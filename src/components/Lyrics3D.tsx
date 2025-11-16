@@ -13,6 +13,7 @@ interface Lyrics3DProps {
   isPlaying: boolean;
   syncedData: SyncedAudioData | null;
   font?: string; // Optional custom font URL
+  color?: string; // Optional color, defaults to green
 }
 
 function LyricText3D({
@@ -23,6 +24,7 @@ function LyricText3D({
   syncedData,
   offset,
   font,
+  color = "#1ed760",
 }: {
   text: string;
   position: [number, number, number];
@@ -31,6 +33,7 @@ function LyricText3D({
   syncedData: SyncedAudioData | null;
   offset: number;
   font?: string;
+  color?: string;
 }) {
   const textRef = useRef<THREE.Mesh>(null);
   const targetScaleRef = useRef(1);
@@ -85,9 +88,9 @@ function LyricText3D({
   });
 
   // Color based on state and offset
-  const color = useMemo(() => {
+  const textColor = useMemo(() => {
     if (isCurrent) {
-      return "#1ed760"; // Spotify green - BRIGHT
+      return color; // Use prop color - BRIGHT
     } else if (isPast) {
       return "#666666"; // Dim gray for previous
     } else if (offset === 1) {
@@ -98,29 +101,29 @@ function LyricText3D({
       return "#555555"; // Even darker for far future
     }
     return "#444444"; // Very dim for far past
-  }, [isCurrent, isPast, offset]);
+  }, [isCurrent, isPast, offset, color]);
 
   const emissiveColor = useMemo(() => {
     if (isCurrent) {
-      return "#1ed760"; // BRIGHT emissive
+      return color; // Use prop color for emissive
     } else if (isPast) {
-      return "#1ed760"; // Subtle for previous
+      return color; // Subtle for previous
     } else if (offset === 1) {
-      return "#1ed760"; // Medium emissive for next
+      return color; // Medium emissive for next
     } else if (offset === 2) {
-      return "#1ed760"; // Weaker emissive for next-next
+      return color; // Weaker emissive for next-next
     } else if (offset >= 3) {
-      return "#1ed760"; // Very weak for far future
+      return color; // Very weak for far future
     }
     return "#000000";
-  }, [isCurrent, isPast, offset]);
+  }, [isCurrent, isPast, offset, color]);
 
   return (
     <Text
       ref={textRef}
       position={position}
       fontSize={1}
-      color={color}
+      color={textColor}
       anchorX="center"
       anchorY="middle"
       font={font}
@@ -168,6 +171,7 @@ export default function Lyrics3D({
   isPlaying,
   syncedData,
   font,
+  color = "#1ed760",
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -251,6 +255,7 @@ export default function Lyrics3D({
             syncedData={syncedData}
             offset={offset}
             font={font}
+            color={color}
           />
         );
       })}
