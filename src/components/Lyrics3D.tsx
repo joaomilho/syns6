@@ -169,6 +169,7 @@ function LyricText3D({
       anchorY="middle"
       font={font}
       outlineWidth={isCurrent ? 0.04 : 0}
+      letterSpacing={isCurrent ? 0.04 : 0}
       outlineColor={color}
       characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
     >
