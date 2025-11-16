@@ -6,6 +6,7 @@ import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { LyricLine, getCurrentLyricIndex, getVisibleLines } from "@/lib/lyrics";
 import { SyncedAudioData } from "@/lib/audioSync";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
@@ -14,6 +15,7 @@ interface Lyrics3DProps {
   syncedData: SyncedAudioData | null;
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
+  micData?: MicrophoneData; // Optional microphone data
 }
 
 function LyricText3D({
@@ -27,6 +29,7 @@ function LyricText3D({
   color = "#0f0",
   showCountdown,
   countdownSeconds,
+  micData,
 }: {
   text: string;
   position: [number, number, number];
@@ -38,6 +41,7 @@ function LyricText3D({
   color?: string;
   showCountdown?: boolean;
   countdownSeconds?: number;
+  micData?: MicrophoneData;
 }) {
   const textRef = useRef<THREE.Mesh>(null);
   const targetScaleRef = useRef(1);
@@ -62,27 +66,32 @@ function LyricText3D({
     // Calculate target scale based on position
     let targetScale = 1.0;
     if (isCurrent) {
-      // CURRENT LINE - HUGE with beat pulse
+      // CURRENT LINE - BIG with beat pulse + VOICE BOOST
       const beatPulse = syncedData?.isOnBeat ? 1.15 : 1.0;
       const beatDecay = 1 - (syncedData?.beatProgress || 0);
-      targetScale = 3.5 * (1 + beatDecay * (beatPulse - 1) * 0.2);
+
+      // VOICE MAKES IT MUCH BIGGER! (Only reacts to singing/speaking)
+      const voiceStrength = micData?.voiceStrength || 0;
+      const voiceScale = 1 + voiceStrength * 1.5; // Up to 2.5x bigger with voice!
+
+      targetScale = 2.0 * (1 + beatDecay * (beatPulse - 1) * 0.2) * voiceScale;
 
       // Barely any wave motion
       textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
-      targetScale = 1.5; // Bigger past lyric (was 0.8)
+      targetScale = 1.0; // Past lyric
       textRef.current.position.y = position[1];
     } else if (offset === 1) {
-      targetScale = 2.5;
-      textRef.current.position.y = position[1];
-    } else if (offset === 2) {
       targetScale = 1.5;
       textRef.current.position.y = position[1];
-    } else if (offset >= 3) {
+    } else if (offset === 2) {
       targetScale = 1.0;
       textRef.current.position.y = position[1];
+    } else if (offset >= 3) {
+      targetScale = 0.7;
+      textRef.current.position.y = position[1];
     } else {
-      targetScale = 0.6;
+      targetScale = 0.4;
       textRef.current.position.y = position[1];
     }
 
@@ -227,6 +236,7 @@ export default function Lyrics3D({
   syncedData,
   font,
   color = "#1ed760",
+  micData,
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -342,6 +352,7 @@ export default function Lyrics3D({
             color={color}
             showCountdown={showCountdown}
             countdownSeconds={countdownSeconds}
+            micData={micData}
           />
         );
       })}

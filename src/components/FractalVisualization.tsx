@@ -7,6 +7,7 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
@@ -23,6 +24,7 @@ interface VisualizationProps {
   syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
+  micData?: MicrophoneData;
 }
 
 // Mandelbrot set shader
@@ -39,6 +41,8 @@ const mandelbrotFragmentShader = `
   uniform float energy;
   uniform float zoom;
   uniform vec2 center;
+  uniform float micEnergy;
+  uniform float micBass;
   varying vec2 vUv;
 
   vec3 hsv2rgb(vec3 c) {
@@ -68,34 +72,39 @@ const mandelbrotFragmentShader = `
       iterations = i;
     }
     
-    // DRAMATIC psychedelic coloring with rapid changes
+    // DRAMATIC psychedelic coloring with AGGRESSIVE microphone reactivity
     if(length(z) > 2.0) {
       float t = iterations / maxIterations;
       
+      // MICROPHONE DRIVES COLOR SPEED - gets CRAZY fast with loud sounds
+      float micSpeedBoost = 1.0 + micEnergy * 5.0; // Up to 6x faster with mic!
+      float bassShift = micBass * 2.0; // Bass shifts hue dramatically
+      
       // FAST cycling through ALL colors with dramatic shifts
-      float hue1 = mod(t * 20.0 + time * 0.3, 1.0);  // Fast full spectrum
-      float hue2 = mod(t * 15.0 - time * 0.4, 1.0);  // Counter-rotating
-      float hue3 = mod(t * 30.0 + time * 0.2, 1.0);  // Super fast
+      float hue1 = mod(t * 20.0 * micSpeedBoost + time * 0.3 + bassShift, 1.0);
+      float hue2 = mod(t * 15.0 * micSpeedBoost - time * 0.4 - bassShift, 1.0);
+      float hue3 = mod(t * 30.0 * micSpeedBoost + time * 0.2, 1.0);
       
-      // Dramatic mixing with sharp transitions
-      float hue = mix(hue1, mix(hue2, hue3, sin(time * 2.0) * 0.5 + 0.5), energy);
+      // Dramatic mixing with sharp transitions driven by mic
+      float mixFactor = sin(time * 2.0 + micEnergy * 10.0) * 0.5 + 0.5;
+      float hue = mix(hue1, mix(hue2, hue3, mixFactor), energy + micEnergy * 0.5);
       
-      // MAXIMUM saturation for vivid, intense colors
-      float saturation = 0.95 + energy * 0.05;
+      // MAXIMUM saturation boosted by microphone
+      float saturation = 0.95 + (energy + micEnergy) * 0.05;
       
-      // High contrast brightness with sharp bands
-      float brightness = 0.3 + t * 0.7 + sin(t * 20.0) * 0.2;
+      // High contrast brightness with sharp bands - EXPLODES with mic input
+      float brightness = 0.3 + t * 0.7 + sin(t * 20.0) * 0.2 + micEnergy * 0.3;
       
       vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
       
-      // Less reduction for more vibrant output
-      color *= 0.7;
+      // Less reduction for more vibrant output, boosted by mic
+      color *= 0.7 + micEnergy * 0.3;
       
       gl_FragColor = vec4(color, 1.0);
     } else {
-      // Inside the set - dramatic dark with color shifts
-      float innerHue = mod(time * 0.2, 1.0); // Full spectrum cycling
-      vec3 innerColor = hsv2rgb(vec3(innerHue, 0.8, 0.08 + energy * 0.1));
+      // Inside the set - dramatic dark with color shifts driven by bass
+      float innerHue = mod(time * 0.2 + micBass * 3.0, 1.0);
+      vec3 innerColor = hsv2rgb(vec3(innerHue, 0.8, 0.08 + (energy + micEnergy) * 0.15));
       gl_FragColor = vec4(innerColor, 1.0);
     }
   }
@@ -105,6 +114,7 @@ function MandelbrotPlane({
   audioFeatures,
   isPlaying,
   syncedData,
+  micData,
 }: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -128,6 +138,8 @@ function MandelbrotPlane({
       energy: { value: 0.5 },
       zoom: { value: 4.0 },
       center: { value: new THREE.Vector2(-0.7463, 0.1102) },
+      micEnergy: { value: 0 },
+      micBass: { value: 0 },
     }),
     []
   );
@@ -159,6 +171,10 @@ function MandelbrotPlane({
       currentLocation.x,
       currentLocation.y
     );
+
+    // AGGRESSIVE MICROPHONE REACTIVITY - always update
+    materialRef.current.uniforms.micEnergy.value = micData?.energy || 0;
+    materialRef.current.uniforms.micBass.value = micData?.bass || 0;
 
     if (isPlaying && audioFeatures) {
       const energy = audioFeatures.energy || 0.5;
@@ -287,6 +303,7 @@ function SpiralParticles({ audioFeatures, isPlaying }: VisualizationProps) {
           count={particleCount}
           array={positions}
           itemSize={3}
+          args={[positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -307,6 +324,7 @@ export default function FractalVisualization({
   syncedData,
   lyrics,
   currentTimeMs,
+  micData,
 }: VisualizationProps) {
   return (
     <div
@@ -336,6 +354,7 @@ export default function FractalVisualization({
           audioFeatures={audioFeatures}
           isPlaying={isPlaying}
           syncedData={syncedData}
+          micData={micData}
         />
 
         {/* 3D Lyrics - always show, component handles "not found" */}
@@ -346,6 +365,7 @@ export default function FractalVisualization({
             isPlaying={isPlaying}
             syncedData={syncedData}
             color="#fff"
+            micData={micData}
           />
         )}
 
