@@ -2,14 +2,18 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { getCurrentlyPlaying, getAudioFeatures } from "@/lib/spotify";
+import { getCurrentlyPlaying, getAudioFeatures, getAudioAnalysis } from "@/lib/spotify";
+import { AudioAnalysis, SyncedAudioData, syncAudioAnalysis } from "@/lib/audioSync";
+import { SyncedLyrics, fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
+import WavyLinesVisualization from "@/components/WavyLinesVisualization";
+import Karaoke from "@/components/Karaoke";
 import styles from "./player.module.css";
 import Link from "next/link";
 
-type VisualizationType = "particles" | "fractal" | "psychedelic";
+type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves";
 
 interface Track {
   id: string;
@@ -42,6 +46,9 @@ export default function PlayerPage() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
+  const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(null);
+  const [syncedData, setSyncedData] = useState<SyncedAudioData | null>(null);
+  const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
 
   // Fetch current playback state
@@ -62,6 +69,39 @@ export default function PlayerPage() {
             setAudioFeatures(features);
           } catch (err) {
             console.error("Error fetching audio features:", err);
+          }
+
+          // Fetch audio analysis (detailed beat/segment data)
+          try {
+            const analysis = await getAudioAnalysis(session.accessToken, data.item.id);
+            setAudioAnalysis(analysis);
+            console.log("Audio analysis loaded:", {
+              beats: analysis.beats?.length,
+              segments: analysis.segments?.length,
+              sections: analysis.sections?.length,
+            });
+          } catch (err) {
+            console.warn("Audio analysis not available for this track (403 is normal for some tracks)");
+            setAudioAnalysis(null);
+          }
+
+          // Fetch synced lyrics
+          try {
+            const syncedLyrics = await fetchSyncedLyrics(
+              data.item.name,
+              data.item.artists[0].name,
+              data.item.duration_ms
+            );
+            if (syncedLyrics) {
+              setLyrics(syncedLyrics.lines);
+              console.log("Synced lyrics loaded:", syncedLyrics.lines.length, "lines");
+            } else {
+              setLyrics(null);
+              console.log("No synced lyrics found");
+            }
+          } catch (err) {
+            console.error("Error fetching lyrics:", err);
+            setLyrics(null);
           }
         }
       } else {
@@ -96,6 +136,17 @@ export default function PlayerPage() {
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
 
+  // Sync audio analysis with current playback position (60fps for smooth reactions)
+  useEffect(() => {
+    if (playbackState?.is_playing && audioAnalysis) {
+      const interval = setInterval(() => {
+        const synced = syncAudioAnalysis(currentProgress, audioAnalysis);
+        setSyncedData(synced);
+      }, 16); // Update 60 times per second for ultra-smooth beat detection
+      return () => clearInterval(interval);
+    }
+  }, [currentProgress, audioAnalysis, playbackState?.is_playing]);
+
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -129,25 +180,43 @@ export default function PlayerPage() {
 
   return (
     <div className={styles.fullscreenPage}>
-      {/* Background Visualization */}
+      {/* Background Visualization with 3D Lyrics */}
       {playbackState?.item && (
         <>
           {visualizationType === "particles" && (
             <MusicVisualization
               audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
             />
           )}
           {visualizationType === "fractal" && (
             <FractalVisualization
               audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
             />
           )}
           {visualizationType === "psychedelic" && (
             <PsychedelicVisualization
               audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
+            />
+          )}
+          {visualizationType === "waves" && (
+            <WavyLinesVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
             />
           )}
         </>
@@ -187,6 +256,15 @@ export default function PlayerPage() {
             title="Psychedelic"
           >
             ✧
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "waves" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("waves")}
+            title="Wavy Lines"
+          >
+            ≋
           </button>
         </div>
       </div>
