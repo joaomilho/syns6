@@ -32,20 +32,20 @@ function PulsingDarkLight() {
   return (
     <group position={[0, 0, 10]}>
       {/* Dim pulsing white light */}
-      <pointLight 
+      <pointLight
         ref={lightRef}
-        color="#ffffff" 
-        intensity={5} 
+        color="#ffffff"
+        intensity={5}
         distance={100}
         decay={2}
       />
-      
+
       {/* Small visible dark sphere at light source */}
       <mesh>
         <sphereGeometry args={[0.5, 32, 32]} />
-        <meshStandardMaterial 
-          color="#0a0a0a" 
-          emissive="#0a0a0a" 
+        <meshStandardMaterial
+          color="#0a0a0a"
+          emissive="#0a0a0a"
           emissiveIntensity={0.1}
         />
       </mesh>
@@ -54,15 +54,15 @@ function PulsingDarkLight() {
 }
 
 // PROPER Pentagram - 5-pointed star
-function SimplePentagram({ 
-  position, 
-  scale = 1, 
+function SimplePentagram({
+  position,
+  scale = 1,
   color = "#ff0000",
   emissiveIntensity = 4,
   floatSpeed = 0.5,
-  floatAmount = 0.3
-}: { 
-  position: [number, number, number]; 
+  floatAmount = 0.3,
+}: {
+  position: [number, number, number];
   scale?: number;
   color?: string;
   emissiveIntensity?: number;
@@ -76,7 +76,8 @@ function SimplePentagram({
     if (groupRef.current) {
       // Float up and down instead of spinning
       const time = state.clock.getElapsedTime();
-      groupRef.current.position.y = initialY + Math.sin(time * floatSpeed) * floatAmount;
+      groupRef.current.position.y =
+        initialY + Math.sin(time * floatSpeed) * floatAmount;
     }
   });
 
@@ -84,7 +85,7 @@ function SimplePentagram({
   const starLines = [];
   const radius = 5;
   const points = [];
-  
+
   // Calculate 5 points of the star
   for (let i = 0; i < 5; i++) {
     const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
@@ -93,7 +94,7 @@ function SimplePentagram({
       y: Math.sin(angle) * radius,
     });
   }
-  
+
   // Connect points in star pattern (0->2->4->1->3->0)
   const starOrder = [0, 2, 4, 1, 3, 0];
   for (let i = 0; i < starOrder.length - 1; i++) {
@@ -114,15 +115,9 @@ function SimplePentagram({
         const midY = (line.start.y + line.end.y) / 2;
 
         return (
-          <mesh
-            key={i}
-            position={[midX, midY, 0]}
-            rotation={[0, 0, angle]}
-          >
+          <mesh key={i} position={[midX, midY, 0]} rotation={[0, 0, angle]}>
             <boxGeometry args={[length, 0.4, 0.4]} />
-            <meshStandardMaterial 
-              color={color}
-            />
+            <meshStandardMaterial color={color} />
           </mesh>
         );
       })}
@@ -133,7 +128,7 @@ function SimplePentagram({
 // Hundreds of small black pentagrams floating around
 function BlackPentagramField() {
   const pentagrams = [];
-  
+
   // Generate 200 small RED pentagrams scattered throughout the scene
   for (let i = 0; i < 200; i++) {
     pentagrams.push({
@@ -166,7 +161,13 @@ function BlackPentagramField() {
 }
 
 // UPSIDE-DOWN Cross (inverted cross) - rotated 180 degrees
-function SimpleCross({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
+function SimpleCross({
+  position,
+  scale = 1,
+}: {
+  position: [number, number, number];
+  scale?: number;
+}) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
@@ -176,21 +177,22 @@ function SimpleCross({ position, scale = 1 }: { position: [number, number, numbe
   });
 
   return (
-    <group ref={groupRef} position={position} scale={scale} rotation={[0, 0, Math.PI]}>
+    <group
+      ref={groupRef}
+      position={position}
+      scale={scale}
+      rotation={[0, 0, Math.PI]}
+    >
       {/* Vertical beam - RED but not glowing */}
-      <mesh position={[0, 0, 0]}>
+      <mesh position={[0, 0.5, 0]}>
         <boxGeometry args={[0.6, 6, 0.6]} />
-        <meshStandardMaterial 
-          color="#ff0000"
-        />
+        <meshStandardMaterial color="#ff0000" />
       </mesh>
-      
-      {/* Horizontal beam - RED but not glowing */}
-      <mesh position={[0, 2, 0]}>
+
+      {/* Horizontal beam - RED but not glowing - positioned lower to raise intersection */}
+      <mesh position={[0, 1.7, 0]}>
         <boxGeometry args={[4, 0.6, 0.6]} />
-        <meshStandardMaterial 
-          color="#ff0000"
-        />
+        <meshStandardMaterial color="#ff0000" />
       </mesh>
     </group>
   );
@@ -219,7 +221,7 @@ export default function BlackMetalVisualization({
     >
       <Canvas camera={{ position: [0, 0, 30], fov: 75 }}>
         <color attach="background" args={["#000000"]} />
-        
+
         {/* MINIMAL lighting - almost pure darkness */}
         <ambientLight intensity={0.1} color="#ffffff" />
 
@@ -227,16 +229,41 @@ export default function BlackMetalVisualization({
         <BlackPentagramField />
 
         {/* NO light source - objects are just red, not glowing */}
-        
+
         {/* GIANT central pentagram - RED */}
-        <SimplePentagram position={[0, 0, -5]} scale={2} color="#ff0000" emissiveIntensity={0} />
-        
+        <SimplePentagram
+          position={[0, 0, -5]}
+          scale={2}
+          color="#ff0000"
+          emissiveIntensity={0}
+        />
+
         {/* Scattered RED pentagrams */}
-        <SimplePentagram position={[-15, 8, -10]} scale={1.5} color="#ff0000" emissiveIntensity={0} />
-        <SimplePentagram position={[15, -8, -10]} scale={1.5} color="#ff0000" emissiveIntensity={0} />
-        <SimplePentagram position={[-12, -10, -15]} scale={1.2} color="#ff0000" emissiveIntensity={0} />
-        <SimplePentagram position={[12, 10, -15]} scale={1.2} color="#ff0000" emissiveIntensity={0} />
-        
+        <SimplePentagram
+          position={[-15, 8, -10]}
+          scale={1.5}
+          color="#ff0000"
+          emissiveIntensity={0}
+        />
+        <SimplePentagram
+          position={[15, -8, -10]}
+          scale={1.5}
+          color="#ff0000"
+          emissiveIntensity={0}
+        />
+        <SimplePentagram
+          position={[-12, -10, -15]}
+          scale={1.2}
+          color="#ff0000"
+          emissiveIntensity={0}
+        />
+        <SimplePentagram
+          position={[12, 10, -15]}
+          scale={1.2}
+          color="#ff0000"
+          emissiveIntensity={0}
+        />
+
         {/* BIGGER Crosses scattered around */}
         <SimpleCross position={[-18, 5, -8]} scale={1.5} />
         <SimpleCross position={[18, -5, -8]} scale={1.5} />
@@ -252,6 +279,8 @@ export default function BlackMetalVisualization({
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
             syncedData={syncedData}
+            font="/fonts/fraktur.ttf"
+            color="#ff0000"
           />
         )}
 
