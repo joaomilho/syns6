@@ -70,7 +70,7 @@ function LyricText3D({
       // Barely any wave motion
       textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
-      targetScale = 0.8;
+      targetScale = 1.5; // Bigger past lyric (was 0.8)
       textRef.current.position.y = position[1];
     } else if (offset === 1) {
       targetScale = 2.5;
@@ -112,36 +112,41 @@ function LyricText3D({
           targetColor = new THREE.Color(color);
           targetEmissive = new THREE.Color(color);
           targetOpacity = 1.0;
-          targetEmissiveIntensity = 1.0;
+          targetEmissiveIntensity = 0.8; // Less intense shine
         } else if (isPast) {
-          targetColor = new THREE.Color("#cccccc");
+          targetColor = new THREE.Color(color); // Keep same color as current
           targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.3;
-          targetEmissiveIntensity = 0.15;
+          targetOpacity = 0.85; // Almost as visible as current
+          targetEmissiveIntensity = 0.75; // Almost as much shine
         } else if (offset === 1) {
           targetColor = new THREE.Color("#999999");
           targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.7;
-          targetEmissiveIntensity = 0.4;
+          targetOpacity = 0.75;
+          targetEmissiveIntensity = 0.5; // More shine
         } else if (offset === 2) {
           targetColor = new THREE.Color("#777777");
           targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.5;
-          targetEmissiveIntensity = 0.2;
+          targetOpacity = 0.6;
+          targetEmissiveIntensity = 0.35; // More shine
         } else if (offset >= 3) {
           targetColor = new THREE.Color("#555555");
           targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.3;
-          targetEmissiveIntensity = 0.1;
+          targetOpacity = 0.4;
+          targetEmissiveIntensity = 0.2;
         } else {
           targetColor = new THREE.Color("#444444");
           targetEmissive = new THREE.Color("#000000");
-          targetOpacity = 0.15;
-          targetEmissiveIntensity = 0.05;
+          targetOpacity = 0.2;
+          targetEmissiveIntensity = 0.1;
         }
 
         // VERY SLOW color lerp for smooth transition from current to past
-        const colorLerpFactor = 0.001; // Even slower (was 0.003)
+        // Use EXTRA slow lerp when transitioning FROM current (to keep it bright longer)
+        const isTransitioningFromCurrent =
+          currentEmissiveIntensityRef.current > 0.7 &&
+          targetEmissiveIntensity < 0.7;
+        const colorLerpFactor = isTransitioningFromCurrent ? 0.0001 : 0.0005; // 5x slower when leaving current
+
         currentColorRef.current.lerp(targetColor, colorLerpFactor);
         currentEmissiveRef.current.lerp(targetEmissive, colorLerpFactor);
         currentOpacityRef.current +=
@@ -177,7 +182,7 @@ function LyricText3D({
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={isCurrent ? 0.9 : isPast ? 0.2 : 0.7}
+        emissiveIntensity={isCurrent ? 1.9 : isPast ? 0.9 : 0.7}
         transparent
         opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
         side={THREE.FrontSide}
