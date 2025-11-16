@@ -2,11 +2,13 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { getCurrentlyPlaying } from "@/lib/spotify";
+import { getCurrentlyPlaying, getAudioFeatures } from "@/lib/spotify";
+import MusicVisualization from "@/components/MusicVisualization";
 import styles from "./player.module.css";
 import Link from "next/link";
 
 interface Track {
+  id: string;
   name: string;
   artists: Array<{ name: string }>;
   album: {
@@ -22,11 +24,20 @@ interface PlaybackState {
   is_playing: boolean;
 }
 
+interface AudioFeatures {
+  energy: number;
+  tempo: number;
+  valence: number;
+  danceability: number;
+  acousticness: number;
+}
+
 export default function PlayerPage() {
   const { data: session, status } = useSession();
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
@@ -38,6 +49,16 @@ export default function PlayerPage() {
         setPlaybackState(data);
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
+
+        // Fetch audio features for the current track
+        if (data.item.id) {
+          try {
+            const features = await getAudioFeatures(session.accessToken, data.item.id);
+            setAudioFeatures(features);
+          } catch (err) {
+            console.error("Error fetching audio features:", err);
+          }
+        }
       } else {
         setPlaybackState(null);
         setError("No track currently playing");
@@ -52,7 +73,7 @@ export default function PlayerPage() {
   useEffect(() => {
     if (session?.accessToken) {
       fetchPlaybackState();
-      const interval = setInterval(fetchPlaybackState, 5000); // Update every 5 seconds
+      const interval = setInterval(fetchPlaybackState, 5000);
       return () => clearInterval(interval);
     }
   }, [session]);
@@ -79,8 +100,8 @@ export default function PlayerPage() {
 
   if (status === "loading") {
     return (
-      <div className={styles.page}>
-        <div className={styles.player}>
+      <div className={styles.fullscreenPage}>
+        <div className={styles.centerMessage}>
           <h1>Loading...</h1>
         </div>
       </div>
@@ -89,8 +110,8 @@ export default function PlayerPage() {
 
   if (!session) {
     return (
-      <div className={styles.page}>
-        <div className={styles.player}>
+      <div className={styles.fullscreenPage}>
+        <div className={styles.centerMessage}>
           <h1>Not Authenticated</h1>
           <p>Please sign in to use the player</p>
           <Link href="/" className={styles.link}>
@@ -102,24 +123,36 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.player}>
-        <div className={styles.header}>
-          <Link href="/" className={styles.backLink}>
-            ← Back to Home
-          </Link>
-          <h1>Now Playing</h1>
-        </div>
+    <div className={styles.fullscreenPage}>
+      {/* Background Visualization */}
+      {playbackState?.item && (
+        <MusicVisualization
+          audioFeatures={audioFeatures}
+          isPlaying={playbackState.is_playing}
+        />
+      )}
 
-        {error && !playbackState ? (
-          <div className={styles.error}>
+      {/* Top Controls */}
+      <div className={styles.topBar}>
+        <Link href="/" className={styles.backLink}>
+          ← Back
+        </Link>
+      </div>
+
+      {/* Bottom Player Controls */}
+      {error && !playbackState ? (
+        <div className={styles.bottomControls}>
+          <div className={styles.errorMessage}>
             <p>{error}</p>
             <p className={styles.hint}>
-              Open Spotify and start playing a track to see it here
+              Open Spotify and start playing a track
             </p>
           </div>
-        ) : playbackState?.item ? (
-          <div className={styles.nowPlaying}>
+        </div>
+      ) : playbackState?.item ? (
+        <div className={styles.bottomControls}>
+          <div className={styles.controlsContainer}>
+            {/* Album Art */}
             <div className={styles.albumArt}>
               {playbackState.item.album.images[0] && (
                 <img
@@ -129,46 +162,53 @@ export default function PlayerPage() {
               )}
             </div>
 
-            <div className={styles.trackInfo}>
-              <h2 className={styles.trackName}>{playbackState.item.name}</h2>
-              <p className={styles.artistName}>
-                {playbackState.item.artists.map((a) => a.name).join(", ")}
-              </p>
-              <p className={styles.albumName}>{playbackState.item.album.name}</p>
-            </div>
-
-            <div className={styles.progressContainer}>
-              <div className={styles.progressBar}>
-                <div
-                  className={styles.progressFill}
-                  style={{
-                    width: `${
-                      (currentProgress / playbackState.item.duration_ms) * 100
-                    }%`,
-                  }}
-                />
+            {/* Track Info & Controls */}
+            <div className={styles.trackInfoContainer}>
+              <div className={styles.trackInfo}>
+                <h2 className={styles.trackName}>{playbackState.item.name}</h2>
+                <p className={styles.artistName}>
+                  {playbackState.item.artists.map((a) => a.name).join(", ")}
+                </p>
               </div>
-              <div className={styles.timeInfo}>
-                <span>{formatTime(currentProgress)}</span>
-                <span>{formatTime(playbackState.item.duration_ms)}</span>
-              </div>
-            </div>
 
-            <div className={styles.playbackStatus}>
-              {playbackState.is_playing ? (
-                <span className={styles.playing}>▶ Playing</span>
-              ) : (
-                <span className={styles.paused}>⏸ Paused</span>
-              )}
+              {/* Progress Bar */}
+              <div className={styles.progressContainer}>
+                <span className={styles.timeText}>
+                  {formatTime(currentProgress)}
+                </span>
+                <div className={styles.progressBar}>
+                  <div
+                    className={styles.progressFill}
+                    style={{
+                      width: `${
+                        (currentProgress / playbackState.item.duration_ms) * 100
+                      }%`,
+                    }}
+                  />
+                </div>
+                <span className={styles.timeText}>
+                  {formatTime(playbackState.item.duration_ms)}
+                </span>
+              </div>
+
+              {/* Playback Status */}
+              <div className={styles.playbackStatus}>
+                {playbackState.is_playing ? (
+                  <span className={styles.statusBadge}>▶ Playing</span>
+                ) : (
+                  <span className={styles.statusBadge}>⏸ Paused</span>
+                )}
+              </div>
             </div>
           </div>
-        ) : (
-          <div className={styles.noTrack}>
+        </div>
+      ) : (
+        <div className={styles.bottomControls}>
+          <div className={styles.errorMessage}>
             <p>No track currently playing</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-
