@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { getCurrentlyPlaying } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
+import { useHueLights } from "@/hooks/useHueLights";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
+import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
 import Link from "next/link";
 
@@ -39,8 +41,10 @@ export default function PlayerPage() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic } = useMicrophoneAnalysis();
+  const hue = useHueLights();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
+  const [showHueControls, setShowHueControls] = useState(false);
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
@@ -104,6 +108,20 @@ export default function PlayerPage() {
       return () => clearInterval(interval);
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
+
+  // Hue lights react to music
+  useEffect(() => {
+    if (micData && hue.isConnected && playbackState?.is_playing) {
+      hue.reactToMusic({
+        energy: micData.energy,
+        bass: micData.bass,
+        mid: micData.mid,
+        treble: micData.treble,
+        isLoud: micData.isLoud,
+        voiceStrength: micData.voiceStrength,
+      });
+    }
+  }, [micData, hue, playbackState?.is_playing]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -207,6 +225,16 @@ export default function PlayerPage() {
         >
           🎤
         </button>
+
+        {/* Hue Lights Toggle */}
+        <button
+          className={`${styles.vizButton} ${hue.isConnected ? styles.active : ""} ${showHueControls ? styles.highlighted : ""}`}
+          onClick={() => setShowHueControls(!showHueControls)}
+          title={hue.isConnected ? "Hue Connected" : "Connect Hue Lights"}
+          style={{ marginLeft: '10px' }}
+        >
+          💡
+        </button>
         
         {/* Visualization Selector */}
         <div className={styles.vizSelector}>
@@ -266,6 +294,13 @@ export default function PlayerPage() {
           </button>
         </div>
       </div>
+
+      {/* Hue Controls Panel */}
+      {showHueControls && (
+        <div className={styles.huePanel}>
+          <HueControls />
+        </div>
+      )}
 
       {/* Bottom Player Controls */}
       {error && !playbackState ? (
