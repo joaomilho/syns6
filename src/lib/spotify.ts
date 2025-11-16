@@ -167,3 +167,10 @@ export async function getAudioFeatures(accessToken: string, trackId: string) {
   });
 }
 
+export async function getAudioAnalysis(accessToken: string, trackId: string) {
+  return spotifyApi({
+    accessToken,
+    endpoint: `/audio-analysis/${trackId}`,
+  });
+}
+
