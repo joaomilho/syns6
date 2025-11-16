@@ -25,6 +25,8 @@ function LyricText3D({
   offset,
   font,
   color = "#1ed760",
+  showCountdown,
+  countdownSeconds,
 }: {
   text: string;
   position: [number, number, number];
@@ -34,9 +36,15 @@ function LyricText3D({
   offset: number;
   font?: string;
   color?: string;
+  showCountdown?: boolean;
+  countdownSeconds?: number;
 }) {
   const textRef = useRef<THREE.Mesh>(null);
   const targetScaleRef = useRef(1);
+  const currentColorRef = useRef(new THREE.Color(color));
+  const currentEmissiveRef = useRef(new THREE.Color(color));
+  const currentOpacityRef = useRef(1);
+  const currentEmissiveIntensityRef = useRef(1);
 
   useFrame((state) => {
     if (!textRef.current) return;
@@ -81,49 +89,78 @@ function LyricText3D({
     // Smoothly lerp to target scale instead of instant change
     targetScaleRef.current = targetScale;
     const currentScale = textRef.current.scale.x;
-    const lerpFactor = 0.04; // Even slower = even smoother transition
-    const newScale = currentScale + (targetScale - currentScale) * lerpFactor;
+    const scaleLerpFactor = 0.04; // Even slower = even smoother transition
+    const newScale = currentScale + (targetScale - currentScale) * scaleLerpFactor;
     
     textRef.current.scale.set(newScale, newScale, newScale);
+
+    // Smoothly lerp colors and opacity for MUCH slower transitions
+    // Access the material from the mesh's children (Text component structure)
+    if (textRef.current.children && textRef.current.children.length > 0) {
+      const textMesh = textRef.current.children[0] as THREE.Mesh;
+      const material = textMesh?.material as THREE.MeshStandardMaterial;
+      
+      if (material && material.color && material.emissive) {
+        // Determine target colors based on state
+        let targetColor: THREE.Color;
+        let targetEmissive: THREE.Color;
+        let targetOpacity: number;
+        let targetEmissiveIntensity: number;
+
+        if (isCurrent) {
+          targetColor = new THREE.Color(color);
+          targetEmissive = new THREE.Color(color);
+          targetOpacity = 1.0;
+          targetEmissiveIntensity = 1.0;
+        } else if (isPast) {
+          targetColor = new THREE.Color("#cccccc");
+          targetEmissive = new THREE.Color(color);
+          targetOpacity = 0.3;
+          targetEmissiveIntensity = 0.15;
+        } else if (offset === 1) {
+          targetColor = new THREE.Color("#999999");
+          targetEmissive = new THREE.Color(color);
+          targetOpacity = 0.7;
+          targetEmissiveIntensity = 0.4;
+        } else if (offset === 2) {
+          targetColor = new THREE.Color("#777777");
+          targetEmissive = new THREE.Color(color);
+          targetOpacity = 0.5;
+          targetEmissiveIntensity = 0.2;
+        } else if (offset >= 3) {
+          targetColor = new THREE.Color("#555555");
+          targetEmissive = new THREE.Color(color);
+          targetOpacity = 0.3;
+          targetEmissiveIntensity = 0.1;
+        } else {
+          targetColor = new THREE.Color("#444444");
+          targetEmissive = new THREE.Color("#000000");
+          targetOpacity = 0.15;
+          targetEmissiveIntensity = 0.05;
+        }
+
+        // VERY SLOW color lerp for smooth transition from current to past
+        const colorLerpFactor = 0.001; // Even slower (was 0.003)
+        currentColorRef.current.lerp(targetColor, colorLerpFactor);
+        currentEmissiveRef.current.lerp(targetEmissive, colorLerpFactor);
+        currentOpacityRef.current += (targetOpacity - currentOpacityRef.current) * colorLerpFactor;
+        currentEmissiveIntensityRef.current += (targetEmissiveIntensity - currentEmissiveIntensityRef.current) * colorLerpFactor;
+
+        // Apply lerped values
+        material.color.copy(currentColorRef.current);
+        material.emissive.copy(currentEmissiveRef.current);
+        material.opacity = currentOpacityRef.current;
+        material.emissiveIntensity = currentEmissiveIntensityRef.current;
+      }
+    }
   });
 
-  // Color based on state and offset
-  const textColor = useMemo(() => {
-    if (isCurrent) {
-      return color; // Use prop color - BRIGHT
-    } else if (isPast) {
-      return "#666666"; // Dim gray for previous
-    } else if (offset === 1) {
-      return "#999999"; // Slightly darker gray for next (50%)
-    } else if (offset === 2) {
-      return "#777777"; // Darker gray for next-next (30%)
-    } else if (offset >= 3) {
-      return "#555555"; // Even darker for far future
-    }
-    return "#444444"; // Very dim for far past
-  }, [isCurrent, isPast, offset, color]);
-
-  const emissiveColor = useMemo(() => {
-    if (isCurrent) {
-      return color; // Use prop color for emissive
-    } else if (isPast) {
-      return color; // Subtle for previous
-    } else if (offset === 1) {
-      return color; // Medium emissive for next
-    } else if (offset === 2) {
-      return color; // Weaker emissive for next-next
-    } else if (offset >= 3) {
-      return color; // Very weak for far future
-    }
-    return "#000000";
-  }, [isCurrent, isPast, offset, color]);
-
-  return (
+  const textElement = (
     <Text
       ref={textRef}
       position={position}
       fontSize={1}
-      color={textColor}
+      color={color}
       anchorX="center"
       anchorY="middle"
       font={font}
@@ -141,28 +178,43 @@ function LyricText3D({
       {text}
       <meshStandardMaterial
         color={color}
-        emissive={emissiveColor}
-        emissiveIntensity={
-          isCurrent ? 1.0 : 
-          isPast ? 0.15 : 
-          offset === 1 ? 0.4 : 
-          offset === 2 ? 0.2 : 
-          offset >= 3 ? 0.1 :
-          0.05
-        }
+        emissive={color}
+        emissiveIntensity={1.0}
         transparent
-        opacity={
-          isCurrent ? 1 : 
-          isPast ? 0.3 : 
-          offset === 1 ? 0.7 : 
-          offset === 2 ? 0.5 : 
-          offset >= 3 ? 0.3 :
-          0.15
-        }
+        opacity={1.0}
         side={THREE.DoubleSide}
       />
     </Text>
   );
+
+  // Render countdown if needed
+  if (showCountdown && countdownSeconds !== undefined && countdownSeconds > 0) {
+    return (
+      <>
+        {textElement}
+        <Text
+          position={[position[0], position[1] + 2, position[2]]}
+          fontSize={1.2}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          font={font}
+        >
+          {Math.ceil(countdownSeconds)}
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#ffffff"
+            emissiveIntensity={1.5}
+            transparent
+            opacity={1.0}
+            side={THREE.DoubleSide}
+          />
+        </Text>
+      </>
+    );
+  }
+
+  return textElement;
 }
 
 export default function Lyrics3D({
@@ -245,6 +297,35 @@ export default function Lyrics3D({
         
         const isCurrent = index === currentIndex;
 
+        // Check if next line has a long wait (>10s)
+        let showCountdown = false;
+        let countdownSeconds = 0;
+        
+        // Special case: First line when song hasn't started (currentIndex === -1)
+        if (currentIndex === -1 && index === 0 && lyrics && lyrics.length > 0) {
+          const firstLine = lyrics[0];
+          const waitTime = firstLine.time - currentTimeMs;
+          
+          if (waitTime > 0 && firstLine.time > 10000) {
+            showCountdown = true;
+            countdownSeconds = waitTime / 1000;
+          }
+        }
+        // Normal case: Next line after current
+        else if (offset === 1 && lyrics && index < lyrics.length) {
+          const currentLine = lyrics[currentIndex];
+          const nextLine = lyrics[index];
+          if (currentLine && nextLine) {
+            const gap = nextLine.time - currentLine.time;
+            const timeUntilNext = nextLine.time - currentTimeMs;
+            
+            if (gap > 10000 && timeUntilNext > 0) {
+              showCountdown = true;
+              countdownSeconds = timeUntilNext / 1000;
+            }
+          }
+        }
+
         return (
           <LyricText3D
             key={`${index}-${line.text}`}
@@ -256,6 +337,8 @@ export default function Lyrics3D({
             offset={offset}
             font={font}
             color={color}
+            showCountdown={showCountdown}
+            countdownSeconds={countdownSeconds}
           />
         );
       })}
