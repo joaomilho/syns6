@@ -160,3 +160,10 @@ export async function search(
   });
 }
 
+export async function getAudioFeatures(accessToken: string, trackId: string) {
+  return spotifyApi({
+    accessToken,
+    endpoint: `/audio-features/${trackId}`,
+  });
+}
+
