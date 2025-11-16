@@ -11,11 +11,12 @@ import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
+import DebugVisualization from "@/components/DebugVisualization";
 import Karaoke from "@/components/Karaoke";
 import styles from "./player.module.css";
 import Link from "next/link";
 
-type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves" | "blackmetal";
+type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves" | "blackmetal" | "debug";
 
 interface Track {
   id: string;
@@ -65,28 +66,25 @@ export default function PlayerPage() {
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
 
-        // Fetch audio features for the current track
+        // NOTE: Audio features and analysis endpoints were deprecated for new apps on Nov 27, 2024
+        // We'll use fallback values based on playback state and microphone input instead
         if (data.item.id) {
-          try {
-            const features = await getAudioFeatures(session.accessToken, data.item.id);
-            setAudioFeatures(features);
-          } catch (err) {
-            console.error("Error fetching audio features:", err);
-          }
-
-          // Fetch audio analysis (detailed beat/segment data)
-          try {
-            const analysis = await getAudioAnalysis(session.accessToken, data.item.id);
-            setAudioAnalysis(analysis);
-            console.log("Audio analysis loaded:", {
-              beats: analysis.beats?.length,
-              segments: analysis.segments?.length,
-              sections: analysis.sections?.length,
-            });
-          } catch (err) {
-            console.warn("Audio analysis not available for this track (403 is normal for some tracks)");
-            setAudioAnalysis(null);
-          }
+          console.log("ℹ️ Audio features/analysis not available (deprecated for new Spotify apps)");
+          console.log("ℹ️ Using fallback values based on playback state + microphone");
+          
+          // Set fallback audio features with reasonable defaults
+          // These will be enhanced by microphone input for reactivity
+          setAudioFeatures({
+            energy: 0.7, // Default medium-high energy
+            tempo: 120, // Default 120 BPM
+            valence: 0.6, // Default slightly positive
+            danceability: 0.7, // Default danceable
+            acousticness: 0.3, // Default mostly electronic
+          });
+          
+          // No audio analysis available
+          setAudioAnalysis(null);
+        }
 
           // Fetch synced lyrics
           try {
@@ -236,6 +234,16 @@ export default function PlayerPage() {
               micData={micData}
             />
           )}
+          {visualizationType === "debug" && (
+            <DebugVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
+              micData={micData}
+            />
+          )}
         </>
       )}
 
@@ -301,6 +309,15 @@ export default function PlayerPage() {
             title="Black Metal"
           >
             ⛧
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "debug" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("debug")}
+            title="Debug View"
+          >
+            🔍
           </button>
         </div>
       </div>
