@@ -4,8 +4,12 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { getCurrentlyPlaying, getAudioFeatures } from "@/lib/spotify";
 import MusicVisualization from "@/components/MusicVisualization";
+import FractalVisualization from "@/components/FractalVisualization";
+import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import styles from "./player.module.css";
 import Link from "next/link";
+
+type VisualizationType = "particles" | "fractal" | "psychedelic";
 
 interface Track {
   id: string;
@@ -38,6 +42,7 @@ export default function PlayerPage() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
+  const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
@@ -126,10 +131,26 @@ export default function PlayerPage() {
     <div className={styles.fullscreenPage}>
       {/* Background Visualization */}
       {playbackState?.item && (
-        <MusicVisualization
-          audioFeatures={audioFeatures}
-          isPlaying={playbackState.is_playing}
-        />
+        <>
+          {visualizationType === "particles" && (
+            <MusicVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+            />
+          )}
+          {visualizationType === "fractal" && (
+            <FractalVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+            />
+          )}
+          {visualizationType === "psychedelic" && (
+            <PsychedelicVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+            />
+          )}
+        </>
       )}
 
       {/* Top Controls */}
@@ -137,6 +158,37 @@ export default function PlayerPage() {
         <Link href="/" className={styles.backLink}>
           ← Back
         </Link>
+        
+        {/* Visualization Selector */}
+        <div className={styles.vizSelector}>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "particles" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("particles")}
+            title="Particles & Rings"
+          >
+            ◯
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "fractal" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("fractal")}
+            title="Fractal Tree"
+          >
+            ❋
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "psychedelic" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("psychedelic")}
+            title="Psychedelic"
+          >
+            ✧
+          </button>
+        </div>
       </div>
 
       {/* Bottom Player Controls */}
