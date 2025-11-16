@@ -117,9 +117,12 @@ export function getCurrentLyricIndex(
 ): number {
   if (!lines.length) return -1;
 
+  // Start transition 0.6 seconds early for smoother animation
+  const adjustedTime = currentTimeMs + 600;
+
   // Find the last line that has started
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (currentTimeMs >= lines[i].time) {
+    if (adjustedTime >= lines[i].time) {
       return i;
     }
   }
