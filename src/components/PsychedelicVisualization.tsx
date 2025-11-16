@@ -6,6 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
@@ -22,6 +23,7 @@ interface VisualizationProps {
   syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
+  micData?: MicrophoneData;
 }
 
 // Morphing blob with shader-like color effects
@@ -245,6 +247,7 @@ export default function PsychedelicVisualization({
   syncedData,
   lyrics,
   currentTimeMs,
+  micData,
 }: VisualizationProps) {
   return (
     <div
