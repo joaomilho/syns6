@@ -4,6 +4,9 @@ import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { SyncedAudioData } from "@/lib/audioSync";
+import { LyricLine } from "@/lib/lyrics";
+import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
   energy: number;
@@ -16,6 +19,9 @@ interface AudioFeatures {
 interface VisualizationProps {
   audioFeatures: AudioFeatures | null;
   isPlaying: boolean;
+  syncedData: SyncedAudioData | null;
+  lyrics?: LyricLine[] | null;
+  currentTimeMs?: number;
 }
 
 // Morphing blob with shader-like color effects
@@ -236,6 +242,9 @@ function LiquidParticles({ audioFeatures, isPlaying }: VisualizationProps) {
 export default function PsychedelicVisualization({
   audioFeatures,
   isPlaying,
+  syncedData,
+  lyrics,
+  currentTimeMs,
 }: VisualizationProps) {
   return (
     <div
@@ -261,13 +270,23 @@ export default function PsychedelicVisualization({
         <KaleidoscopePlanes audioFeatures={audioFeatures} isPlaying={isPlaying} />
         <LiquidParticles audioFeatures={audioFeatures} isPlaying={isPlaying} />
 
+        {/* 3D Lyrics - always show, component handles "not found" */}
+        {currentTimeMs !== undefined && (
+          <Lyrics3D
+            lyrics={lyrics || null}
+            currentTimeMs={currentTimeMs}
+            isPlaying={isPlaying}
+            syncedData={syncedData}
+          />
+        )}
+
         <OrbitControls
           enableZoom={true}
           enablePan={false}
           minDistance={15}
           maxDistance={50}
-          autoRotate={isPlaying}
-          autoRotateSpeed={0.8}
+          autoRotate={false}
+          autoRotateSpeed={0}
         />
       </Canvas>
     </div>

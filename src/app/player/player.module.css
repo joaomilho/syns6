@@ -58,6 +58,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .backLink {
@@ -75,6 +76,45 @@
 .backLink:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateX(-4px);
+}
+
+/* Mode Toggle */
+.modeToggle {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modeButton {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+}
+
+.modeButton.active {
+  background: rgba(29, 185, 84, 0.3);
+  color: #1ed760;
+  border: 1px solid rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
 }
 
 /* Visualization Selector */
@@ -114,6 +154,17 @@
   color: #1ed760;
   border: 1px solid rgba(29, 185, 84, 0.5);
   box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+}
+
+/* Karaoke Container */
+.karaokeContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%);
+  z-index: 0;
 }
 
 /* Bottom Controls */
@@ -250,6 +301,17 @@
 @media (max-width: 768px) {
   .topBar {
     padding: 16px 20px;
+    flex-wrap: wrap;
+  }
+
+  .modeToggle {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .vizSelector {
+    order: 2;
   }
 
   .bottomControls {
