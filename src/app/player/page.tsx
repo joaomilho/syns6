@@ -9,11 +9,12 @@ import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
+import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import Karaoke from "@/components/Karaoke";
 import styles from "./player.module.css";
 import Link from "next/link";
 
-type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves";
+type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves" | "blackmetal";
 
 interface Track {
   id: string;
@@ -219,6 +220,15 @@ export default function PlayerPage() {
               currentTimeMs={currentProgress}
             />
           )}
+          {visualizationType === "blackmetal" && (
+            <BlackMetalVisualization
+              audioFeatures={audioFeatures}
+              isPlaying={playbackState.is_playing}
+              syncedData={syncedData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
+            />
+          )}
         </>
       )}
 
@@ -265,6 +275,15 @@ export default function PlayerPage() {
             title="Wavy Lines"
           >
             ≋
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "blackmetal" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("blackmetal")}
+            title="Black Metal"
+          >
+            ⛧
           </button>
         </div>
       </div>

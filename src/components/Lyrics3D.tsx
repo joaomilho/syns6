@@ -12,6 +12,7 @@ interface Lyrics3DProps {
   currentTimeMs: number;
   isPlaying: boolean;
   syncedData: SyncedAudioData | null;
+  font?: string; // Optional custom font URL
 }
 
 function LyricText3D({
@@ -21,6 +22,7 @@ function LyricText3D({
   isPast,
   syncedData,
   offset,
+  font,
 }: {
   text: string;
   position: [number, number, number];
@@ -28,6 +30,7 @@ function LyricText3D({
   isPast: boolean;
   syncedData: SyncedAudioData | null;
   offset: number;
+  font?: string;
 }) {
   const textRef = useRef<THREE.Mesh>(null);
   const targetScaleRef = useRef(1);
@@ -120,6 +123,7 @@ function LyricText3D({
       color={color}
       anchorX="center"
       anchorY="middle"
+      font={font}
       outlineWidth={
         isCurrent ? 0.04 : 
         isPast ? 0.01 : 
@@ -163,6 +167,7 @@ export default function Lyrics3D({
   currentTimeMs,
   isPlaying,
   syncedData,
+  font,
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -207,6 +212,7 @@ export default function Lyrics3D({
           color="#ff3333"
           anchorX="center"
           anchorY="middle"
+          font={font}
           outlineWidth={0.05}
           outlineColor="#000000"
         >
@@ -244,6 +250,7 @@ export default function Lyrics3D({
             isPast={isPast}
             syncedData={syncedData}
             offset={offset}
+            font={font}
           />
         );
       })}
