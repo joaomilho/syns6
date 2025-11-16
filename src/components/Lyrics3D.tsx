@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
@@ -15,6 +15,44 @@ interface Lyrics3DProps {
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
+}
+
+/**
+ * Split long text into multiple lines at word boundaries
+ */
+function splitLongText(text: string, maxLength: number = 60): string[] {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+
+  // Find best break point (space) near the middle
+  const middle = text.length / 2;
+  let bestBreak = -1;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === " ") {
+      const distance = Math.abs(i - middle);
+      if (distance < minDistance && distance < maxLength / 2) {
+        minDistance = distance;
+        bestBreak = i;
+      }
+    }
+  }
+
+  // Use the break point if found
+  if (bestBreak > 0) {
+    return [
+      text.substring(0, bestBreak).trim(),
+      text.substring(bestBreak + 1).trim(),
+    ];
+  }
+
+  // Otherwise split at maxLength
+  return [
+    text.substring(0, maxLength).trim(),
+    text.substring(maxLength).trim(),
+  ];
 }
 
 function LyricText3D({
@@ -40,157 +78,89 @@ function LyricText3D({
   countdownSeconds?: number;
   micData?: MicrophoneData;
 }) {
-  const textRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const targetScaleRef = useRef(1);
-  const currentColorRef = useRef(new THREE.Color(color));
-  const currentEmissiveRef = useRef(new THREE.Color(color));
-  const currentOpacityRef = useRef(1);
-  const currentEmissiveIntensityRef = useRef(1);
 
   useFrame((state) => {
-    if (!textRef.current) return;
+    if (!groupRef.current) return;
 
     const time = state.clock.getElapsedTime();
 
     // OSCILLATING rotation instead of continuous spin
-    // Slowly sways back and forth between -0.15 and +0.15 radians (~8 degrees each way)
     const maxRotation = 0.15;
-    const rotationSpeed = 0.3; // How fast it oscillates
-    textRef.current.rotation.y = Math.sin(time * rotationSpeed) * maxRotation;
-    textRef.current.rotation.x = 0;
-    textRef.current.rotation.z = 0;
+    const rotationSpeed = 0.3;
+    groupRef.current.rotation.y = Math.sin(time * rotationSpeed) * maxRotation;
+    groupRef.current.rotation.x = 0;
+    groupRef.current.rotation.z = 0;
 
     // Calculate target scale based on position
     let targetScale = 1.0;
     if (isCurrent) {
-      // CURRENT LINE - BIG with VOICE BOOST
-      // VOICE MAKES IT MUCH BIGGER! (Only reacts to singing/speaking)
       const voiceStrength = micData?.voiceStrength || 0;
-      const voiceScale = 1 + voiceStrength * 1.5; // Up to 2.5x bigger with voice!
-
-      targetScale = 2.0 * voiceScale;
-
-      // Barely any wave motion
-      textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
+      const voiceScale = 1 + voiceStrength * 1.5;
+      targetScale = 1.7 * voiceScale; // Reduced from 2.0 to 1.7
+      groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
-      targetScale = 1.0; // Past lyric
-      textRef.current.position.y = position[1];
+      targetScale = 1.0;
+      groupRef.current.position.y = position[1];
     } else if (offset === 1) {
       targetScale = 1.5;
-      textRef.current.position.y = position[1];
+      groupRef.current.position.y = position[1];
     } else if (offset === 2) {
       targetScale = 1.0;
-      textRef.current.position.y = position[1];
+      groupRef.current.position.y = position[1];
     } else if (offset >= 3) {
       targetScale = 0.7;
-      textRef.current.position.y = position[1];
+      groupRef.current.position.y = position[1];
     } else {
       targetScale = 0.4;
-      textRef.current.position.y = position[1];
+      groupRef.current.position.y = position[1];
     }
 
-    // Smoothly lerp to target scale instead of instant change
+    // Smoothly lerp to target scale
     targetScaleRef.current = targetScale;
-    const currentScale = textRef.current.scale.x;
-    const scaleLerpFactor = 0.04; // Even slower = even smoother transition
+    const currentScale = groupRef.current.scale.x;
+    const scaleLerpFactor = 0.04;
     const newScale =
       currentScale + (targetScale - currentScale) * scaleLerpFactor;
+    groupRef.current.scale.set(newScale, newScale, newScale);
 
-    textRef.current.scale.set(newScale, newScale, newScale);
-
-    // Smoothly lerp colors and opacity for MUCH slower transitions
-    // Access the material from the mesh's children (Text component structure)
-    if (textRef.current.children && textRef.current.children.length > 0) {
-      const textMesh = textRef.current.children[0] as THREE.Mesh;
-      const material = textMesh?.material as THREE.MeshStandardMaterial;
-
-      if (material && material.color && material.emissive) {
-        // Determine target colors based on state
-        let targetColor: THREE.Color;
-        let targetEmissive: THREE.Color;
-        let targetOpacity: number;
-        let targetEmissiveIntensity: number;
-
-        if (isCurrent) {
-          targetColor = new THREE.Color(color);
-          targetEmissive = new THREE.Color(color);
-          targetOpacity = 1.0;
-          targetEmissiveIntensity = 0.8; // Less intense shine
-        } else if (isPast) {
-          targetColor = new THREE.Color(color); // Keep same color as current
-          targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.85; // Almost as visible as current
-          targetEmissiveIntensity = 0.75; // Almost as much shine
-        } else if (offset === 1) {
-          targetColor = new THREE.Color("#999999");
-          targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.75;
-          targetEmissiveIntensity = 0.5; // More shine
-        } else if (offset === 2) {
-          targetColor = new THREE.Color("#777777");
-          targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.6;
-          targetEmissiveIntensity = 0.35; // More shine
-        } else if (offset >= 3) {
-          targetColor = new THREE.Color("#555555");
-          targetEmissive = new THREE.Color(color);
-          targetOpacity = 0.4;
-          targetEmissiveIntensity = 0.2;
-        } else {
-          targetColor = new THREE.Color("#444444");
-          targetEmissive = new THREE.Color("#000000");
-          targetOpacity = 0.2;
-          targetEmissiveIntensity = 0.1;
-        }
-
-        // VERY SLOW color lerp for smooth transition from current to past
-        // Use EXTRA slow lerp when transitioning FROM current (to keep it bright longer)
-        const isTransitioningFromCurrent =
-          currentEmissiveIntensityRef.current > 0.7 &&
-          targetEmissiveIntensity < 0.7;
-        const colorLerpFactor = isTransitioningFromCurrent ? 0.0001 : 0.0005; // 5x slower when leaving current
-
-        currentColorRef.current.lerp(targetColor, colorLerpFactor);
-        currentEmissiveRef.current.lerp(targetEmissive, colorLerpFactor);
-        currentOpacityRef.current +=
-          (targetOpacity - currentOpacityRef.current) * colorLerpFactor;
-        currentEmissiveIntensityRef.current +=
-          (targetEmissiveIntensity - currentEmissiveIntensityRef.current) *
-          colorLerpFactor;
-
-        // Apply lerped values
-        material.color.copy(currentColorRef.current);
-        material.emissive.copy(currentEmissiveRef.current);
-        material.opacity = currentOpacityRef.current;
-        material.emissiveIntensity = currentEmissiveIntensityRef.current;
-      }
-    }
+    // Color and material updates are handled by the Text component's props
+    // No need to manually update materials since we're using declarative props
   });
 
+  // Split text into lines if needed
+  const textLines = useMemo(() => splitLongText(text), [text]);
+  const lineSpacing = 1.3; // Vertical spacing between lines
+
   const textElement = (
-    <Text
-      ref={textRef}
-      position={position}
-      fontSize={1}
-      color={color}
-      anchorX="center"
-      anchorY="middle"
-      font={font}
-      outlineWidth={isCurrent ? 0.04 : 0}
-      letterSpacing={isCurrent ? 0.04 : 0}
-      outlineColor={color}
-      characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
-    >
-      {text}
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={isCurrent ? 1.9 : isPast ? 0.9 : 0.7}
-        transparent
-        opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
-        side={THREE.FrontSide}
-      />
-    </Text>
+    <group ref={groupRef} position={position}>
+      {textLines.map((line, lineIndex) => (
+        <Text
+          key={lineIndex}
+          position={[0, -lineIndex * lineSpacing, 0]}
+          fontSize={1}
+          color={color}
+          anchorX="center"
+          anchorY="middle"
+          font={font}
+          outlineWidth={isCurrent ? 0.04 : 0}
+          letterSpacing={isCurrent ? 0.04 : 0}
+          outlineColor={color}
+          characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
+        >
+          {line}
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={isCurrent ? 1.9 : isPast ? 0.9 : 0.7}
+            transparent
+            opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
+            side={THREE.FrontSide}
+          />
+        </Text>
+      ))}
+    </group>
   );
 
   // Render countdown if needed
@@ -247,7 +217,7 @@ export default function Lyrics3D({
   }, [lyrics, currentIndex]);
 
   // Update target position when current line changes
-  useMemo(() => {
+  useEffect(() => {
     // Each line is spaced 6 units apart
     // Move the group UP by 6 units for each lyric progression
     targetYRef.current = currentIndex * 6;
