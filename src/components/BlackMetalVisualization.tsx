@@ -7,6 +7,7 @@ import { useRef } from "react";
 import * as THREE from "three";
 import { AudioFeatures, SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
 
 interface VisualizationProps {
@@ -15,6 +16,7 @@ interface VisualizationProps {
   syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
+  micData?: MicrophoneData;
 }
 
 // Pulsing dark light source (very dim white light)
@@ -204,6 +206,7 @@ export default function BlackMetalVisualization({
   syncedData,
   lyrics,
   currentTimeMs,
+  micData,
 }: VisualizationProps) {
   console.log("BlackMetalVisualization rendering");
 

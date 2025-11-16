@@ -25,6 +25,7 @@ interface VisualizationProps {
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
+  micData?: MicrophoneData;
 }
 
 // Mandelbrot set shader
