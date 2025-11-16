@@ -55,6 +55,9 @@
   padding: 24px 32px;
   z-index: 100;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .backLink {
@@ -72,6 +75,45 @@
 .backLink:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateX(-4px);
+}
+
+/* Visualization Selector */
+.vizSelector {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vizButton {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vizButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+}
+
+.vizButton.active {
+  background: rgba(29, 185, 84, 0.3);
+  color: #1ed760;
+  border: 1px solid rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
 }
 
 /* Bottom Controls */
