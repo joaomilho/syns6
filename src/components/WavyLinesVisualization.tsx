@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
@@ -21,6 +22,7 @@ interface VisualizationProps {
   syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
+  micData?: MicrophoneData;
 }
 
 function WavyLine({
@@ -30,6 +32,7 @@ function WavyLine({
   isPlaying,
   syncedData,
   offset,
+  micData,
 }: {
   yPosition: number;
   zPosition: number;
@@ -37,6 +40,7 @@ function WavyLine({
   isPlaying: boolean;
   syncedData: SyncedAudioData | null;
   offset: number;
+  micData?: MicrophoneData;
 }) {
   const lineRef = useRef<THREE.Line>(null);
   const materialRef = useRef<THREE.LineBasicMaterial>(null);
@@ -71,6 +75,11 @@ function WavyLine({
     const timbreEnergy = syncedData?.timbreEnergy || 0.5;
     const anticipation = syncedData?.anticipation || 0;
 
+    // MIC DATA - makes lines go WILD and RED!
+    const micEnergy = micData?.energy || 0;
+    const micVolume = micData?.volume || 0;
+    const micBass = micData?.bass || 0;
+
     // AGGRESSIVE beat pulse - MUCH bigger impact
     const onBeatMultiplier = syncedData?.isOnBeat ? 2.5 : 1.0;
     const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 2); // Exponential decay
@@ -79,14 +88,18 @@ function WavyLine({
     // Anticipation effect - build up before beat
     const anticipationBoost = 1 + anticipation * 0.5;
 
-    // Calculate wave intensity - MUCH MORE AGGRESSIVE
+    // MIC BOOST - adds to wave intensity
+    const micWaveBoost = 1 + micEnergy * 2; // Up to 3x more wavy with mic!
+
+    // Calculate wave intensity - MUCH MORE AGGRESSIVE + MIC
     const baseWaveAmount = (tempo / 100) * 1.5; // Increased from 120 divisor
     const waveIntensity = baseWaveAmount * 
                           energy * 
                           loudness * 
                           beatPulse * 
                           anticipationBoost *
-                          (0.8 + timbreEnergy * 0.4); // Timbre adds variation
+                          (0.8 + timbreEnergy * 0.4) * // Timbre adds variation
+                          micWaveBoost; // MIC MAKES IT WILD!
 
     // Update line positions to create waves
     const positionAttribute = lineRef.current.geometry.attributes.position;
@@ -109,20 +122,25 @@ function WavyLine({
 
     positionAttribute.needsUpdate = true;
 
-    // Color based on intensity - MORE DRAMATIC SHIFT
+    // Color based on intensity - MORE DRAMATIC SHIFT + MIC FORCES RED!
     const intensity = energy * loudness * beatPulse * (1 + anticipation);
     
     // Clamp intensity for color calculation
     const clampedIntensity = Math.min(1, intensity);
     
+    // MIC DOMINATES COLOR - when mic hits, GO RED!
+    const micRedForce = micVolume * 3; // Massive red shift with mic
+    
     // Low intensity: deep blue/purple (hue ~0.7)
-    // High intensity: bright red (hue ~0.0)
-    const hue = 0.7 - clampedIntensity * 0.7; // Full range from blue to red
-    const saturation = 0.7 + clampedIntensity * 0.3; // More saturated when intense
-    const lightness = 0.35 + clampedIntensity * 0.45; // Brighter when intense
+    // High intensity: moves toward red
+    // MIC HIT: FORCES BRIGHT RED (hue = 0.0)
+    const baseHue = 0.7 - clampedIntensity * 0.7; // Music intensity
+    const hue = micVolume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES EVERYTHING!
+    const saturation = 0.7 + clampedIntensity * 0.3 + micEnergy * 0.3; // Max saturation with mic
+    const lightness = 0.35 + clampedIntensity * 0.45 + micVolume * 0.4; // Much brighter with mic
 
     materialRef.current.color.setHSL(hue, saturation, lightness);
-    materialRef.current.opacity = 0.5 + clampedIntensity * 0.45; // More visible when intense
+    materialRef.current.opacity = 0.5 + clampedIntensity * 0.45 + micEnergy * 0.4; // More visible with mic
   });
 
   return (
@@ -138,7 +156,7 @@ function WavyLine({
   );
 }
 
-function WavyLineField({ audioFeatures, isPlaying, syncedData }: VisualizationProps) {
+function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: VisualizationProps) {
   const lineCount = 40;
 
   const lines = useMemo(() => {
@@ -167,6 +185,7 @@ function WavyLineField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
           isPlaying={isPlaying}
           syncedData={syncedData}
           offset={line.offset}
+          micData={micData}
         />
       ))}
     </>
@@ -258,6 +277,7 @@ export default function WavyLinesVisualization({
   syncedData,
   lyrics,
   currentTimeMs,
+  micData,
 }: VisualizationProps) {
   return (
     <div
@@ -277,7 +297,7 @@ export default function WavyLinesVisualization({
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
 
-        <WavyLineField audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
+        <WavyLineField audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} micData={micData} />
         <FlowingParticles audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
 
         {/* 3D Lyrics - always show, component handles "not found" */}
@@ -287,6 +307,7 @@ export default function WavyLinesVisualization({
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
             syncedData={syncedData}
+            micData={micData}
           />
         )}
       </Canvas>

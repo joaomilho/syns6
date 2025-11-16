@@ -6,6 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SyncedAudioData, getDominantPitch } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
@@ -22,9 +23,15 @@ interface VisualizationProps {
   syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
+  micData?: MicrophoneData;
 }
 
-function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationProps) {
+function ParticleField({
+  audioFeatures,
+  isPlaying,
+  syncedData,
+  micData,
+}: VisualizationProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const particleCount = 2000;
 
@@ -44,7 +51,7 @@ function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
     return positions;
   }, []);
 
-  // Animation based on audio features AND real-time beats - SUPER AGGRESSIVE
+  // Animation based on audio features AND real-time beats - SUPER AGGRESSIVE + MIC
   useFrame((state) => {
     if (!pointsRef.current || !isPlaying) return;
 
@@ -53,30 +60,43 @@ function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
     const valence = audioFeatures?.valence || 0.5;
     const tempo = audioFeatures?.tempo || 120;
 
+    // MICROPHONE DATA - AGGRESSIVE BOOST
+    const micEnergy = micData?.energy || 0;
+    const micBass = micData?.bass || 0;
+    const micVolume = micData?.volume || 0;
+
     // ENHANCED: Use all new synced data for maximum reactivity!
     const loudness = syncedData?.interpolatedLoudness || 0.5;
     const beatIntensity = syncedData?.beatIntensity || 1.0;
     const timbreEnergy = syncedData?.timbreEnergy || 0.5;
     const anticipation = syncedData?.anticipation || 0;
 
-    // MUCH MORE AGGRESSIVE beat pulse
-    const onBeatPulse = syncedData?.isOnBeat ? 2.0 : 1.0; // Doubled from 1.3
-    const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 1.5); // Faster decay
-    const beatScale = onBeatPulse + beatDecay * 0.8 * beatIntensity;
+    // CHILL beat pulse baseline, AGGRESSIVE with mic
+    const onBeatPulse = syncedData?.isOnBeat ? 1.2 : 1.0; // Much subtler
+    const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 1.5);
+    const beatScale = onBeatPulse + beatDecay * 0.2 * beatIntensity; // Reduced
 
     // Anticipation builds before beat
-    const anticipationScale = 1 + anticipation * 0.3;
+    const anticipationScale = 1 + anticipation * 0.1; // Reduced
 
-    // Rotate based on tempo (BPM) - FASTER
-    const rotationSpeed = (tempo / 100) * 0.4; // Increased from 120/0.3
+    // Rotate based on tempo (BPM) - SUPER CHILL baseline, subtle mic boost
+    const micSpinBoost = micEnergy * 2; // 0 to 2x with mic
+    const rotationSpeed = (tempo / 100) * 0.002 * (1 + micSpinBoost); // VERY slow baseline
     pointsRef.current.rotation.y = time * rotationSpeed;
     pointsRef.current.rotation.x = time * rotationSpeed * 0.6;
+    pointsRef.current.rotation.z = time * micBass * 0.3; // Bass adds subtle Z rotation
 
-    // Scale with beats, loudness, and anticipation - MUCH MORE DRAMATIC
-    const scale = beatScale * anticipationScale * (1 + loudness * 0.4) * (1 + timbreEnergy * 0.2);
+    // Scale with beats, loudness, and anticipation + subtle mic boost
+    const micScale = 1 + micVolume * 0.4; // Mic makes it slightly bigger
+    const scale =
+      beatScale *
+      anticipationScale *
+      (1 + loudness * 0.1) * // Reduced baseline
+      (1 + timbreEnergy * 0.05) * // Reduced baseline
+      micScale;
     pointsRef.current.scale.set(scale, scale, scale);
 
-    // Update particle positions for wave effect - MORE INTENSE
+    // Update particle positions for wave effect - SUBTLE baseline, EXPLOSIVE with mic
     const positionAttribute = pointsRef.current.geometry.attributes.position;
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
@@ -84,13 +104,29 @@ function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
       const y = positions[i3 + 1];
       const z = positions[i3 + 2];
 
-      // Add wave motion based on valence, loudness, and timbre - AMPLIFIED
-      const wave = Math.sin(time * 2 + i * 0.01) * valence * 3 * loudness * (1 + timbreEnergy);
-      
-      // Beat wave - extra movement on beats
-      const beatWave = syncedData?.isOnBeat ? Math.sin(i * 0.05) * beatIntensity * 2 : 0;
-      
-      positionAttribute.setXYZ(i, x + wave + beatWave, y + wave, z + wave);
+      // Add wave motion based on valence, loudness, and timbre - REDUCED baseline
+      const wave =
+        Math.sin(time * 2 + i * 0.001) *
+        valence *
+        0.5 *
+        loudness *
+        (1 + timbreEnergy * 0.02);
+
+      // Beat wave - extra movement on beats - REDUCED
+      const beatWave = syncedData?.isOnBeat
+        ? Math.sin(i * 0.01) * beatIntensity * 0.5
+        : 0;
+
+      // MIC WAVE - creates subtle particle movement
+      const micWave = Math.sin(time * 5 + i * 0.02) * micEnergy * 1;
+      const micBassWave = Math.cos(time * 3 + i * 0.03) * micBass * 0.7;
+
+      positionAttribute.setXYZ(
+        i,
+        x + wave + beatWave + micWave,
+        y + wave + micBassWave,
+        z + wave + micWave
+      );
     }
     positionAttribute.needsUpdate = true;
   });
@@ -100,14 +136,18 @@ function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
     const valence = audioFeatures?.valence || 0.5;
     const pitch = syncedData?.dominantPitch || 0;
     const timbre = syncedData?.timbreEnergy || 0.5;
-    
+
     // Mix valence, pitch, and timbre for dynamic color
     const hue = 0.6 - (valence * 0.15 + pitch * 0.25 + timbre * 0.1);
     const saturation = 0.9 + timbre * 0.1;
     const lightness = 0.5 + valence * 0.2 + timbre * 0.1;
-    
+
     return new THREE.Color().setHSL(hue, saturation, lightness);
-  }, [audioFeatures?.valence, syncedData?.dominantPitch, syncedData?.timbreEnergy]);
+  }, [
+    audioFeatures?.valence,
+    syncedData?.dominantPitch,
+    syncedData?.timbreEnergy,
+  ]);
 
   return (
     <points ref={pointsRef}>
@@ -131,7 +171,12 @@ function ParticleField({ audioFeatures, isPlaying, syncedData }: VisualizationPr
   );
 }
 
-function CenterSphere({ audioFeatures, isPlaying, syncedData }: VisualizationProps) {
+function CenterSphere({
+  audioFeatures,
+  isPlaying,
+  syncedData,
+  micData,
+}: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -147,17 +192,28 @@ function CenterSphere({ audioFeatures, isPlaying, syncedData }: VisualizationPro
     const beatIntensity = syncedData?.beatIntensity || 1.0;
     const anticipation = syncedData?.anticipation || 0;
 
-    // Rotate - FASTER with danceability
-    meshRef.current.rotation.y += 0.015 * danceability * (1 + loudness * 0.5);
-    meshRef.current.rotation.x += 0.008 * danceability;
+    // MIC DATA
+    const micEnergy = micData?.energy || 0;
+    const micVolume = micData?.volume || 0;
 
-    // SUPER AGGRESSIVE beat-synchronized pulsate
-    const onBeatPulse = syncedData?.isOnBeat ? 2.5 : 1.0; // Massive pulse
+    // Rotate - FASTER with danceability + subtle mic boost
+    const micSpinBoost = 1 + micEnergy * 0.8; // Up to 1.8x faster
+    meshRef.current.rotation.y +=
+      0.015 * danceability * (1 + loudness * 0.5) * micSpinBoost;
+    meshRef.current.rotation.x += 0.008 * danceability * micSpinBoost;
+
+    // SUPER AGGRESSIVE beat-synchronized pulsate + subtle mic boost
+    const onBeatPulse = syncedData?.isOnBeat ? 2.5 : 1.0;
     const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 1.8);
     const basePulse = 1 + Math.sin(time * 3) * 0.4 * energy;
     const anticipationPulse = 1 + anticipation * 0.4;
-    const scale = basePulse * (1 + beatDecay * (onBeatPulse - 1) * beatIntensity * 0.7) * anticipationPulse;
-    
+    const micPulse = 1 + micVolume * 0.3; // Mic makes it slightly bigger
+    const scale =
+      basePulse *
+      (1 + beatDecay * (onBeatPulse - 1) * beatIntensity * 0.7) *
+      anticipationPulse *
+      micPulse;
+
     meshRef.current.scale.set(scale, scale, scale);
 
     // Color shift based on section and loudness - MORE DRAMATIC
@@ -165,8 +221,13 @@ function CenterSphere({ audioFeatures, isPlaying, syncedData }: VisualizationPro
       const sectionKey = syncedData?.currentSection?.key || 0;
       const hue = (time * 0.15 + sectionKey / 12 + loudness * 0.1) % 1;
       materialRef.current.color.setHSL(hue, 1, 0.5);
-      materialRef.current.emissive.setHSL(hue, 1, 0.2 + energy * loudness * 0.5);
-      materialRef.current.emissiveIntensity = 0.3 + loudness * beatIntensity * 0.7;
+      materialRef.current.emissive.setHSL(
+        hue,
+        1,
+        0.2 + energy * loudness * 0.5
+      );
+      materialRef.current.emissiveIntensity =
+        0.3 + loudness * beatIntensity * 0.7;
     }
   });
 
@@ -183,7 +244,12 @@ function CenterSphere({ audioFeatures, isPlaying, syncedData }: VisualizationPro
   );
 }
 
-function WireframeRings({ audioFeatures, isPlaying, syncedData }: VisualizationProps) {
+function WireframeRings({
+  audioFeatures,
+  isPlaying,
+  syncedData,
+  micData,
+}: VisualizationProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -192,16 +258,24 @@ function WireframeRings({ audioFeatures, isPlaying, syncedData }: VisualizationP
     const time = state.clock.getElapsedTime();
     const acousticness = audioFeatures?.acousticness || 0.5;
 
+    // MIC DATA
+    const micEnergy = micData?.energy || 0;
+    const micTreble = micData?.treble || 0;
+
     // ENHANCED: React to bars AND beats for more movement
-    const barPulse = (syncedData?.barProgress || 0) < 0.1 ? 1.4 : 1.0; // Bigger pulse
+    const barPulse = (syncedData?.barProgress || 0) < 0.1 ? 1.4 : 1.0;
     const beatPulse = syncedData?.isOnBeat ? 1.2 : 1.0;
 
-    // Rotate in opposite direction - FASTER
-    groupRef.current.rotation.z = time * 0.6 * (1 - acousticness);
-    groupRef.current.rotation.x = Math.sin(time * 0.7) * 0.6;
-    
-    // Scale with bars and beats - MORE DRAMATIC
-    const combinedPulse = barPulse * beatPulse;
+    // Rotate in opposite direction - FASTER + subtle mic boost
+    const micSpinBoost = 1 + micEnergy * 0.8; // Up to 1.8x faster
+    groupRef.current.rotation.z =
+      time * 0.6 * (1 - acousticness) * micSpinBoost;
+    groupRef.current.rotation.x =
+      Math.sin(time * 0.7) * 0.6 * (1 + micTreble * 0.4);
+
+    // Scale with bars and beats - MORE DRAMATIC + subtle mic boost
+    const micPulse = 1 + micEnergy * 0.25;
+    const combinedPulse = barPulse * beatPulse * micPulse;
     groupRef.current.scale.setScalar(combinedPulse);
   });
 
@@ -229,28 +303,52 @@ export default function MusicVisualization({
   syncedData,
   lyrics,
   currentTimeMs,
+  micData,
 }: VisualizationProps) {
   return (
-    <div style={{ 
-      position: "fixed", 
-      top: 0, 
-      left: 0, 
-      width: "100vw", 
-      height: "100vh", 
-      zIndex: 0 
-    }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 0,
+      }}
+    >
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
-        style={{ background: "radial-gradient(circle, #0a0a0a 0%, #000000 100%)" }}
+        style={{
+          background: "radial-gradient(circle, #0a0a0a 0%, #000000 100%)",
+        }}
       >
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
-        <pointLight position={[-10, -10, -10]} color="#ff00ff" intensity={0.5} />
-        
-        <ParticleField audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
-        <CenterSphere audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
-        <WireframeRings audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
-        
+        <pointLight
+          position={[-10, -10, -10]}
+          color="#ff00ff"
+          intensity={0.5}
+        />
+
+        <ParticleField
+          audioFeatures={audioFeatures}
+          isPlaying={isPlaying}
+          syncedData={syncedData}
+          micData={micData}
+        />
+        <CenterSphere
+          audioFeatures={audioFeatures}
+          isPlaying={isPlaying}
+          syncedData={syncedData}
+          micData={micData}
+        />
+        <WireframeRings
+          audioFeatures={audioFeatures}
+          isPlaying={isPlaying}
+          syncedData={syncedData}
+          micData={micData}
+        />
+
         {/* 3D Lyrics - always show, component handles "not found" */}
         {currentTimeMs !== undefined && (
           <Lyrics3D
@@ -258,9 +356,10 @@ export default function MusicVisualization({
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
             syncedData={syncedData}
+            micData={micData}
           />
         )}
-        
+
         <OrbitControls
           enableZoom={true}
           enablePan={false}
@@ -273,4 +372,3 @@ export default function MusicVisualization({
     </div>
   );
 }
-

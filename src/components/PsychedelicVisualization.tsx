@@ -277,6 +277,7 @@ export default function PsychedelicVisualization({
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
             syncedData={syncedData}
+            micData={micData}
           />
         )}
 

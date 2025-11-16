@@ -281,6 +281,7 @@ export default function BlackMetalVisualization({
             syncedData={syncedData}
             font="/fonts/fraktur.ttf"
             color="#ff0000"
+            micData={micData}
           />
         )}
 
