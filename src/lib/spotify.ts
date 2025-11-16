@@ -41,6 +41,13 @@ export async function spotifyApi<T = any>({
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    console.error("Spotify API Error Details:", {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      endpoint,
+    });
     throw new Error(
       `Spotify API error: ${response.status} - ${
         error.error?.message || response.statusText
