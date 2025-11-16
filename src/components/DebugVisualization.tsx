@@ -1,21 +1,10 @@
 "use client";
 
-import { SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
-interface AudioFeatures {
-  energy: number;
-  tempo: number;
-  valence: number;
-  danceability: number;
-  acousticness: number;
-}
-
 interface VisualizationProps {
-  audioFeatures: AudioFeatures | null;
   isPlaying: boolean;
-  syncedData: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
@@ -105,14 +94,10 @@ function DebugSection({
 }
 
 export default function DebugVisualization({
-  audioFeatures,
   isPlaying,
-  syncedData,
   micData,
 }: VisualizationProps) {
   // Debug logging
-  console.log("🔍 Debug Viz - audioFeatures:", audioFeatures);
-  console.log("🔍 Debug Viz - syncedData:", syncedData);
   console.log("🔍 Debug Viz - isPlaying:", isPlaying);
   console.log("🔍 Debug Viz - micData:", micData);
 
@@ -144,40 +129,6 @@ export default function DebugVisualization({
         >
           🔍 Debug Visualization
         </h1>
-
-        {/* Data Status Warnings */}
-        {!audioFeatures && (
-          <div
-            style={{
-              padding: "16px",
-              backgroundColor: "rgba(255, 68, 68, 0.2)",
-              border: "2px solid #ff4444",
-              borderRadius: "8px",
-              marginBottom: "16px",
-              color: "#ff4444",
-              fontFamily: "monospace",
-              textAlign: "center",
-            }}
-          >
-            ⚠️ Audio Features not loaded - Make sure a song is playing!
-          </div>
-        )}
-        {!syncedData && (
-          <div
-            style={{
-              padding: "16px",
-              backgroundColor: "rgba(255, 170, 68, 0.2)",
-              border: "2px solid #ffaa44",
-              borderRadius: "8px",
-              marginBottom: "16px",
-              color: "#ffaa44",
-              fontFamily: "monospace",
-              textAlign: "center",
-            }}
-          >
-            ⚠️ Real-time Audio Analysis not loaded
-          </div>
-        )}
 
         {/* Microphone Section */}
         <DebugSection title="🎤 Microphone Input">
@@ -215,80 +166,6 @@ export default function DebugVisualization({
           />
         </DebugSection>
 
-        {/* Song Audio Features */}
-        <DebugSection title="🎵 Song Audio Features (Spotify)">
-          <DebugBar
-            label="Energy"
-            value={audioFeatures?.energy || 0}
-            color="#ff6b6b"
-          />
-          <DebugBar
-            label="Tempo"
-            value={(audioFeatures?.tempo || 0) / 200}
-            color="#4ecdc4"
-            unit=" BPM"
-          />
-          <DebugBar
-            label="Valence (Happiness)"
-            value={audioFeatures?.valence || 0}
-            color="#ffe66d"
-          />
-          <DebugBar
-            label="Danceability"
-            value={audioFeatures?.danceability || 0}
-            color="#a8e6cf"
-          />
-          <DebugBar
-            label="Acousticness"
-            value={audioFeatures?.acousticness || 0}
-            color="#ffd3b6"
-          />
-        </DebugSection>
-
-        {/* Real-time Synced Data */}
-        <DebugSection title="⚡ Real-time Audio Analysis">
-          <DebugBar
-            label="Interpolated Loudness"
-            value={syncedData?.interpolatedLoudness || 0}
-            color="#ff5555"
-          />
-          <DebugBar
-            label="Beat Intensity"
-            value={syncedData?.beatIntensity || 0}
-            color="#ff88ff"
-          />
-          <DebugBar
-            label="Is On Beat"
-            value={syncedData?.isOnBeat ? 1 : 0}
-            color="#ff00ff"
-          />
-          <DebugBar
-            label="Beat Progress"
-            value={syncedData?.beatProgress || 0}
-            color="#aa88ff"
-          />
-          <DebugBar
-            label="Bar Progress"
-            value={syncedData?.barProgress || 0}
-            color="#8888ff"
-          />
-          <DebugBar
-            label="Timbre Energy"
-            value={syncedData?.timbreEnergy || 0}
-            color="#88ffff"
-          />
-          <DebugBar
-            label="Dominant Pitch"
-            value={(syncedData?.dominantPitch || 0) / 12}
-            color="#ffaa88"
-          />
-          <DebugBar
-            label="Anticipation"
-            value={syncedData?.anticipation || 0}
-            color="#ffff88"
-          />
-        </DebugSection>
-
         {/* Status */}
         <DebugSection title="📊 Status">
           <div
@@ -303,18 +180,6 @@ export default function DebugVisualization({
               <strong>Playing:</strong>{" "}
               <span style={{ color: isPlaying ? "#00ff88" : "#ff4444" }}>
                 {isPlaying ? "YES" : "NO"}
-              </span>
-            </div>
-            <div>
-              <strong>Tempo:</strong>{" "}
-              <span style={{ color: "#4ecdc4" }}>
-                {audioFeatures?.tempo?.toFixed(1) || "N/A"} BPM
-              </span>
-            </div>
-            <div>
-              <strong>Current Section:</strong>{" "}
-              <span style={{ color: "#ffe66d" }}>
-                {syncedData?.currentSection || "N/A"}
               </span>
             </div>
             <div>
@@ -339,13 +204,16 @@ export default function DebugVisualization({
             textAlign: "center",
           }}
         >
-          <strong>💡 TIP:</strong> Use this to understand what values your
-          visualizations should react to.
+          <strong>💡 TIP:</strong> Enable the microphone (🎤 button) to see realtime audio analysis.
           <br />
-          Sing or speak into the mic to see voice detection in action!
+          Sing or speak to see voice detection in action!
+          <br />
+          <br />
+          <strong>⚠️ NOTE:</strong> Spotify audio features/analysis endpoints are deprecated for new apps (Nov 27, 2024).
+          <br />
+          All visualizations now react to microphone input only.
         </div>
       </div>
     </div>
   );
 }
-
