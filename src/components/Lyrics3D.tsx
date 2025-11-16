@@ -5,14 +5,13 @@ import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { LyricLine, getCurrentLyricIndex, getVisibleLines } from "@/lib/lyrics";
-import { SyncedAudioData } from "@/lib/audioSync";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
   currentTimeMs: number;
   isPlaying: boolean;
-  syncedData: SyncedAudioData | null;
+  syncedData: null; // Deprecated, kept for compatibility
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
@@ -23,7 +22,6 @@ function LyricText3D({
   position,
   isCurrent,
   isPast,
-  syncedData,
   offset,
   font,
   color = "#0f0",
@@ -35,7 +33,6 @@ function LyricText3D({
   position: [number, number, number];
   isCurrent: boolean;
   isPast: boolean;
-  syncedData: SyncedAudioData | null;
   offset: number;
   font?: string;
   color?: string;
@@ -66,15 +63,12 @@ function LyricText3D({
     // Calculate target scale based on position
     let targetScale = 1.0;
     if (isCurrent) {
-      // CURRENT LINE - BIG with beat pulse + VOICE BOOST
-      const beatPulse = syncedData?.isOnBeat ? 1.15 : 1.0;
-      const beatDecay = 1 - (syncedData?.beatProgress || 0);
-
+      // CURRENT LINE - BIG with VOICE BOOST
       // VOICE MAKES IT MUCH BIGGER! (Only reacts to singing/speaking)
       const voiceStrength = micData?.voiceStrength || 0;
       const voiceScale = 1 + voiceStrength * 1.5; // Up to 2.5x bigger with voice!
 
-      targetScale = 2.0 * (1 + beatDecay * (beatPulse - 1) * 0.2) * voiceScale;
+      targetScale = 2.0 * voiceScale;
 
       // Barely any wave motion
       textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
@@ -233,7 +227,7 @@ export default function Lyrics3D({
   lyrics,
   currentTimeMs,
   isPlaying,
-  syncedData,
+  syncedData, // Deprecated, ignored
   font,
   color = "#1ed760",
   micData,
@@ -346,7 +340,6 @@ export default function Lyrics3D({
             position={[0, yPos, 5]}
             isCurrent={isCurrent}
             isPast={isPast}
-            syncedData={syncedData}
             offset={offset}
             font={font}
             color={color}

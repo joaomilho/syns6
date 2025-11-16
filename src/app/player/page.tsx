@@ -2,9 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { getCurrentlyPlaying, getAudioFeatures, getAudioAnalysis } from "@/lib/spotify";
-import { AudioAnalysis, SyncedAudioData, syncAudioAnalysis } from "@/lib/audioSync";
-import { SyncedLyrics, fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
+import { getCurrentlyPlaying } from "@/lib/spotify";
+import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
@@ -12,7 +11,6 @@ import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
-import Karaoke from "@/components/Karaoke";
 import styles from "./player.module.css";
 import Link from "next/link";
 
@@ -35,23 +33,12 @@ interface PlaybackState {
   is_playing: boolean;
 }
 
-interface AudioFeatures {
-  energy: number;
-  tempo: number;
-  valence: number;
-  danceability: number;
-  acousticness: number;
-}
-
 export default function PlayerPage() {
   const { data: session, status } = useSession();
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
-  const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(null);
   const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic } = useMicrophoneAnalysis();
-  const [syncedData, setSyncedData] = useState<SyncedAudioData | null>(null);
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
 
@@ -66,27 +53,8 @@ export default function PlayerPage() {
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
 
-        // NOTE: Audio features and analysis endpoints were deprecated for new apps on Nov 27, 2024
-        // We'll use fallback values based on playback state and microphone input instead
+        // Fetch synced lyrics
         if (data.item.id) {
-          console.log("ℹ️ Audio features/analysis not available (deprecated for new Spotify apps)");
-          console.log("ℹ️ Using fallback values based on playback state + microphone");
-          
-          // Set fallback audio features with reasonable defaults
-          // These will be enhanced by microphone input for reactivity
-          setAudioFeatures({
-            energy: 0.7, // Default medium-high energy
-            tempo: 120, // Default 120 BPM
-            valence: 0.6, // Default slightly positive
-            danceability: 0.7, // Default danceable
-            acousticness: 0.3, // Default mostly electronic
-          });
-          
-          // No audio analysis available
-          setAudioAnalysis(null);
-        }
-
-          // Fetch synced lyrics
           try {
             const syncedLyrics = await fetchSyncedLyrics(
               data.item.name,
@@ -95,13 +63,13 @@ export default function PlayerPage() {
             );
             if (syncedLyrics) {
               setLyrics(syncedLyrics.lines);
-              console.log("Synced lyrics loaded:", syncedLyrics.lines.length, "lines");
+              console.log("✅ Synced lyrics loaded:", syncedLyrics.lines.length, "lines");
             } else {
               setLyrics(null);
-              console.log("No synced lyrics found");
+              console.log("⚠️ No synced lyrics found");
             }
           } catch (err) {
-            console.error("Error fetching lyrics:", err);
+            console.error("❌ Error fetching lyrics:", err);
             setLyrics(null);
           }
         }
@@ -136,17 +104,6 @@ export default function PlayerPage() {
       return () => clearInterval(interval);
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
-
-  // Sync audio analysis with current playback position (60fps for smooth reactions)
-  useEffect(() => {
-    if (playbackState?.is_playing && audioAnalysis) {
-      const interval = setInterval(() => {
-        const synced = syncAudioAnalysis(currentProgress, audioAnalysis);
-        setSyncedData(synced);
-      }, 16); // Update 60 times per second for ultra-smooth beat detection
-      return () => clearInterval(interval);
-    }
-  }, [currentProgress, audioAnalysis, playbackState?.is_playing]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -186,9 +143,7 @@ export default function PlayerPage() {
         <>
           {visualizationType === "particles" && (
             <MusicVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
@@ -196,9 +151,7 @@ export default function PlayerPage() {
           )}
           {visualizationType === "fractal" && (
             <FractalVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
@@ -206,9 +159,7 @@ export default function PlayerPage() {
           )}
           {visualizationType === "psychedelic" && (
             <PsychedelicVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
@@ -216,9 +167,7 @@ export default function PlayerPage() {
           )}
           {visualizationType === "waves" && (
             <WavyLinesVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
@@ -226,9 +175,7 @@ export default function PlayerPage() {
           )}
           {visualizationType === "blackmetal" && (
             <BlackMetalVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
@@ -236,9 +183,7 @@ export default function PlayerPage() {
           )}
           {visualizationType === "debug" && (
             <DebugVisualization
-              audioFeatures={audioFeatures}
               isPlaying={playbackState.is_playing}
-              syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
               micData={micData}
