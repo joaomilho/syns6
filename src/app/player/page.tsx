@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getCurrentlyPlaying, getAudioFeatures, getAudioAnalysis } from "@/lib/spotify";
 import { AudioAnalysis, SyncedAudioData, syncAudioAnalysis } from "@/lib/audioSync";
 import { SyncedLyrics, fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
+import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -48,6 +49,7 @@ export default function PlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
   const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(null);
+  const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic } = useMicrophoneAnalysis();
   const [syncedData, setSyncedData] = useState<SyncedAudioData | null>(null);
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
@@ -191,6 +193,7 @@ export default function PlayerPage() {
               syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
+              micData={micData}
             />
           )}
           {visualizationType === "fractal" && (
@@ -200,6 +203,7 @@ export default function PlayerPage() {
               syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
+              micData={micData}
             />
           )}
           {visualizationType === "psychedelic" && (
@@ -209,6 +213,7 @@ export default function PlayerPage() {
               syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
+              micData={micData}
             />
           )}
           {visualizationType === "waves" && (
@@ -218,6 +223,7 @@ export default function PlayerPage() {
               syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
+              micData={micData}
             />
           )}
           {visualizationType === "blackmetal" && (
@@ -227,6 +233,7 @@ export default function PlayerPage() {
               syncedData={syncedData}
               lyrics={lyrics}
               currentTimeMs={currentProgress}
+              micData={micData}
             />
           )}
         </>
@@ -237,6 +244,16 @@ export default function PlayerPage() {
         <Link href="/" className={styles.backLink}>
           ← Back
         </Link>
+        
+        {/* Microphone Toggle */}
+        <button
+          className={`${styles.vizButton} ${isMicEnabled ? styles.active : ""}`}
+          onClick={() => isMicEnabled ? disableMic() : enableMic()}
+          title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
+          style={{ marginLeft: '10px' }}
+        >
+          🎤
+        </button>
         
         {/* Visualization Selector */}
         <div className={styles.vizSelector}>
