@@ -24,7 +24,7 @@ function LyricText3D({
   syncedData,
   offset,
   font,
-  color = "#1ed760",
+  color = "#0f0",
   showCountdown,
   countdownSeconds,
 }: {
@@ -66,7 +66,7 @@ function LyricText3D({
       const beatPulse = syncedData?.isOnBeat ? 1.15 : 1.0;
       const beatDecay = 1 - (syncedData?.beatProgress || 0);
       targetScale = 3.5 * (1 + beatDecay * (beatPulse - 1) * 0.2);
-      
+
       // Barely any wave motion
       textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
@@ -90,8 +90,9 @@ function LyricText3D({
     targetScaleRef.current = targetScale;
     const currentScale = textRef.current.scale.x;
     const scaleLerpFactor = 0.04; // Even slower = even smoother transition
-    const newScale = currentScale + (targetScale - currentScale) * scaleLerpFactor;
-    
+    const newScale =
+      currentScale + (targetScale - currentScale) * scaleLerpFactor;
+
     textRef.current.scale.set(newScale, newScale, newScale);
 
     // Smoothly lerp colors and opacity for MUCH slower transitions
@@ -99,7 +100,7 @@ function LyricText3D({
     if (textRef.current.children && textRef.current.children.length > 0) {
       const textMesh = textRef.current.children[0] as THREE.Mesh;
       const material = textMesh?.material as THREE.MeshStandardMaterial;
-      
+
       if (material && material.color && material.emissive) {
         // Determine target colors based on state
         let targetColor: THREE.Color;
@@ -143,8 +144,11 @@ function LyricText3D({
         const colorLerpFactor = 0.001; // Even slower (was 0.003)
         currentColorRef.current.lerp(targetColor, colorLerpFactor);
         currentEmissiveRef.current.lerp(targetEmissive, colorLerpFactor);
-        currentOpacityRef.current += (targetOpacity - currentOpacityRef.current) * colorLerpFactor;
-        currentEmissiveIntensityRef.current += (targetEmissiveIntensity - currentEmissiveIntensityRef.current) * colorLerpFactor;
+        currentOpacityRef.current +=
+          (targetOpacity - currentOpacityRef.current) * colorLerpFactor;
+        currentEmissiveIntensityRef.current +=
+          (targetEmissiveIntensity - currentEmissiveIntensityRef.current) *
+          colorLerpFactor;
 
         // Apply lerped values
         material.color.copy(currentColorRef.current);
@@ -164,25 +168,18 @@ function LyricText3D({
       anchorX="center"
       anchorY="middle"
       font={font}
-      outlineWidth={
-        isCurrent ? 0.04 : 
-        isPast ? 0.01 : 
-        offset === 1 ? 0.025 : 
-        offset === 2 ? 0.015 : 
-        offset >= 3 ? 0.01 :
-        0.005
-      }
-      outlineColor="#000000"
+      outlineWidth={isCurrent ? 0.04 : 0}
+      outlineColor={color}
       characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
     >
       {text}
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={1.0}
+        emissiveIntensity={isCurrent ? 0.9 : isPast ? 0.2 : 0.7}
         transparent
-        opacity={1.0}
-        side={THREE.DoubleSide}
+        opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
+        side={THREE.FrontSide}
       />
     </Text>
   );
@@ -227,7 +224,7 @@ export default function Lyrics3D({
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
-  
+
   const currentIndex = useMemo(() => {
     if (!lyrics) return -1;
     return getCurrentLyricIndex(lyrics, currentTimeMs);
@@ -249,12 +246,12 @@ export default function Lyrics3D({
   // Smooth animation to keep current line centered
   useFrame(() => {
     if (!groupRef.current) return;
-    
+
     // Smooth lerp to target position (very slow for smooth scrolling)
     const currentY = groupRef.current.position.y;
     const targetY = targetYRef.current;
     const lerpFactor = 0.03; // Ultra slow for buttery smooth scrolling
-    
+
     groupRef.current.position.y += (targetY - currentY) * lerpFactor;
   });
 
@@ -290,22 +287,22 @@ export default function Lyrics3D({
       {visibleLines.map(({ line, index, isAdjacent }, i) => {
         const isPast = index < currentIndex;
         const offset = index - currentIndex;
-        
+
         // Position ALL lines in absolute positions
         // Each line is 6 units apart vertically
         const yPos = -index * 6;
-        
+
         const isCurrent = index === currentIndex;
 
         // Check if next line has a long wait (>10s)
         let showCountdown = false;
         let countdownSeconds = 0;
-        
+
         // Special case: First line when song hasn't started (currentIndex === -1)
         if (currentIndex === -1 && index === 0 && lyrics && lyrics.length > 0) {
           const firstLine = lyrics[0];
           const waitTime = firstLine.time - currentTimeMs;
-          
+
           if (waitTime > 0 && firstLine.time > 10000) {
             showCountdown = true;
             countdownSeconds = waitTime / 1000;
@@ -318,7 +315,7 @@ export default function Lyrics3D({
           if (currentLine && nextLine) {
             const gap = nextLine.time - currentLine.time;
             const timeUntilNext = nextLine.time - currentTimeMs;
-            
+
             if (gap > 10000 && timeUntilNext > 0) {
               showCountdown = true;
               countdownSeconds = timeUntilNext / 1000;
@@ -345,4 +342,3 @@ export default function Lyrics3D({
     </group>
   );
 }
-
