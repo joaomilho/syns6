@@ -345,6 +345,7 @@ export default function FractalVisualization({
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
             syncedData={syncedData}
+            color="#fff"
           />
         )}
 
