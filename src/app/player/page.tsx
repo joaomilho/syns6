@@ -61,8 +61,27 @@ export default function PlayerPage() {
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("particles");
   const [showHueControls, setShowHueControls] = useState(false);
-  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
+
+  // Derive error state from session
+  const sessionError = session?.error === "RefreshAccessTokenError"
+    ? "Session expired. Please sign out and sign in again to refresh your Spotify connection."
+    : null;
+
+  // Proactively refresh token every 30 minutes
+  useEffect(() => {
+    if (!session?.accessToken) return;
+
+    const refreshInterval = setInterval(
+      async () => {
+        console.log("🔄 Proactively refreshing session...");
+        await update();
+      },
+      30 * 60 * 1000
+    ); // 30 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [session?.accessToken, update]);
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
@@ -417,10 +436,10 @@ export default function PlayerPage() {
             </div>
           </div>
         </div>
-      ) : error ? (
+      ) : error || sessionError ? (
         <div className={styles.bottomControls}>
           <div className={styles.errorMessage}>
-            <p>{error}</p>
+            <p>{error || sessionError}</p>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className={styles.link}
