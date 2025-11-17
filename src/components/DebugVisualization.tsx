@@ -97,10 +97,6 @@ export default function DebugVisualization({
   isPlaying,
   micData,
 }: VisualizationProps) {
-  // Debug logging
-  console.log("🔍 Debug Viz - isPlaying:", isPlaying);
-  console.log("🔍 Debug Viz - micData:", micData);
-
   return (
     <div
       style={{
@@ -204,12 +200,14 @@ export default function DebugVisualization({
             textAlign: "center",
           }}
         >
-          <strong>💡 TIP:</strong> Enable the microphone (🎤 button) to see realtime audio analysis.
+          <strong>💡 TIP:</strong> Enable the microphone (🎤 button) to see
+          realtime audio analysis.
           <br />
           Sing or speak to see voice detection in action!
           <br />
           <br />
-          <strong>⚠️ NOTE:</strong> Spotify audio features/analysis endpoints are deprecated for new apps (Nov 27, 2024).
+          <strong>⚠️ NOTE:</strong> Spotify audio features/analysis endpoints
+          are deprecated for new apps (Nov 27, 2024).
           <br />
           All visualizations now react to microphone input only.
         </div>

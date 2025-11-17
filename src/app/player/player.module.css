@@ -61,21 +61,16 @@
   gap: 16px;
 }
 
-.backLink {
+.logo {
   color: #fff;
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s;
-}
-
-.backLink:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateX(-4px);
+  font-size: 24px;
+  font-weight: 200;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #1ed760, #1db954);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Mode Toggle */
@@ -162,7 +157,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
   }
   50% {
