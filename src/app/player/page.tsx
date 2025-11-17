@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { getCurrentlyPlaying } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
@@ -11,12 +11,20 @@ import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
+import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
 import Link from "next/link";
 
-type VisualizationType = "particles" | "fractal" | "psychedelic" | "waves" | "blackmetal" | "debug";
+type VisualizationType =
+  | "particles"
+  | "fractal"
+  | "psychedelic"
+  | "waves"
+  | "blackmetal"
+  | "animated"
+  | "debug";
 
 interface Track {
   id: string;
@@ -36,19 +44,29 @@ interface PlaybackState {
 }
 
 export default function PlayerPage() {
-  const { data: session, status } = useSession();
-  const [playbackState, setPlaybackState] = useState<PlaybackState | null>(null);
+  const { data: session, status, update } = useSession();
+  const [playbackState, setPlaybackState] = useState<PlaybackState | null>(
+    null
+  );
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic } = useMicrophoneAnalysis();
+  const {
+    micData,
+    isEnabled: isMicEnabled,
+    enable: enableMic,
+    disable: disableMic,
+  } = useMicrophoneAnalysis();
   const hue = useHueLights();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
-  const [visualizationType, setVisualizationType] = useState<VisualizationType>("particles");
+  const [visualizationType, setVisualizationType] =
+    useState<VisualizationType>("particles");
   const [showHueControls, setShowHueControls] = useState(false);
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+  const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
-    if (!session?.accessToken) return;
+    if (!session?.accessToken || isRefreshingToken) return;
 
     try {
       const data = await getCurrentlyPlaying(session.accessToken);
@@ -56,6 +74,7 @@ export default function PlayerPage() {
         setPlaybackState(data);
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
+        setTokenRefreshAttempts(0); // Reset on success
 
         // Fetch synced lyrics
         if (data.item.id) {
@@ -67,7 +86,11 @@ export default function PlayerPage() {
             );
             if (syncedLyrics) {
               setLyrics(syncedLyrics.lines);
-              console.log("✅ Synced lyrics loaded:", syncedLyrics.lines.length, "lines");
+              console.log(
+                "✅ Synced lyrics loaded:",
+                syncedLyrics.lines.length,
+                "lines"
+              );
             } else {
               setLyrics(null);
               console.log("⚠️ No synced lyrics found");
@@ -81,9 +104,27 @@ export default function PlayerPage() {
         setPlaybackState(null);
         setError("No track currently playing");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching playback:", err);
-      setError("Failed to fetch playback state");
+
+      // Check if it's a 401 error (token expired)
+      if (
+        err.message &&
+        err.message.includes("401") &&
+        tokenRefreshAttempts < 1
+      ) {
+        console.log("🔄 Token expired, please re-authenticate...");
+        setTokenRefreshAttempts((prev) => prev + 1);
+        setPlaybackState(null); // Clear old playback state
+        setError(
+          "Session expired. Please sign out and sign in again to refresh your Spotify connection."
+        );
+      } else if (tokenRefreshAttempts >= 1) {
+        setPlaybackState(null); // Clear old playback state
+        setError("Session expired. Please sign out and sign in again.");
+      } else {
+        setError("Failed to fetch playback state");
+      }
     }
   };
 
@@ -109,9 +150,9 @@ export default function PlayerPage() {
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
 
-  // Hue lights react to music
+  // Hue lights react to music (only when active)
   useEffect(() => {
-    if (micData && hue.isConnected && playbackState?.is_playing) {
+    if (micData && hue.isActive && playbackState?.is_playing) {
       hue.reactToMusic({
         energy: micData.energy,
         bass: micData.bass,
@@ -199,6 +240,14 @@ export default function PlayerPage() {
               micData={micData}
             />
           )}
+          {visualizationType === "animated" && (
+            <AnimatedSceneVisualization
+              micData={micData}
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
+              isPlaying={playbackState.is_playing}
+            />
+          )}
           {visualizationType === "debug" && (
             <DebugVisualization
               isPlaying={playbackState.is_playing}
@@ -212,30 +261,33 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <Link href="/" className={styles.backLink}>
-          ← Back
-        </Link>
-        
-        {/* Microphone Toggle */}
-        <button
-          className={`${styles.vizButton} ${isMicEnabled ? styles.active : ""}`}
-          onClick={() => isMicEnabled ? disableMic() : enableMic()}
-          title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
-          style={{ marginLeft: '10px' }}
-        >
-          🎤
-        </button>
+        <div className={styles.logo}>Syns</div>
 
-        {/* Hue Lights Toggle */}
-        <button
-          className={`${styles.vizButton} ${hue.isConnected ? styles.active : ""} ${showHueControls ? styles.highlighted : ""}`}
-          onClick={() => setShowHueControls(!showHueControls)}
-          title={hue.isConnected ? "Hue Connected" : "Connect Hue Lights"}
-          style={{ marginLeft: '10px' }}
-        >
-          💡
-        </button>
-        
+        {/* Actions Group */}
+        <div className={styles.vizSelector}>
+          {/* Microphone Toggle */}
+          <button
+            className={`${styles.vizButton} ${
+              isMicEnabled ? styles.active : ""
+            }`}
+            onClick={() => (isMicEnabled ? disableMic() : enableMic())}
+            title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
+          >
+            ⦿
+          </button>
+
+          {/* Hue Lights Toggle */}
+          <button
+            className={`${styles.vizButton} ${
+              hue.isConnected ? styles.active : ""
+            } ${showHueControls ? styles.highlighted : ""}`}
+            onClick={() => setShowHueControls(!showHueControls)}
+            title={hue.isConnected ? "Hue Connected" : "Connect Hue Lights"}
+          >
+            ◐
+          </button>
+        </div>
+
         {/* Visualization Selector */}
         <div className={styles.vizSelector}>
           <button
@@ -285,12 +337,21 @@ export default function PlayerPage() {
           </button>
           <button
             className={`${styles.vizButton} ${
+              visualizationType === "animated" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("animated")}
+            title="Morphing Blobs"
+          >
+            ◉
+          </button>
+          <button
+            className={`${styles.vizButton} ${
               visualizationType === "debug" ? styles.active : ""
             }`}
             onClick={() => setVisualizationType("debug")}
             title="Debug View"
           >
-            🔍
+            ▤
           </button>
         </div>
       </div>
@@ -303,16 +364,7 @@ export default function PlayerPage() {
       )}
 
       {/* Bottom Player Controls */}
-      {error && !playbackState ? (
-        <div className={styles.bottomControls}>
-          <div className={styles.errorMessage}>
-            <p>{error}</p>
-            <p className={styles.hint}>
-              Open Spotify and start playing a track
-            </p>
-          </div>
-        </div>
-      ) : playbackState?.item ? (
+      {playbackState?.item ? (
         <div className={styles.bottomControls}>
           <div className={styles.controlsContainer}>
             {/* Album Art */}
@@ -365,10 +417,26 @@ export default function PlayerPage() {
             </div>
           </div>
         </div>
+      ) : error ? (
+        <div className={styles.bottomControls}>
+          <div className={styles.errorMessage}>
+            <p>{error}</p>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className={styles.link}
+              style={{ marginTop: "16px", cursor: "pointer", border: "none" }}
+            >
+              Sign Out & Re-authenticate
+            </button>
+          </div>
+        </div>
       ) : (
         <div className={styles.bottomControls}>
           <div className={styles.errorMessage}>
             <p>No track currently playing</p>
+            <p className={styles.hint}>
+              Open Spotify and start playing a track
+            </p>
           </div>
         </div>
       )}
