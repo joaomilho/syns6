@@ -64,28 +64,26 @@ export default function PlayerPage() {
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
 
   // Derive error state from session
-  const sessionError = session?.error === "RefreshAccessTokenError"
-    ? "Session expired. Please sign out and sign in again to refresh your Spotify connection."
-    : null;
+  const sessionError =
+    session?.error === "RefreshAccessTokenError"
+      ? "Session expired. Please sign out and sign in again to refresh your Spotify connection."
+      : null;
 
   // Proactively refresh token every 30 minutes
   useEffect(() => {
     if (!session?.accessToken) return;
 
-    const refreshInterval = setInterval(
-      async () => {
-        console.log("🔄 Proactively refreshing session...");
-        await update();
-      },
-      30 * 60 * 1000
-    ); // 30 minutes
+    const refreshInterval = setInterval(async () => {
+      console.log("🔄 Proactively refreshing session...");
+      await update();
+    }, 30 * 60 * 1000); // 30 minutes
 
     return () => clearInterval(refreshInterval);
   }, [session?.accessToken, update]);
 
   // Fetch current playback state
   const fetchPlaybackState = async () => {
-    if (!session?.accessToken || isRefreshingToken) return;
+    if (!session?.accessToken) return;
 
     try {
       const data = await getCurrentlyPlaying(session.accessToken);
@@ -214,68 +212,74 @@ export default function PlayerPage() {
     );
   }
 
+  // Create a placeholder "no track" lyrics for when nothing is playing
+  const noTrackLyrics = !playbackState?.item
+    ? [
+        {
+          time: 0,
+          text: "No track currently playing",
+        },
+      ]
+    : null;
+
   return (
     <div className={styles.fullscreenPage}>
-      {/* Background Visualization with 3D Lyrics */}
-      {playbackState?.item && (
-        <>
-          {visualizationType === "particles" && (
-            <MusicVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-          {visualizationType === "fractal" && (
-            <FractalVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-          {visualizationType === "psychedelic" && (
-            <PsychedelicVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-          {visualizationType === "waves" && (
-            <WavyLinesVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-          {visualizationType === "blackmetal" && (
-            <BlackMetalVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-          {visualizationType === "animated" && (
-            <AnimatedSceneVisualization
-              micData={micData}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              isPlaying={playbackState.is_playing}
-            />
-          )}
-          {visualizationType === "debug" && (
-            <DebugVisualization
-              isPlaying={playbackState.is_playing}
-              lyrics={lyrics}
-              currentTimeMs={currentProgress}
-              micData={micData}
-            />
-          )}
-        </>
+      {/* Background Visualization with 3D Lyrics - Always render */}
+      {visualizationType === "particles" && (
+        <MusicVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
+      {visualizationType === "fractal" && (
+        <FractalVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
+      {visualizationType === "psychedelic" && (
+        <PsychedelicVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
+      {visualizationType === "waves" && (
+        <WavyLinesVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
+      {visualizationType === "blackmetal" && (
+        <BlackMetalVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
+      {visualizationType === "animated" && (
+        <AnimatedSceneVisualization
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+        />
+      )}
+      {visualizationType === "debug" && (
+        <DebugVisualization
+          isPlaying={playbackState?.is_playing || false}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
       )}
 
       {/* Top Controls */}
