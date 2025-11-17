@@ -21,10 +21,12 @@ export interface HueConfig {
 export interface HueConnection {
   isConnected: boolean;
   isConnecting: boolean;
+  isActive: boolean;
   error: string | null;
   bridges: HueBridge[];
   lights: Record<string, HueLight>;
   config: HueConfig | null;
+  mode: HueMode;
   
   discover: () => Promise<void>;
   connect: (bridgeIp: string) => Promise<void>;
@@ -39,17 +41,23 @@ export interface HueConnection {
     isLoud?: boolean;
     voiceStrength?: number;
   }) => void;
+  setActive: (active: boolean) => void;
+  setMode: (mode: HueMode) => void;
 }
+
+export type HueMode = "full" | "voice-only" | "no-voice";
 
 const HUE_CONFIG_KEY = "syns_hue_config";
 
 export function useHueLights(): HueConnection {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bridges, setBridges] = useState<HueBridge[]>([]);
   const [lights, setLights] = useState<Record<string, HueLight>>({});
   const [config, setConfig] = useState<HueConfig | null>(null);
+  const [mode, setMode] = useState<HueMode>("full");
   
   const lastUpdateTime = useRef<number>(0);
   const updateThrottleMs = 50; // 20 updates/second
@@ -179,7 +187,8 @@ export function useHueLights(): HueConnection {
       isLoud?: boolean;
       voiceStrength?: number;
     }) => {
-      if (!config || !isConnected || config.selectedLights.length === 0) {
+      // Only react if explicitly active
+      if (!config || !isConnected || !isActive || config.selectedLights.length === 0) {
         return;
       }
 
@@ -195,27 +204,32 @@ export function useHueLights(): HueConnection {
         micData.mid,
         micData.treble,
         micData.isLoud,
-        micData.voiceStrength || 0
+        micData.voiceStrength || 0,
+        mode
       );
 
       updateLights(lightState);
     },
-    [config, isConnected, updateThrottleMs]
+    [config, isConnected, isActive, mode, updateThrottleMs]
   );
 
   return {
     isConnected,
     isConnecting,
+    isActive,
     error,
     bridges,
     lights,
     config,
+    mode,
     discover,
     connect,
     disconnect,
     selectLights,
     updateLights,
     reactToMusic,
+    setActive: setIsActive,
+    setMode,
   };
 }
 

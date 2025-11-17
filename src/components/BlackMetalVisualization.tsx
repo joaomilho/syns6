@@ -208,8 +208,6 @@ export default function BlackMetalVisualization({
   currentTimeMs,
   micData,
 }: VisualizationProps) {
-  console.log("BlackMetalVisualization rendering");
-
   return (
     <div
       style={{
