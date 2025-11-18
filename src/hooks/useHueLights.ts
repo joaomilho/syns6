@@ -44,6 +44,7 @@ export interface HueConnection {
     treble: number;
     subBass: number;
     presence: number;
+    voiceStrength?: number;
   }, force?: boolean) => void;
   setActive: (active: boolean) => void;
   setMode: (mode: HueMode) => void;
@@ -81,13 +82,22 @@ export function useHueLights(): HueConnection {
       try {
         const savedConfig = JSON.parse(saved) as any;
         
-        // Migrate old configs that don't have lightConfigs
+        // Migrate old configs that don't have lightConfigs or have old format
         if (!savedConfig.lightConfigs) {
           const lightConfigs: Record<string, LightConfig> = {};
           savedConfig.selectedLights?.forEach((lightId: string) => {
-            lightConfigs[lightId] = { color: "red", frequency: "bass" };
+            lightConfigs[lightId] = { mode: "bass" };
           });
           savedConfig.lightConfigs = lightConfigs;
+        } else {
+          // Migrate old lightConfigs format to new mode-based format
+          Object.keys(savedConfig.lightConfigs).forEach((lightId: string) => {
+            const oldConfig = savedConfig.lightConfigs[lightId];
+            if (!oldConfig.mode) {
+              // Old format had color/frequency, convert to mode
+              savedConfig.lightConfigs[lightId] = { mode: "bass" };
+            }
+          });
         }
         
         setConfig(savedConfig as HueConfig);
@@ -147,10 +157,10 @@ export function useHueLights(): HueConnection {
       const username = await createUser(bridgeIp);
       const fetchedLights = await getLights(bridgeIp, username);
       
-      // Initialize all lights with red/bass by default
+      // Initialize all lights with bass mode by default
       const lightConfigs: Record<string, LightConfig> = {};
       Object.keys(fetchedLights).forEach((lightId) => {
-        lightConfigs[lightId] = { color: "red", frequency: "bass" };
+        lightConfigs[lightId] = { mode: "bass" };
       });
       
       const newConfig: HueConfig = {
@@ -240,6 +250,7 @@ export function useHueLights(): HueConnection {
       treble: number;
       subBass: number;
       presence: number;
+      voiceStrength?: number;
     }, force: boolean = false) => {
       // Only react if explicitly active
       if (!config || !isConnected || !isActive || config.selectedLights.length === 0) {
@@ -279,7 +290,9 @@ export function useHueLights(): HueConnection {
         treble: micData.treble,
         subBass: micData.subBass,
         presence: micData.presence,
+        voice: micData.voiceStrength || 0, // Voice detection for voice-reactive lights
       };
+      
 
       // Reset failure counts periodically
       if (now - lastLogTime.current > FAILURE_RESET_MS) {
@@ -333,13 +346,11 @@ export function useHueLights(): HueConnection {
         }
         
         try {
-          console.log(`💡 Updating light ${lightId} (${lights[lightId]?.name || 'unknown'}) to brightness ${newBrightness}`);
           await setLightState(config.bridgeIp, config.username, lightId, lightState);
           // Success - reset failure count, mark as responsive, and store brightness
           lightFailures.current.set(lightId, 0);
           responsiveLights.current.add(lightId);
           lastBrightness.current.set(lightId, newBrightness);
-          console.log(`✅ Light ${lightId} (${lights[lightId]?.name || 'unknown'}) updated successfully`);
         } catch (e) {
           // Increment failure count
           const failures = (lightFailures.current.get(lightId) || 0) + 1;

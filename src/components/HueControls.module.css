@@ -267,7 +267,6 @@
   padding: 10px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 6px;
-  cursor: pointer;
 }
 
 .lightItem:hover {
@@ -281,9 +280,9 @@
 }
 
 .lightName {
-  flex: 1;
   color: white;
   font-size: 14px;
+  min-width: 80px;
 }
 
 .reachable {
@@ -292,6 +291,29 @@
 
 .unreachable {
   color: rgba(255, 255, 255, 0.3);
+}
+
+.modeSelect {
+  padding: 4px 8px;
+  background: rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  max-width: 120px;
+}
+
+.modeSelect:hover {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.6);
+}
+
+.modeSelect option {
+  background: #1a1a1a;
+  color: white;
 }
 
 .activeToggle {

@@ -215,6 +215,7 @@ export default function PlayerPage() {
         treble: micData.treble,
         subBass: micData.subBass,
         presence: micData.presence,
+        voiceStrength: micData.voiceStrength, // Add voice detection
       });
     }
   }, [micData, hue.isActive, hue.reactToMusic]);
@@ -536,6 +537,12 @@ export default function PlayerPage() {
             </span>
           </div>
           <div style={{ marginBottom: "5px" }}>
+            Voice Input:{" "}
+            <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
+              {micData ? (micData.voiceStrength * 100).toFixed(1) : 0}%
+            </span>
+          </div>
+          <div style={{ marginBottom: "5px" }}>
             Brightness:{" "}
             <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
               {hue.debugData.brightness}/254
@@ -544,20 +551,20 @@ export default function PlayerPage() {
           <div style={{ marginTop: "8px", fontSize: "12px", color: "#999" }}>
             ({((hue.debugData.brightness / 254) * 100).toFixed(0)}% bright)
           </div>
-           <div
-             style={{
-               marginTop: "10px",
-               fontSize: "11px",
-               color: "#666",
-               borderTop: "1px solid #444",
-               paddingTop: "8px",
-             }}
-           >
-             Bucket: {Math.round(hue.debugData.brightness / (254 / 12))} / 12
-           </div>
-           <div style={{ marginTop: "5px", fontSize: "10px", color: "#888" }}>
-             Lights: {hue.config?.selectedLights.length || 0} selected
-           </div>
+          <div
+            style={{
+              marginTop: "10px",
+              fontSize: "11px",
+              color: "#666",
+              borderTop: "1px solid #444",
+              paddingTop: "8px",
+            }}
+          >
+            Bucket: {Math.round(hue.debugData.brightness / (254 / 12))} / 12
+          </div>
+          <div style={{ marginTop: "5px", fontSize: "10px", color: "#888" }}>
+            Lights: {hue.config?.selectedLights.length || 0} selected
+          </div>
         </div>
       )}
 
