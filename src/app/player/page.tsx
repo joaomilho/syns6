@@ -112,14 +112,13 @@ export default function PlayerPage() {
             setLastFetchedTrackId(data.item.id);
             console.log("📦 Using cached lyrics for track:", data.item.id);
           } else {
-            // Fetch from API
+            // Fetch from backend API
             try {
-              const syncedLyrics = await fetchSyncedLyrics(
+              const lyricsLines = await fetchSyncedLyrics(
                 data.item.name,
                 data.item.artists[0].name,
                 data.item.duration_ms
               );
-              const lyricsLines = syncedLyrics?.lines || null;
 
               // Cache the result (even if null)
               lyricsCache.current.set(data.item.id, lyricsLines);
