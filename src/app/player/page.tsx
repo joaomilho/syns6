@@ -352,6 +352,9 @@ export default function PlayerPage() {
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
+          hueDebugData={hue.debugData}
+          hueIsActive={hue.isActive}
+          hueConfig={hue.config}
         />
       )}
 
@@ -501,93 +504,6 @@ export default function PlayerPage() {
       {showHueControls && (
         <div className={styles.huePanel}>
           <HueControls hue={hue} />
-        </div>
-      )}
-
-      {/* Hue Debug Display */}
-      {hue.debugData && hue.isActive && (
-        <div
-          style={{
-            position: "fixed",
-            top: "80px",
-            right: "20px",
-            background: "rgba(0, 0, 0, 0.8)",
-            color: "white",
-            padding: "15px",
-            borderRadius: "8px",
-            fontFamily: "monospace",
-            fontSize: "14px",
-            zIndex: 1000,
-            minWidth: "220px",
-          }}
-        >
-          <div
-            style={{
-              marginBottom: "8px",
-              fontWeight: "bold",
-              borderBottom: "1px solid #666",
-              paddingBottom: "5px",
-            }}
-          >
-            💡 Hue Light Debug
-          </div>
-          <div style={{ marginBottom: "5px" }}>
-            Bass Input:{" "}
-            <span style={{ color: "#ff6b6b", fontWeight: "bold" }}>
-              {(hue.debugData.bass * 100).toFixed(1)}%
-            </span>
-          </div>
-          <div style={{ marginBottom: "5px" }}>
-            Voice Input:{" "}
-            <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
-              {micData ? (micData.voiceStrength * 100).toFixed(1) : 0}%
-            </span>
-          </div>
-          <div style={{ marginBottom: "5px" }}>
-            Drums Input:{" "}
-            <span style={{ color: "#ffd93d", fontWeight: "bold" }}>
-              {micData && micData.instruments?.drumComponents
-                ? (
-                    (((micData.instruments.drumComponents.hihat || 0) * 2.0 +
-                      (micData.instruments.drumComponents.cymbal || 0) * 2.0 +
-                      (micData.instruments.drumComponents.snare || 0) * 1.0) /
-                      5.0) *
-                    100
-                  ).toFixed(1)
-                : 0}
-              %
-            </span>
-            <span
-              style={{ fontSize: "10px", color: "#999", marginLeft: "5px" }}
-            >
-              (H:{micData?.instruments?.drumComponents?.hihat?.toFixed(2) || 0}{" "}
-              C:{micData?.instruments?.drumComponents?.cymbal?.toFixed(2) || 0}{" "}
-              S:{micData?.instruments?.drumComponents?.snare?.toFixed(2) || 0})
-            </span>
-          </div>
-          <div style={{ marginBottom: "5px" }}>
-            Brightness:{" "}
-            <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
-              {hue.debugData.brightness}/254
-            </span>
-          </div>
-          <div style={{ marginTop: "8px", fontSize: "12px", color: "#999" }}>
-            ({((hue.debugData.brightness / 254) * 100).toFixed(0)}% bright)
-          </div>
-          <div
-            style={{
-              marginTop: "10px",
-              fontSize: "11px",
-              color: "#666",
-              borderTop: "1px solid #444",
-              paddingTop: "8px",
-            }}
-          >
-            Bucket: {Math.round(hue.debugData.brightness / (254 / 12))} / 12
-          </div>
-          <div style={{ marginTop: "5px", fontSize: "10px", color: "#888" }}>
-            Lights: {hue.config?.selectedLights.length || 0} selected
-          </div>
         </div>
       )}
 
