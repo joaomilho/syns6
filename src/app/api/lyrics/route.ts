@@ -213,33 +213,44 @@ export async function GET(request: NextRequest) {
   const duration = parseInt(durationStr);
 
   console.log(`🔍 [API] Searching lyrics for: "${trackName}" by "${artistName}" (${Math.round(duration / 1000)}s)`);
+  console.log("📡 [API] Starting parallel search across all sources...");
 
-  // Try LRCLIB first (with duration matching)
-  console.log("📡 [API] Trying LRCLIB...");
-  const lrclibResult = await fetchFromLRCLIB(trackName, artistName, duration);
-  if (lrclibResult && lrclibResult.length > 0) {
-    console.log(`✅ [API] LRCLIB success: ${lrclibResult.length} lines`);
-    return NextResponse.json({ lines: lrclibResult, source: "LRCLIB" });
-  }
-  console.log("⏭️  [API] LRCLIB failed, trying LRCLIB Search...");
-
-  // Try LRCLIB search as fallback (fuzzy matching, checks all results)
-  const lrclibSearchResult = await fetchFromLRCLIBSearch(trackName, artistName);
-  if (lrclibSearchResult && lrclibSearchResult.length > 0) {
-    console.log(`✅ [API] LRCLIB Search success: ${lrclibSearchResult.length} lines`);
-    return NextResponse.json({
-      lines: lrclibSearchResult,
+  // Run all API calls in parallel and return the first successful result
+  const results = await Promise.allSettled([
+    fetchFromLRCLIB(trackName, artistName, duration).then((lines) => ({
+      lines,
+      source: "LRCLIB",
+    })),
+    fetchFromLRCLIBSearch(trackName, artistName).then((lines) => ({
+      lines,
       source: "LRCLIB Search",
-    });
-  }
-  console.log("⏭️  [API] LRCLIB Search failed, trying NetEase...");
+    })),
+    fetchFromNetease(trackName, artistName).then((lines) => ({
+      lines,
+      source: "NetEase",
+    })),
+  ]);
 
-  // Try NetEase Cloud Music as last resort (often unreliable/down)
-  const neteaseResult = await fetchFromNetease(trackName, artistName);
-  if (neteaseResult && neteaseResult.length > 0) {
-    console.log(`✅ [API] NetEase success: ${neteaseResult.length} lines`);
-    return NextResponse.json({ lines: neteaseResult, source: "NetEase" });
+  // Find the first successful result with lyrics
+  for (const result of results) {
+    if (result.status === "fulfilled" && result.value.lines && result.value.lines.length > 0) {
+      console.log(`✅ [API] ${result.value.source} success: ${result.value.lines.length} lines`);
+      return NextResponse.json({
+        lines: result.value.lines,
+        source: result.value.source,
+      });
+    }
   }
+
+  // Log which sources failed
+  results.forEach((result, index) => {
+    const sources = ["LRCLIB", "LRCLIB Search", "NetEase"];
+    if (result.status === "rejected") {
+      console.log(`   ✗ ${sources[index]} failed: ${result.reason}`);
+    } else if (!result.value.lines || result.value.lines.length === 0) {
+      console.log(`   ✗ ${sources[index]}: No lyrics found`);
+    }
+  });
 
   console.log("❌ [API] All sources exhausted - no lyrics found");
   return NextResponse.json(
