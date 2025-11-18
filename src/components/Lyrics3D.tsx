@@ -156,7 +156,7 @@ function LyricText3D({
             emissiveIntensity={isCurrent ? 1.9 : isPast ? 0.9 : 0.7}
             transparent
             opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
-            side={THREE.FrontSide}
+            side={THREE.DoubleSide}
           />
         </Text>
       ))}
