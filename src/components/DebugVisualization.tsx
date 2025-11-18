@@ -2,12 +2,16 @@
 
 import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
+import { HueConfig } from "@/hooks/useHueLights";
 
 interface VisualizationProps {
   isPlaying: boolean;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
+  hueDebugData?: { bass: number; brightness: number } | null;
+  hueIsActive?: boolean;
+  hueConfig?: HueConfig | null;
 }
 
 interface BarProps {
@@ -200,6 +204,9 @@ function MicSpectrumBars({
 export default function DebugVisualization({
   isPlaying,
   micData,
+  hueDebugData,
+  hueIsActive,
+  hueConfig,
 }: VisualizationProps) {
   const vocal = micData?.vocal;
   const instruments = micData?.instruments;
@@ -540,6 +547,89 @@ export default function DebugVisualization({
           <strong>🎵 DETECTION:</strong> Frequency-based detection for Drums,
           Bass, Guitar, Piano, Brass, Strings, and Vocals using Web Audio API.
         </div>
+
+        {/* Hue Debug Panel */}
+        {hueDebugData && hueIsActive && (
+          <div
+            style={{
+              marginTop: "32px",
+              padding: "16px",
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
+              borderRadius: "8px",
+              fontFamily: "monospace",
+              fontSize: "14px",
+            }}
+          >
+            <div
+              style={{
+                marginBottom: "12px",
+                fontWeight: "bold",
+                borderBottom: "1px solid #666",
+                paddingBottom: "8px",
+                fontSize: "16px",
+              }}
+            >
+              💡 Hue Light Debug
+            </div>
+            <div style={{ marginBottom: "8px" }}>
+              Bass Input:{" "}
+              <span style={{ color: "#ff6b6b", fontWeight: "bold" }}>
+                {(hueDebugData.bass * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div style={{ marginBottom: "8px" }}>
+              Voice Input:{" "}
+              <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
+                {micData ? (micData.voiceStrength * 100).toFixed(1) : 0}%
+              </span>
+            </div>
+            <div style={{ marginBottom: "8px" }}>
+              Drums Input:{" "}
+              <span style={{ color: "#ffd93d", fontWeight: "bold" }}>
+                {micData && micData.instruments?.drumComponents
+                  ? (
+                      (((micData.instruments.drumComponents.hihat || 0) * 2.0 +
+                        (micData.instruments.drumComponents.cymbal || 0) * 2.0 +
+                        (micData.instruments.drumComponents.snare || 0) * 1.0) /
+                        5.0) *
+                      100
+                    ).toFixed(1)
+                  : 0}
+                %
+              </span>
+              <span
+                style={{ fontSize: "10px", color: "#999", marginLeft: "8px" }}
+              >
+                (H:{micData?.instruments?.drumComponents?.hihat?.toFixed(2) || 0}{" "}
+                C:{micData?.instruments?.drumComponents?.cymbal?.toFixed(2) || 0}{" "}
+                S:{micData?.instruments?.drumComponents?.snare?.toFixed(2) || 0})
+              </span>
+            </div>
+            <div style={{ marginBottom: "8px" }}>
+              Brightness:{" "}
+              <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
+                {hueDebugData.brightness}/254
+              </span>
+              <span style={{ marginLeft: "8px", fontSize: "12px", color: "#999" }}>
+                ({((hueDebugData.brightness / 254) * 100).toFixed(0)}% bright)
+              </span>
+            </div>
+            <div
+              style={{
+                marginTop: "12px",
+                fontSize: "11px",
+                color: "#666",
+                borderTop: "1px solid #444",
+                paddingTop: "8px",
+              }}
+            >
+              Bucket: {Math.round(hueDebugData.brightness / (254 / 12))} / 12
+            </div>
+            <div style={{ marginTop: "5px", fontSize: "10px", color: "#888" }}>
+              Lights: {hueConfig?.selectedLights.length || 0} selected
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
