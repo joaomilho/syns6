@@ -32,10 +32,12 @@ export interface HueLightState {
 
 export type FrequencyRange = "bass" | "mid" | "treble" | "sub-bass" | "presence";
 export type LightColor = "red" | "orange" | "yellow" | "green" | "cyan" | "blue" | "purple" | "pink" | "white";
+export type LightMode = "bass" | "voice";
 
 export interface LightConfig {
-  color: LightColor;
-  frequency: FrequencyRange;
+  mode: LightMode;
+  color?: LightColor; // Optional, used for legacy configs
+  frequency?: FrequencyRange; // Optional, used for legacy configs
 }
 
 // Color to hue mapping (0-360)
@@ -137,8 +139,6 @@ export async function setLightState(
   state: HueLightState
 ): Promise<void> {
   try {
-    console.log(`🔵 Sending to light ${lightId}:`, JSON.stringify(state));
-    
     const response = await fetch(
       `http://${bridgeIp}/api/${username}/lights/${lightId}/state`,
       {
@@ -149,7 +149,6 @@ export async function setLightState(
     );
 
     const data = await response.json();
-    console.log(`🔵 Response from light ${lightId}:`, data);
     
     // Log the response for debugging
     if (data[0]?.error) {
@@ -203,7 +202,7 @@ export function hsvToHue(
 }
 
 /**
- * Create light state for a specific light based on its color and frequency assignment
+ * Create light state for a specific light based on its mode
  */
 export function lightConfigToState(
   config: LightConfig,
@@ -213,27 +212,24 @@ export function lightConfigToState(
     treble: number; // 0-1
     subBass: number; // 0-1
     presence: number; // 0-1
+    voice?: number; // 0-1, optional for voice detection
   }
 ): HueLightState {
-  // Get the intensity for this light's frequency range
-  let intensity = 0;
-  switch (config.frequency) {
-    case "sub-bass":
-      intensity = audioData.subBass;
-      break;
-    case "bass":
-      intensity = audioData.bass;
-      break;
-    case "mid":
-      intensity = audioData.mid;
-      break;
-    case "treble":
-      intensity = audioData.treble;
-      break;
-    case "presence":
-      intensity = audioData.presence;
-      break;
+  // Handle different modes
+  if (config.mode === "bass") {
+    return createBassLightState(audioData.bass);
+  } else if (config.mode === "voice") {
+    return createVoiceLightState(audioData.voice || 0);
   }
+  
+  // Fallback to bass mode if mode is not recognized
+  return createBassLightState(audioData.bass);
+}
+
+/**
+ * Create bass-reactive light state (red → purple → blue)
+ */
+function createBassLightState(intensity: number): HueLightState {
 
   // Apply exponential curve for more dramatic response
   // This makes quiet sounds dimmer and loud sounds much brighter
@@ -285,6 +281,60 @@ export function lightConfigToState(
     hue: hue,
     sat: sat,
     transitiontime: 1, // 100ms smooth transition - balances responsiveness with smoothness
+  };
+}
+
+/**
+ * Create voice-reactive light state (blue, dramatic)
+ */
+function createVoiceLightState(intensity: number): HueLightState {
+  // Apply exponential curve for more dramatic response
+  const dramaticIntensity = Math.pow(intensity, 0.5);
+  
+  // VOICE MODE: Blue light that responds to voice intensity
+  // 0-40%: Very dim blue (barely visible)
+  // 40-70%: Bright blue (clear voice)
+  // 70-100%: Intense cyan-blue (loud voice)
+  
+  let brightness: number;
+  let hue: number;
+  let sat: number;
+  
+  if (intensity < 0.4) {
+    // Low intensity: very dim blue
+    brightness = 1 + (intensity / 0.4) * 29; // 1-30% brightness
+    hue = 46920; // Blue
+    sat = 254; // Full saturation
+  } else if (intensity < 0.7) {
+    // Medium intensity: bright blue
+    brightness = 30 + ((intensity - 0.4) / 0.3) * 60; // 30-90% brightness
+    hue = 46920; // Blue
+    sat = 254; // Full saturation
+  } else {
+    // High intensity: intense cyan-blue
+    const extremeAmount = (intensity - 0.7) / 0.3; // 0-1
+    brightness = 90 + extremeAmount * 10; // 90-100% brightness
+    hue = Math.round(46920 - extremeAmount * 10000); // Blue to cyan
+    sat = 254; // Full saturation
+  }
+
+  // Convert to Hue scale (0-254)
+  const rawBri = (brightness / 100) * 254;
+  
+  // Quantize into 12 buckets to reduce API calls
+  const numBuckets = 12;
+  const bucketSize = Math.floor(254 / numBuckets);
+  const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
+  
+  // Clamp to valid range and ensure integer
+  const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
+
+  return {
+    on: true,
+    bri: finalBri,
+    hue: hue,
+    sat: sat,
+    transitiontime: 1, // 100ms smooth transition
   };
 }
 

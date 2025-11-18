@@ -70,24 +70,6 @@ export default function HueControls({ hue }: HueControlsProps) {
             {isActive ? "Lights are reacting to music" : "Click to activate lights"}
           </p>
         </div>
-        
-        <div className={styles.colorGuide}>
-          <p className={styles.guideTitle}>🎨 Colors:</p>
-          <div className={styles.guideGrid}>
-            <div className={styles.guideItem}>
-              <span style={{color: "#ff3300"}}>🔴</span> Bass
-            </div>
-            <div className={styles.guideItem}>
-              <span style={{color: "#66ff00"}}>🟢</span> Mid
-            </div>
-            <div className={styles.guideItem}>
-              <span style={{color: "#0099ff"}}>🔵</span> Treble
-            </div>
-            <div className={styles.guideItem}>
-              <span style={{color: "#cc00ff"}}>🟣</span> Voice
-            </div>
-          </div>
-        </div>
 
         <div className={styles.lightSelector}>
           <div className={styles.selectorHeader}>
@@ -104,17 +86,27 @@ export default function HueControls({ hue }: HueControlsProps) {
 
           <div className={styles.lightList}>
             {Object.entries(lights).map(([id, light]) => (
-              <label key={id} className={styles.lightItem}>
+              <div key={id} className={styles.lightItem}>
                 <input
                   type="checkbox"
                   checked={config.selectedLights.includes(id)}
                   onChange={() => handleToggleLight(id)}
                 />
                 <span className={styles.lightName}>{light.name}</span>
+                {config.selectedLights.includes(id) && (
+                  <select
+                    className={styles.modeSelect}
+                    value={config.lightConfigs[id]?.mode || "bass"}
+                    onChange={(e) => hue.setLightConfig(id, { mode: e.target.value as "bass" | "voice" })}
+                  >
+                    <option value="bass">🔴 BASS</option>
+                    <option value="voice">🔵 VOICE</option>
+                  </select>
+                )}
                 <span className={light.state.reachable ? styles.reachable : styles.unreachable}>
                   {light.state.reachable ? "●" : "○"}
                 </span>
-              </label>
+              </div>
             ))}
           </div>
         </div>
