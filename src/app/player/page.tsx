@@ -13,6 +13,8 @@ import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
+import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
+import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
@@ -26,6 +28,8 @@ type VisualizationType =
   | "blackmetal"
   | "animated"
   | "spectrum3d"
+  | "wavespectrum"
+  | "fftspectrum"
   | "debug";
 
 interface Track {
@@ -303,6 +307,22 @@ export default function PlayerPage() {
           isPlaying={playbackState?.is_playing || false}
         />
       )}
+      {visualizationType === "wavespectrum" && (
+        <WaveSpectrum3DVisualization
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+        />
+      )}
+      {visualizationType === "fftspectrum" && (
+        <FFTSpectrumVisualization
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+        />
+      )}
       {visualizationType === "debug" && (
         <DebugVisualization
           isPlaying={playbackState?.is_playing || false}
@@ -404,6 +424,24 @@ export default function PlayerPage() {
             title="3D Spectrum"
           >
             ▦
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "wavespectrum" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("wavespectrum")}
+            title="Wave Spectrum"
+          >
+            ▬
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "fftspectrum" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("fftspectrum")}
+            title="FFT Spectrum Grid"
+          >
+            ▥
           </button>
           <button
             className={`${styles.vizButton} ${
