@@ -6,6 +6,7 @@ import { getCurrentlyPlaying } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
+import { useCamera } from "@/hooks/useCamera";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -15,6 +16,7 @@ import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization"
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
+import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
@@ -30,6 +32,7 @@ type VisualizationType =
   | "spectrum3d"
   | "wavespectrum"
   | "fftspectrum"
+  | "camera"
   | "debug";
 
 interface Track {
@@ -62,6 +65,12 @@ export default function PlayerPage() {
     enable: enableMic,
     disable: disableMic,
   } = useMicrophoneAnalysis();
+  const {
+    isEnabled: isCameraEnabled,
+    enable: enableCamera,
+    disable: disableCamera,
+    videoElement,
+  } = useCamera();
   const hue = useHueLights();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] =
@@ -322,6 +331,15 @@ export default function PlayerPage() {
           isPlaying={playbackState?.is_playing || false}
         />
       )}
+      {visualizationType === "camera" && (
+        <CameraVisualization
+          videoElement={videoElement}
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+        />
+      )}
       {visualizationType === "debug" && (
         <DebugVisualization
           isPlaying={playbackState?.is_playing || false}
@@ -346,6 +364,16 @@ export default function PlayerPage() {
             title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
           >
             ⦿
+          </button>
+          {/* Camera Toggle */}
+          <button
+            className={`${styles.vizButton} ${
+              isCameraEnabled ? styles.active : ""
+            }`}
+            onClick={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+            title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
+          >
+            ⊡
           </button>
           {/* Hue Lights Toggle */}
           <button
@@ -441,6 +469,15 @@ export default function PlayerPage() {
             title="FFT Spectrum Grid"
           >
             ▥
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "camera" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("camera")}
+            title="Camera Effects"
+          >
+            ⊡
           </button>
           <button
             className={`${styles.vizButton} ${

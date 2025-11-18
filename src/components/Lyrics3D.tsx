@@ -140,20 +140,24 @@ function LyricText3D({
           key={lineIndex}
           position={[0, -lineIndex * lineSpacing, 0]}
           fontSize={1}
-          color={color}
+          color={color === "#000000" ? "#000000" : color}
           anchorX="center"
           anchorY="middle"
           font={font}
-          outlineWidth={isCurrent ? 0.04 : 0}
+          fontWeight={color === "#000000" ? 900 : undefined}
+          outlineWidth={color === "#000000" ? 0.03 : isCurrent ? 0.04 : 0}
           letterSpacing={isCurrent ? 0.04 : 0}
-          outlineColor={color}
+          outlineColor={color === "#000000" ? "#ffffff" : color}
+          fillOpacity={color === "#000000" ? 1.0 : undefined}
           characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
         >
           {line}
           <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={isCurrent ? 1.9 : isPast ? 0.9 : 0.7}
+            color={color === "#000000" ? "#000000" : color}
+            emissive={color === "#000000" ? "#000000" : color}
+            emissiveIntensity={
+              color === "#000000" ? 0 : isCurrent ? 1.9 : isPast ? 0.9 : 0.7
+            }
             transparent
             opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
             side={THREE.DoubleSide}
