@@ -1,13 +1,18 @@
 "use client";
 
-import { useHueLights } from "@/hooks/useHueLights";
+import { HueConnection } from "@/hooks/useHueLights";
 import { useState } from "react";
 import styles from "./HueControls.module.css";
 
-export default function HueControls() {
+interface HueControlsProps {
+  hue: HueConnection;
+}
+
+export default function HueControls({ hue }: HueControlsProps) {
   const {
     isConnected,
     isConnecting,
+    isActive,
     error,
     bridges,
     lights,
@@ -16,7 +21,8 @@ export default function HueControls() {
     connect,
     disconnect,
     selectLights,
-  } = useHueLights();
+    setActive,
+  } = hue;
   
   const [manualIp, setManualIp] = useState("");
 
@@ -51,6 +57,18 @@ export default function HueControls() {
         <div className={styles.info}>
           <p>Bridge: {config.bridgeIp}</p>
           <p>{config.selectedLights.length} / {Object.keys(lights).length} lights</p>
+        </div>
+
+        <div className={styles.activeToggle}>
+          <button 
+            onClick={() => setActive(!isActive)}
+            className={`${styles.activeBtn} ${isActive ? styles.activeOn : styles.activeOff}`}
+          >
+            {isActive ? "🟢 Active" : "⚫ Inactive"}
+          </button>
+          <p className={styles.activeHelp}>
+            {isActive ? "Lights are reacting to music" : "Click to activate lights"}
+          </p>
         </div>
         
         <div className={styles.colorGuide}>

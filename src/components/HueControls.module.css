@@ -294,3 +294,48 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+.activeToggle {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.activeBtn {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+}
+
+.activeOn {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+  color: black;
+}
+
+.activeOn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.activeOff {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.activeOff:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.activeHelp {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+

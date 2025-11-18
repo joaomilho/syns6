@@ -81,6 +81,10 @@ export default function PlayerPage() {
     null
   );
   const lyricsCache = useRef<Map<string, LyricLine[] | null>>(new Map());
+  const [hueDebugData, setHueDebugData] = useState<{
+    bass: number;
+    brightness: number;
+  } | null>(null);
 
   // Derive error state from session
   const sessionError =
@@ -201,19 +205,19 @@ export default function PlayerPage() {
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
 
-  // Hue lights react to music (only when active)
+  // Hue lights react to mic input only (ignore play state)
   useEffect(() => {
-    if (micData && hue.isActive && playbackState?.is_playing) {
+    if (hue.isActive && micData) {
       hue.reactToMusic({
         energy: micData.energy,
         bass: micData.bass,
         mid: micData.mid,
         treble: micData.treble,
-        isLoud: micData.isLoud,
-        voiceStrength: micData.voiceStrength,
+        subBass: micData.subBass,
+        presence: micData.presence,
       });
     }
-  }, [micData, hue, playbackState?.is_playing]);
+  }, [micData, hue.isActive, hue.reactToMusic]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -494,7 +498,66 @@ export default function PlayerPage() {
       {/* Hue Controls Panel */}
       {showHueControls && (
         <div className={styles.huePanel}>
-          <HueControls />
+          <HueControls hue={hue} />
+        </div>
+      )}
+
+      {/* Hue Debug Display */}
+      {hue.debugData && hue.isActive && (
+        <div
+          style={{
+            position: "fixed",
+            top: "80px",
+            right: "20px",
+            background: "rgba(0, 0, 0, 0.8)",
+            color: "white",
+            padding: "15px",
+            borderRadius: "8px",
+            fontFamily: "monospace",
+            fontSize: "14px",
+            zIndex: 1000,
+            minWidth: "220px",
+          }}
+        >
+          <div
+            style={{
+              marginBottom: "8px",
+              fontWeight: "bold",
+              borderBottom: "1px solid #666",
+              paddingBottom: "5px",
+            }}
+          >
+            💡 Hue Light Debug
+          </div>
+          <div style={{ marginBottom: "5px" }}>
+            Bass Input:{" "}
+            <span style={{ color: "#ff6b6b", fontWeight: "bold" }}>
+              {(hue.debugData.bass * 100).toFixed(1)}%
+            </span>
+          </div>
+          <div style={{ marginBottom: "5px" }}>
+            Brightness:{" "}
+            <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
+              {hue.debugData.brightness}/254
+            </span>
+          </div>
+          <div style={{ marginTop: "8px", fontSize: "12px", color: "#999" }}>
+            ({((hue.debugData.brightness / 254) * 100).toFixed(0)}% bright)
+          </div>
+           <div
+             style={{
+               marginTop: "10px",
+               fontSize: "11px",
+               color: "#666",
+               borderTop: "1px solid #444",
+               paddingTop: "8px",
+             }}
+           >
+             Bucket: {Math.round(hue.debugData.brightness / (254 / 12))} / 12
+           </div>
+           <div style={{ marginTop: "5px", fontSize: "10px", color: "#888" }}>
+             Lights: {hue.config?.selectedLights.length || 0} selected
+           </div>
         </div>
       )}
 

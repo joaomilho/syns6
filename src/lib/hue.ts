@@ -30,12 +30,33 @@ export interface HueLightState {
   alert?: "none" | "select" | "lselect";
 }
 
+export type FrequencyRange = "bass" | "mid" | "treble" | "sub-bass" | "presence";
+export type LightColor = "red" | "orange" | "yellow" | "green" | "cyan" | "blue" | "purple" | "pink" | "white";
+
+export interface LightConfig {
+  color: LightColor;
+  frequency: FrequencyRange;
+}
+
+// Color to hue mapping (0-360)
+const COLOR_TO_HUE: Record<LightColor, number> = {
+  red: 0,
+  orange: 30,
+  yellow: 60,
+  green: 120,
+  cyan: 180,
+  blue: 240,
+  purple: 280,
+  pink: 320,
+  white: 0, // White uses saturation 0
+};
+
 /**
  * Discover Hue bridges on the local network
  */
 export async function discoverBridges(): Promise<HueBridge[]> {
   try {
-    const response = await fetch("https://discovery.meethue.com/");
+    const response = await fetch("/api/hue/discover");
     if (!response.ok) {
       throw new Error("Failed to discover bridges");
     }
@@ -116,6 +137,8 @@ export async function setLightState(
   state: HueLightState
 ): Promise<void> {
   try {
+    console.log(`🔵 Sending to light ${lightId}:`, JSON.stringify(state));
+    
     const response = await fetch(
       `http://${bridgeIp}/api/${username}/lights/${lightId}/state`,
       {
@@ -126,13 +149,24 @@ export async function setLightState(
     );
 
     const data = await response.json();
+    console.log(`🔵 Response from light ${lightId}:`, data);
     
+    // Log the response for debugging
     if (data[0]?.error) {
+      console.error(`❌ Light ${lightId} error:`, data[0].error);
       throw new Error(data[0].error.description);
     }
+    
+    // Check if all properties were successfully set
+    const successCount = data.filter((item: any) => item.success).length;
+    const errorCount = data.filter((item: any) => item.error).length;
+    
+    if (errorCount > 0) {
+      console.warn(`⚠️ Light ${lightId}: ${successCount} success, ${errorCount} errors`, data);
+    }
   } catch (error) {
-    console.error(`Error setting light ${lightId} state:`, error);
-    // Don't throw - allow graceful degradation
+    // Re-throw to let the circuit breaker handle it
+    throw error;
   }
 }
 
@@ -169,7 +203,93 @@ export function hsvToHue(
 }
 
 /**
- * Create DRAMATIC music-reactive light effect
+ * Create light state for a specific light based on its color and frequency assignment
+ */
+export function lightConfigToState(
+  config: LightConfig,
+  audioData: {
+    bass: number; // 0-1
+    mid: number; // 0-1
+    treble: number; // 0-1
+    subBass: number; // 0-1
+    presence: number; // 0-1
+  }
+): HueLightState {
+  // Get the intensity for this light's frequency range
+  let intensity = 0;
+  switch (config.frequency) {
+    case "sub-bass":
+      intensity = audioData.subBass;
+      break;
+    case "bass":
+      intensity = audioData.bass;
+      break;
+    case "mid":
+      intensity = audioData.mid;
+      break;
+    case "treble":
+      intensity = audioData.treble;
+      break;
+    case "presence":
+      intensity = audioData.presence;
+      break;
+  }
+
+  // Apply exponential curve for more dramatic response
+  // This makes quiet sounds dimmer and loud sounds much brighter
+  const dramaticIntensity = Math.pow(intensity, 0.5); // More aggressive curve for drama
+  
+  // SUPER DRAMATIC MODE:
+  // 0-50%: Very dim red (1-20% brightness)
+  // 50-70%: Bright red (20-100% brightness)
+  // 70-100%: Transition to white/blue (full brightness)
+  
+  let brightness: number;
+  let hue: number;
+  let sat: number;
+  
+  if (intensity < 0.5) {
+    // Low intensity: very dim red
+    brightness = 1 + (intensity / 0.5) * 19; // 1-20% brightness
+    hue = 0; // Red
+    sat = 254; // Full saturation
+  } else if (intensity < 0.7) {
+    // Medium-high intensity: bright red
+    brightness = 20 + ((intensity - 0.5) / 0.2) * 80; // 20-100% brightness
+    hue = 0; // Red
+    sat = 254; // Full saturation
+  } else {
+    // Extreme intensity: red → purple → blue (smooth transition)
+    const extremeAmount = (intensity - 0.7) / 0.3; // 0-1
+    brightness = 100; // Full brightness
+    // Go backwards on color wheel: red (0/65535) → purple → blue (46920)
+    hue = Math.round(65535 - extremeAmount * 18615); // Smooth transition through purple
+    sat = 254; // Keep full saturation - pure colors only, no white
+  }
+
+  // Convert to Hue scale (0-254)
+  const rawBri = (brightness / 100) * 254;
+  
+  // Quantize into 12 buckets to reduce API calls
+  const numBuckets = 12;
+  const bucketSize = Math.floor(254 / numBuckets);
+  const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
+  
+  // Clamp to valid range and ensure integer
+  const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
+
+  // Send full state including color for dramatic effect
+  return {
+    on: true,
+    bri: finalBri,
+    hue: hue,
+    sat: sat,
+    transitiontime: 1, // 100ms smooth transition - balances responsiveness with smoothness
+  };
+}
+
+/**
+ * Create DRAMATIC music-reactive light effect (DEPRECATED - use lightConfigToState instead)
  */
 export function musicToLightState(
   energy: number, // 0-1
