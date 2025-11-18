@@ -251,6 +251,21 @@ export function useHueLights(): HueConnection {
       subBass: number;
       presence: number;
       voiceStrength?: number;
+      instruments?: {
+        drums: number;
+        drumComponents: {
+          kick: number;
+          snare: number;
+          hihat: number;
+          cymbal: number;
+          toms: number;
+        };
+        bass: number;
+        guitar: number;
+        piano: number;
+        brass: number;
+        strings: number;
+      };
     }, force: boolean = false) => {
       // Only react if explicitly active
       if (!config || !isConnected || !isActive || config.selectedLights.length === 0) {
@@ -284,6 +299,10 @@ export function useHueLights(): HueConnection {
       }
 
       // Update each light individually based on its configuration
+      
+      // Debug: log instruments data
+      console.log('🎸 micData.instruments:', micData.instruments);
+      
       const audioData = {
         bass: calculatedBass,
         mid: micData.mid,
@@ -291,6 +310,11 @@ export function useHueLights(): HueConnection {
         subBass: micData.subBass,
         presence: micData.presence,
         voice: micData.voiceStrength || 0, // Voice detection for voice-reactive lights
+        drums: {
+          snare: micData.instruments?.drumComponents?.snare || 0,
+          hihat: micData.instruments?.drumComponents?.hihat || 0,
+          cymbal: micData.instruments?.drumComponents?.cymbal || 0,
+        },
       };
       
 
@@ -320,6 +344,11 @@ export function useHueLights(): HueConnection {
       for (const lightId of lightsToUpdate) {
         const lightConfig = config.lightConfigs[lightId];
         if (!lightConfig) continue;
+
+        // Debug: log mode for first light
+        if (lightsToUpdate.indexOf(lightId) === 0) {
+          console.log(`💡 Light ${lightId} mode: ${lightConfig.mode}`);
+        }
 
         const lightState = lightConfigToState(lightConfig, audioData);
         const newBrightness = lightState.bri || 0;
