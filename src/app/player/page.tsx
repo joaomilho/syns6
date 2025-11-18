@@ -12,6 +12,7 @@ import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization";
+import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
@@ -24,6 +25,7 @@ type VisualizationType =
   | "waves"
   | "blackmetal"
   | "animated"
+  | "spectrum3d"
   | "debug";
 
 interface Track {
@@ -293,6 +295,14 @@ export default function PlayerPage() {
           isPlaying={playbackState?.is_playing || false}
         />
       )}
+      {visualizationType === "spectrum3d" && (
+        <Spectrum3DVisualization
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+        />
+      )}
       {visualizationType === "debug" && (
         <DebugVisualization
           isPlaying={playbackState?.is_playing || false}
@@ -385,6 +395,15 @@ export default function PlayerPage() {
             title="Morphing Blobs"
           >
             ◉
+          </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "spectrum3d" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("spectrum3d")}
+            title="3D Spectrum"
+          >
+            ▦
           </button>
           <button
             className={`${styles.vizButton} ${

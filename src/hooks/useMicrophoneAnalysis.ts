@@ -112,7 +112,12 @@ export function useMicrophoneAnalysis() {
 
         // Start analysis loop
         const analyze = () => {
-          if (!analyserRef.current || !dataArrayRef.current || !timeDataArrayRef.current) return;
+          if (
+            !analyserRef.current ||
+            !dataArrayRef.current ||
+            !timeDataArrayRef.current
+          )
+            return;
 
           // Get both frequency and time domain data
           analyserRef.current.getByteFrequencyData(dataArrayRef.current);
@@ -135,8 +140,10 @@ export function useMicrophoneAnalysis() {
           // ZCR helps distinguish voice (moderate ZCR) from noise (high ZCR) and bass (low ZCR)
           let zeroCrossings = 0;
           for (let i = 1; i < timeData.length; i++) {
-            if ((timeData[i] >= 128 && timeData[i - 1] < 128) ||
-                (timeData[i] < 128 && timeData[i - 1] >= 128)) {
+            if (
+              (timeData[i] >= 128 && timeData[i - 1] < 128) ||
+              (timeData[i] < 128 && timeData[i - 1] >= 128)
+            ) {
               zeroCrossings++;
             }
           }
@@ -149,7 +156,10 @@ export function useMicrophoneAnalysis() {
 
           const getEnergy = (startHz: number, endHz: number): number => {
             const startBin = Math.floor(startHz / binWidth);
-            const endBin = Math.min(Math.floor(endHz / binWidth), bufferLength - 1);
+            const endBin = Math.min(
+              Math.floor(endHz / binWidth),
+              bufferLength - 1
+            );
             let sum = 0;
             for (let i = startBin; i <= endBin; i++) {
               sum += freqData[i] / 255;
@@ -161,12 +171,12 @@ export function useMicrophoneAnalysis() {
           const bass = getEnergy(20, 250);
           const mid = getEnergy(250, 2000);
           const treble = getEnergy(2000, 8000);
-          const energy = (bass * 0.3 + mid * 0.4 + treble * 0.3);
+          const energy = bass * 0.3 + mid * 0.4 + treble * 0.3;
 
           // === STEP 5: VOICE DETECTION using multiple features ===
           const vocalRange = getEnergy(300, 3400); // Main vocal range
           const subBass = getEnergy(20, 80); // Voice doesn't produce this
-          
+
           // Voice characteristics:
           // 1. Strong energy in 300-3400Hz
           // 2. Moderate ZCR (0.05-0.15) - not too high (noise), not too low (bass)
@@ -175,47 +185,75 @@ export function useMicrophoneAnalysis() {
           const vocalClarity = volume > 0.01 ? vocalRange / (volume + 0.01) : 0;
           const vocalPitch = getEnergy(85, 300); // Fundamental
           const vocalHarmonics = getEnergy(1000, 4000); // Harmonics
-          
+
           // Track energy history for temporal analysis
           previousEnergyRef.current.push(vocalRange);
           if (previousEnergyRef.current.length > 5) {
             previousEnergyRef.current.shift();
           }
-          const energyVariance = previousEnergyRef.current.length > 1 ?
-            Math.abs(vocalRange - previousEnergyRef.current[previousEnergyRef.current.length - 2]) : 0;
+          const energyVariance =
+            previousEnergyRef.current.length > 1
+              ? Math.abs(
+                  vocalRange -
+                    previousEnergyRef.current[
+                      previousEnergyRef.current.length - 2
+                    ]
+                )
+              : 0;
 
           // Voice detection: strong vocal range + moderate ZCR + minimal sub-bass
-          const isVoice = 
+          const isVoice =
             vocalRange > 0.15 &&
-            zcr > 0.03 && zcr < 0.2 &&
+            zcr > 0.03 &&
+            zcr < 0.2 &&
             subBass < 0.3 &&
             volume > 0.05;
 
           // === STEP 6: DRUM COMPONENT DETECTION ===
           // Kick drum: Very low frequencies with sharp attack
           const kickLevel = Math.min(1, getEnergy(40, 80) * 2.5);
-          
+
           // Snare drum: Mid-low with high transient
           const snareLevel = Math.min(1, getEnergy(150, 250) * 2);
-          
+
           // Hi-hat: Very high frequencies, crisp
           const hihatLevel = Math.min(1, getEnergy(8000, 12000) * 2);
-          
+
           // Cymbals: High frequencies, sustained
           const cymbalLevel = Math.min(1, getEnergy(4000, 8000) * 1.5);
-          
+
           // Toms: Between kick and snare
           const tomsLevel = Math.min(1, getEnergy(80, 150) * 2);
-          
+
           // Overall drums (combination of all components)
-          const drumsLevel = Math.min(1, (kickLevel + snareLevel + hihatLevel * 0.5 + cymbalLevel * 0.5 + tomsLevel) / 3);
+          const drumsLevel = Math.min(
+            1,
+            (kickLevel +
+              snareLevel +
+              hihatLevel * 0.5 +
+              cymbalLevel * 0.5 +
+              tomsLevel) /
+              3
+          );
 
           // === STEP 7: OTHER INSTRUMENT DETECTION ===
           const bassLevel = Math.min(1, getEnergy(30, 250) * 2);
-          const guitarLevel = Math.min(1, (getEnergy(80, 400) + getEnergy(400, 3000) * 1.5) / 2);
-          const pianoLevel = Math.min(1, (getEnergy(27, 500) + getEnergy(500, 4000)) / 2);
-          const brassLevel = Math.min(1, (getEnergy(150, 600) + getEnergy(600, 5000) * 1.2) / 2);
-          const stringsLevel = Math.min(1, (getEnergy(200, 800) + getEnergy(800, 4000)) / 2);
+          const guitarLevel = Math.min(
+            1,
+            (getEnergy(80, 400) + getEnergy(400, 3000) * 1.5) / 2
+          );
+          const pianoLevel = Math.min(
+            1,
+            (getEnergy(27, 500) + getEnergy(500, 4000)) / 2
+          );
+          const brassLevel = Math.min(
+            1,
+            (getEnergy(150, 600) + getEnergy(600, 5000) * 1.2) / 2
+          );
+          const stringsLevel = Math.min(
+            1,
+            (getEnergy(200, 800) + getEnergy(800, 4000)) / 2
+          );
 
           // === STEP 7: Detect sudden loud sounds ===
           const volumeChange = volume - previousVolumeRef.current;
@@ -263,7 +301,9 @@ export function useMicrophoneAnalysis() {
         analyze();
       } catch (err) {
         console.error("Error accessing microphone:", err);
-        setError(err instanceof Error ? err.message : "Failed to access microphone");
+        setError(
+          err instanceof Error ? err.message : "Failed to access microphone"
+        );
         setIsEnabled(false);
       }
     };
@@ -295,4 +335,3 @@ export function useMicrophoneAnalysis() {
     error,
   };
 }
-
