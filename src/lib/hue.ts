@@ -32,7 +32,7 @@ export interface HueLightState {
 
 export type FrequencyRange = "bass" | "mid" | "treble" | "sub-bass" | "presence";
 export type LightColor = "red" | "orange" | "yellow" | "green" | "cyan" | "blue" | "purple" | "pink" | "white";
-export type LightMode = "bass" | "voice";
+export type LightMode = "bass" | "voice" | "drums";
 
 export interface LightConfig {
   mode: LightMode;
@@ -213,16 +213,27 @@ export function lightConfigToState(
     subBass: number; // 0-1
     presence: number; // 0-1
     voice?: number; // 0-1, optional for voice detection
+    drums?: {
+      snare: number; // 0-1
+      hihat: number; // 0-1
+      cymbal: number; // 0-1
+    };
   }
 ): HueLightState {
   // Handle different modes
+  console.log(`🎵 lightConfigToState called with mode: ${config.mode}`, audioData.drums);
+  
   if (config.mode === "bass") {
     return createBassLightState(audioData.bass);
   } else if (config.mode === "voice") {
     return createVoiceLightState(audioData.voice || 0);
+  } else if (config.mode === "drums") {
+    console.log(`🥁 Calling createDrumsLightState with:`, audioData.drums);
+    return createDrumsLightState(audioData);
   }
   
   // Fallback to bass mode if mode is not recognized
+  console.log(`⚠️ Unknown mode: ${config.mode}, falling back to bass`);
   return createBassLightState(audioData.bass);
 }
 
@@ -315,6 +326,81 @@ function createVoiceLightState(intensity: number): HueLightState {
     const extremeAmount = (intensity - 0.7) / 0.3; // 0-1
     brightness = 90 + extremeAmount * 10; // 90-100% brightness
     hue = Math.round(46920 - extremeAmount * 10000); // Blue to cyan
+    sat = 254; // Full saturation
+  }
+
+  // Convert to Hue scale (0-254)
+  const rawBri = (brightness / 100) * 254;
+  
+  // Quantize into 12 buckets to reduce API calls
+  const numBuckets = 12;
+  const bucketSize = Math.floor(254 / numBuckets);
+  const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
+  
+  // Clamp to valid range and ensure integer
+  const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
+
+  return {
+    on: true,
+    bri: finalBri,
+    hue: hue,
+    sat: sat,
+    transitiontime: 1, // 100ms smooth transition
+  };
+}
+
+/**
+ * Create drums-reactive light state (yellow → orange, dramatic)
+ * Focuses on well-detected percussion: hi-hat, cymbal, and snare
+ */
+function createDrumsLightState(audioData: {
+  drums?: {
+    snare: number;
+    hihat: number;
+    cymbal: number;
+  };
+}): HueLightState {
+  // Calculate drums intensity from well-detected elements only
+  const snare = audioData.drums?.snare || 0;
+  const hihat = audioData.drums?.hihat || 0;
+  const cymbal = audioData.drums?.cymbal || 0;
+  
+  // Weight hi-hat and cymbal more heavily (they're detected very well)
+  // Snare is good but less consistent
+  const intensity = (hihat * 2.0 + cymbal * 2.0 + snare * 1.0) / 5.0;
+  
+  // Debug logging
+  if (intensity > 0.1) {
+    console.log(`🥁 Drums: H=${hihat.toFixed(2)} C=${cymbal.toFixed(2)} S=${snare.toFixed(2)} → ${(intensity * 100).toFixed(1)}%`);
+  }
+  
+  // Apply exponential curve for more dramatic response
+  const dramaticIntensity = Math.pow(intensity, 0.5);
+  
+  // DRUMS MODE: Yellow to orange light
+  // 0-40%: Very dim yellow (barely visible)
+  // 40-70%: Bright yellow (clear hits)
+  // 70-100%: Intense orange (heavy percussion)
+  
+  let brightness: number;
+  let hue: number;
+  let sat: number;
+  
+  if (intensity < 0.4) {
+    // Low intensity: very dim yellow
+    brightness = 1 + (intensity / 0.4) * 29; // 1-30% brightness
+    hue = 10920; // Yellow (60° = 10920 in Hue scale)
+    sat = 254; // Full saturation
+  } else if (intensity < 0.7) {
+    // Medium intensity: bright yellow
+    brightness = 30 + ((intensity - 0.4) / 0.3) * 60; // 30-90% brightness
+    hue = 10920; // Yellow
+    sat = 254; // Full saturation
+  } else {
+    // High intensity: intense orange
+    const extremeAmount = (intensity - 0.7) / 0.3; // 0-1
+    brightness = 90 + extremeAmount * 10; // 90-100% brightness
+    hue = Math.round(10920 - extremeAmount * 5460); // Yellow (60°) to orange (30°)
     sat = 254; // Full saturation
   }
 
