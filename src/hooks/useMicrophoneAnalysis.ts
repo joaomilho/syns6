@@ -173,41 +173,61 @@ export function useMicrophoneAnalysis() {
           const treble = getEnergy(2000, 8000);
           const energy = bass * 0.3 + mid * 0.4 + treble * 0.3;
 
-          // === STEP 5: VOICE DETECTION using multiple features ===
-          const vocalRange = getEnergy(300, 3400); // Main vocal range
+          // === STEP 5: VOICE DETECTION (BACK TO BASICS) ===
+          // Use the ORIGINAL approach that worked, with minimal bass filtering
+          const vocalFundamental = getEnergy(85, 300); // Core voice frequencies
+          const vocalHarmonics = getEnergy(300, 3400); // Overtones
+          const vocalLowMid = getEnergy(300, 1000); // Important for speech clarity
+          const vocalHighMid = getEnergy(1000, 3400); // Sibilance and brightness
           const subBass = getEnergy(20, 80); // Voice doesn't produce this
 
-          // Voice characteristics:
-          // 1. Strong energy in 300-3400Hz
-          // 2. Moderate ZCR (0.05-0.15) - not too high (noise), not too low (bass)
-          // 3. Low sub-bass
-          const vocalStrength = vocalRange;
-          const vocalClarity = volume > 0.01 ? vocalRange / (volume + 0.01) : 0;
-          const vocalPitch = getEnergy(85, 300); // Fundamental
-          const vocalHarmonics = getEnergy(1000, 4000); // Harmonics
+          // Original calculation that worked well
+          const rawVocalStrength =
+            (vocalFundamental * 2.0 + // Fundamental is most important
+              vocalLowMid * 1.5 + // Speech clarity
+              vocalHighMid * 0.8) / // Brightness/sibilance
+            4.3; // Normalize
+
+          // Simple bass check: if there's PURE sub-bass (20-80Hz), reduce voice slightly
+          // But don't kill it completely - just reduce by the amount of sub-bass
+          const bassReduction = Math.max(0.5, 1.0 - subBass * 0.5); // Reduce by up to 50%
+
+          // Apply 2x boost and bass reduction
+          const vocalStrength = Math.min(
+            1.0,
+            rawVocalStrength * 2.0 * bassReduction
+          );
+
+          const vocalClarity =
+            volume > 0.01 ? vocalStrength / (volume + 0.01) : 0;
+          const vocalPitch = vocalFundamental;
 
           // Track energy history for temporal analysis
-          previousEnergyRef.current.push(vocalRange);
+          previousEnergyRef.current.push(vocalStrength);
           if (previousEnergyRef.current.length > 5) {
             previousEnergyRef.current.shift();
           }
           const energyVariance =
             previousEnergyRef.current.length > 1
               ? Math.abs(
-                  vocalRange -
+                  vocalStrength -
                     previousEnergyRef.current[
                       previousEnergyRef.current.length - 2
                     ]
                 )
               : 0;
 
-          // Voice detection: strong vocal range + moderate ZCR + minimal sub-bass
+          // Improved voice detection:
+          // - Strong vocal strength (fundamentals + harmonics)
+          // - Moderate ZCR (not noise, not pure bass)
+          // - Minimal sub-bass (voice doesn't go that low)
+          // - Sufficient volume
           const isVoice =
-            vocalRange > 0.15 &&
+            vocalStrength > 0.12 &&
             zcr > 0.03 &&
-            zcr < 0.2 &&
-            subBass < 0.3 &&
-            volume > 0.05;
+            zcr < 0.25 &&
+            subBass < 0.4 &&
+            volume > 0.03;
 
           // === STEP 6: DRUM COMPONENT DETECTION ===
           // Kick drum: Very low frequencies with sharp attack
