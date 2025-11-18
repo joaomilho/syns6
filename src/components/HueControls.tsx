@@ -97,10 +97,11 @@ export default function HueControls({ hue }: HueControlsProps) {
                   <select
                     className={styles.modeSelect}
                     value={config.lightConfigs[id]?.mode || "bass"}
-                    onChange={(e) => hue.setLightConfig(id, { mode: e.target.value as "bass" | "voice" })}
+                    onChange={(e) => hue.setLightConfig(id, { mode: e.target.value as "bass" | "voice" | "drums" })}
                   >
                     <option value="bass">🔴 BASS</option>
                     <option value="voice">🔵 VOICE</option>
+                    <option value="drums">🟡 DRUMS</option>
                   </select>
                 )}
                 <span className={light.state.reachable ? styles.reachable : styles.unreachable}>

@@ -215,7 +215,8 @@ export default function PlayerPage() {
         treble: micData.treble,
         subBass: micData.subBass,
         presence: micData.presence,
-        voiceStrength: micData.voiceStrength, // Add voice detection
+        voiceStrength: micData.voiceStrength,
+        instruments: micData.instruments, // Add instruments for drums detection
       });
     }
   }, [micData, hue.isActive, hue.reactToMusic]);
@@ -540,6 +541,28 @@ export default function PlayerPage() {
             Voice Input:{" "}
             <span style={{ color: "#4ecdc4", fontWeight: "bold" }}>
               {micData ? (micData.voiceStrength * 100).toFixed(1) : 0}%
+            </span>
+          </div>
+          <div style={{ marginBottom: "5px" }}>
+            Drums Input:{" "}
+            <span style={{ color: "#ffd93d", fontWeight: "bold" }}>
+              {micData && micData.instruments?.drumComponents
+                ? (
+                    (((micData.instruments.drumComponents.hihat || 0) * 2.0 +
+                      (micData.instruments.drumComponents.cymbal || 0) * 2.0 +
+                      (micData.instruments.drumComponents.snare || 0) * 1.0) /
+                      5.0) *
+                    100
+                  ).toFixed(1)
+                : 0}
+              %
+            </span>
+            <span
+              style={{ fontSize: "10px", color: "#999", marginLeft: "5px" }}
+            >
+              (H:{micData?.instruments?.drumComponents?.hihat?.toFixed(2) || 0}{" "}
+              C:{micData?.instruments?.drumComponents?.cymbal?.toFixed(2) || 0}{" "}
+              S:{micData?.instruments?.drumComponents?.snare?.toFixed(2) || 0})
             </span>
           </div>
           <div style={{ marginBottom: "5px" }}>
