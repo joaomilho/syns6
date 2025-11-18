@@ -1,6 +1,6 @@
 /**
- * Lyrics fetching service
- * Uses multiple sources to get synchronized lyrics
+ * Lyrics client-side utilities
+ * Fetching is now done via backend API route
  */
 
 export interface LyricLine {
@@ -8,102 +8,62 @@ export interface LyricLine {
   text: string;
 }
 
-export interface SyncedLyrics {
-  lines: LyricLine[];
-  artist: string;
-  title: string;
-}
-
 /**
- * Parse LRC format lyrics (time-synced)
- * Format: [mm:ss.xx]lyric text
- */
-export function parseLRC(lrcContent: string): LyricLine[] {
-  const lines: LyricLine[] = [];
-  const lrcLines = lrcContent.split('\n');
-
-  for (const line of lrcLines) {
-    // Match [mm:ss.xx] or [mm:ss]
-    const match = line.match(/\[(\d+):(\d+)(?:\.(\d+))?\](.*)/);
-    if (match) {
-      const minutes = parseInt(match[1]);
-      const seconds = parseInt(match[2]);
-      const centiseconds = match[3] ? parseInt(match[3]) : 0;
-      const text = match[4].trim();
-
-      const timeMs = (minutes * 60 + seconds) * 1000 + centiseconds * 10;
-      
-      if (text) {
-        lines.push({ time: timeMs, text });
-      }
-    }
-  }
-
-  return lines.sort((a, b) => a.time - b.time);
-}
-
-/**
- * Fetch synced lyrics from LRCLIB (free, open-source)
+ * Fetch synced lyrics from backend API
+ * Backend tries multiple sources: LRCLIB → NetEase → LRCLIB Search
  */
 export async function fetchSyncedLyrics(
   trackName: string,
   artistName: string,
   duration: number
-): Promise<SyncedLyrics | null> {
+): Promise<LyricLine[] | null> {
   try {
+    console.log(`🔍 Fetching lyrics for: ${trackName} by ${artistName}`);
+
     const params = new URLSearchParams({
-      track_name: trackName,
-      artist_name: artistName,
-      duration: Math.round(duration / 1000).toString(),
+      track: trackName,
+      artist: artistName,
+      duration: duration.toString(),
     });
 
-    const response = await fetch(
-      `https://lrclib.net/api/get?${params.toString()}`
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
-    if (!response.ok) {
-      console.log('LRCLIB: No synced lyrics found');
+    try {
+      const response = await fetch(`/api/lyrics?${params.toString()}`, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log("❌ No synced lyrics found from any source");
+          return null;
+        }
+        console.error(`API error: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const data = await response.json();
+      
+      if (data.lines && data.lines.length > 0) {
+        console.log(`✅ Lyrics found from ${data.source}: ${data.lines.length} lines`);
+        return data.lines;
+      }
+
+      return null;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error("⏱️ Lyrics request timed out after 20 seconds");
+      } else {
+        console.error("Network error fetching lyrics:", fetchError.message);
+      }
       return null;
     }
-
-    const data = await response.json();
-
-    if (data.syncedLyrics) {
-      const lines = parseLRC(data.syncedLyrics);
-      return {
-        lines,
-        artist: artistName,
-        title: trackName,
-      };
-    }
-
-    return null;
   } catch (error) {
-    console.error('Error fetching synced lyrics:', error);
-    return null;
-  }
-}
-
-/**
- * Fetch plain lyrics as fallback (from lyrics.ovh)
- */
-export async function fetchPlainLyrics(
-  trackName: string,
-  artistName: string
-): Promise<string | null> {
-  try {
-    const response = await fetch(
-      `https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.lyrics || null;
-  } catch (error) {
-    console.error('Error fetching plain lyrics:', error);
+    console.error("Error fetching synced lyrics:", error);
     return null;
   }
 }
