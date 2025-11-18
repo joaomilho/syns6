@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCurrentlyPlaying } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -62,6 +62,10 @@ export default function PlayerPage() {
     useState<VisualizationType>("particles");
   const [showHueControls, setShowHueControls] = useState(false);
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
+  const [lastFetchedTrackId, setLastFetchedTrackId] = useState<string | null>(
+    null
+  );
+  const lyricsCache = useRef<Map<string, LyricLine[] | null>>(new Map());
 
   // Derive error state from session
   const sessionError =
@@ -93,28 +97,44 @@ export default function PlayerPage() {
         setError(null);
         setTokenRefreshAttempts(0); // Reset on success
 
-        // Fetch synced lyrics
-        if (data.item.id) {
-          try {
-            const syncedLyrics = await fetchSyncedLyrics(
-              data.item.name,
-              data.item.artists[0].name,
-              data.item.duration_ms
-            );
-            if (syncedLyrics) {
-              setLyrics(syncedLyrics.lines);
-              console.log(
-                "✅ Synced lyrics loaded:",
-                syncedLyrics.lines.length,
-                "lines"
+        // Fetch synced lyrics only if track changed
+        if (data.item.id && data.item.id !== lastFetchedTrackId) {
+          // Check cache first
+          if (lyricsCache.current.has(data.item.id)) {
+            const cachedLyrics = lyricsCache.current.get(data.item.id);
+            setLyrics(cachedLyrics || null);
+            setLastFetchedTrackId(data.item.id);
+            console.log("📦 Using cached lyrics for track:", data.item.id);
+          } else {
+            // Fetch from API
+            try {
+              const syncedLyrics = await fetchSyncedLyrics(
+                data.item.name,
+                data.item.artists[0].name,
+                data.item.duration_ms
               );
-            } else {
+              const lyricsLines = syncedLyrics?.lines || null;
+
+              // Cache the result (even if null)
+              lyricsCache.current.set(data.item.id, lyricsLines);
+              setLyrics(lyricsLines);
+              setLastFetchedTrackId(data.item.id);
+
+              if (lyricsLines) {
+                console.log(
+                  "✅ Synced lyrics loaded:",
+                  lyricsLines.length,
+                  "lines"
+                );
+              } else {
+                console.log("⚠️ No synced lyrics found");
+              }
+            } catch (err) {
+              console.error("❌ Error fetching lyrics:", err);
+              lyricsCache.current.set(data.item.id, null);
               setLyrics(null);
-              console.log("⚠️ No synced lyrics found");
+              setLastFetchedTrackId(data.item.id);
             }
-          } catch (err) {
-            console.error("❌ Error fetching lyrics:", err);
-            setLyrics(null);
           }
         }
       } else {
@@ -298,7 +318,6 @@ export default function PlayerPage() {
           >
             ⦿
           </button>
-
           {/* Hue Lights Toggle */}
           <button
             className={`${styles.vizButton} ${
