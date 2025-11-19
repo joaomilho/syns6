@@ -7,6 +7,7 @@ import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
 import { useCamera } from "@/hooks/useCamera";
+import { useFPS } from "@/hooks/useFPS";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -85,6 +86,7 @@ export default function PlayerPage() {
     bass: number;
     brightness: number;
   } | null>(null);
+  const fps = useFPS();
 
   // Derive error state from session
   const sessionError =
@@ -335,6 +337,7 @@ export default function PlayerPage() {
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
+          fps={fps}
         />
       )}
       {visualizationType === "camera" && (
@@ -357,6 +360,11 @@ export default function PlayerPage() {
           hueConfig={hue.config}
         />
       )}
+
+      {/* FPS Counter */}
+      <div className={styles.fpsCounter}>
+        {fps} FPS
+      </div>
 
       {/* Top Controls */}
       <div className={styles.topBar}>
