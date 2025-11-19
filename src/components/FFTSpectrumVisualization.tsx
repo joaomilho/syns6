@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { LyricLine } from "@/lib/lyrics";
 import Lyrics3D from "./Lyrics3D";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { OrbitControls } from "@react-three/drei";
 
 interface FFTSpectrumVisualizationProps {
@@ -14,14 +13,111 @@ interface FFTSpectrumVisualizationProps {
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   isPlaying?: boolean;
+  fps?: number;
 }
 
-function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
+/**
+ * Calculate target row count based on FPS
+ * Goal: Maintain 60 FPS
+ * - If FPS < 60: Reduce rows to improve performance
+ * - If FPS >= 60: Can increase rows (up to 800 max)
+ */
+function calculateTargetRows(fps: number, currentRows: number): number {
+  const TARGET_FPS = 60;
+  const MIN_ROWS = 100;
+  const MAX_ROWS = 800;
+  
+  if (fps >= TARGET_FPS) {
+    // FPS is good, we can increase rows towards maximum
+    // Gradually increase based on how much above 60 we are
+    const excessFPS = fps - TARGET_FPS;
+    const maxIncrease = Math.min(MAX_ROWS - currentRows, excessFPS * 10); // 10 rows per FPS above 60
+    return Math.min(MAX_ROWS, currentRows + maxIncrease);
+  } else {
+    // FPS is below target, REDUCE rows to improve performance
+    // Reduce more aggressively the further below 60 we are
+    const fpsDeficit = TARGET_FPS - fps;
+    const reductionFactor = fpsDeficit / TARGET_FPS; // 0 to 1, how far below target
+    const reduction = Math.max(50, currentRows * reductionFactor * 0.3); // Reduce by up to 30% of current
+    return Math.max(MIN_ROWS, currentRows - reduction);
+  }
+}
+
+function FFTSpectrumPlanes({ 
+  micData, 
+  fps = 60,
+  onRowsChange 
+}: { 
+  micData?: MicrophoneData; 
+  fps?: number;
+  onRowsChange?: (rows: number) => void;
+}) {
   const groupRef = useRef<THREE.Group>(null);
+  
+  // Dynamic row count based on FPS - start with low rows that work well
+  const [rows, setRows] = useState(200); // Start low (user confirmed 100-200 works at 60fps)
+  
+  // Notify parent when rows change
+  useEffect(() => {
+    onRowsChange?.(rows);
+  }, [rows, onRowsChange]);
+  
+  // Track FPS history for stable averaging (avoid reacting to temporary spikes/drops)
+  const fpsHistory = useRef<number[]>([]);
+  const lastRowChangeTime = useRef<number>(0);
+  const isChangingRows = useRef<boolean>(false);
+  
+  // Update rows based on FPS with debouncing and averaging
+  useEffect(() => {
+    if (fps <= 0) return;
+    
+    // Add to history (keep last 5 seconds of FPS readings)
+    fpsHistory.current.push(fps);
+    if (fpsHistory.current.length > 5) {
+      fpsHistory.current.shift();
+    }
+    
+    // Only proceed if we have enough history and haven't changed recently
+    const now = Date.now();
+    const timeSinceLastChange = now - lastRowChangeTime.current;
+    const minTimeBetweenChanges = 3000; // Wait at least 3 seconds between changes
+    
+    if (fpsHistory.current.length < 3 || timeSinceLastChange < minTimeBetweenChanges) {
+      return; // Not enough data or too soon after last change
+    }
+    
+    // Calculate average FPS over history
+    const avgFPS = fpsHistory.current.reduce((a, b) => a + b, 0) / fpsHistory.current.length;
+    
+    // Calculate target rows based on FPS
+    // If FPS < 60: reduce rows, if FPS >= 60: can increase rows
+    const targetRows = calculateTargetRows(avgFPS, rows);
+    const rowDiff = Math.abs(targetRows - rows);
+    
+    // Only change if difference is substantial (at least 100 rows) and sustained
+    // This prevents constant recreation which causes the performance issue
+    // Be more aggressive when reducing (FPS < 60) - reduce even with smaller differences
+    const minDiff = avgFPS < 60 ? 50 : 150;
+    if (rowDiff >= minDiff && !isChangingRows.current) {
+      isChangingRows.current = true;
+      lastRowChangeTime.current = now;
+      
+      // Update rows
+      setRows(targetRows);
+      
+      // Reset flag after a delay (mesh recreation takes time)
+      setTimeout(() => {
+        isChangingRows.current = false;
+      }, 1000);
+    }
+  }, [fps, rows]);
+  
+  // Reuse objects outside useFrame to avoid allocations every frame
+  const dummy = useRef(new THREE.Object3D());
+  const tempColor = useRef(new THREE.Color());
 
   // Grid configuration - similar to the original project
   const cols = 64; // Number of frequency bars
-  const rows = 800; // Number of rows creating depth (more rows = longer wave)
   const spacingX = 0.45;
   const spacingZ = 0.5;
 
@@ -89,11 +185,17 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
   const frequencyHistory = useRef<number[][]>([]);
   const maxHistoryLength = rows;
 
-  // Store positions for each point
+  // Store positions for each point - resize when rows change
   const positions = useRef<Float32Array>(new Float32Array(cols * rows * 3));
-
-  // Initialize positions
+  
+  // Initialize/resize positions when rows change
   useMemo(() => {
+    // Resize positions array if needed
+    const requiredSize = cols * rows * 3;
+    if (positions.current.length !== requiredSize) {
+      positions.current = new Float32Array(requiredSize);
+    }
+    
     const pos = positions.current;
     let idx = 0;
     for (let col = 0; col < cols; col++) {
@@ -104,6 +206,11 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
         pos[idx++] = 0;
         pos[idx++] = z;
       }
+    }
+    
+    // Reset frequency history when rows change significantly
+    if (frequencyHistory.current.length > rows * 1.5) {
+      frequencyHistory.current = frequencyHistory.current.slice(0, rows);
     }
   }, [cols, rows, spacingX, spacingZ]);
 
@@ -154,20 +261,22 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
       currentFrequencies.push(avgValue / 255);
     }
 
-    // Add current frequencies to history
+    // Add current frequencies to history (newest at front)
+    // Note: unshift is O(n) but necessary for correct ordering
+    // Could be optimized with circular buffer, but this works for now
     frequencyHistory.current.unshift(currentFrequencies);
     if (frequencyHistory.current.length > maxHistoryLength) {
-      frequencyHistory.current.pop();
+      frequencyHistory.current.pop(); // Remove oldest
     }
 
     // Update positions based on frequency history
     const pos = positions.current;
+    const history = frequencyHistory.current;
     for (let col = 0; col < cols; col++) {
       for (let row = 0; row < rows; row++) {
         const idx = (col * rows + row) * 3;
-        const historyIndex = Math.min(row, frequencyHistory.current.length - 1);
-        const normalizedValue =
-          frequencyHistory.current[historyIndex]?.[col] || 0;
+        const historyIndex = Math.min(row, history.length - 1);
+        const normalizedValue = history[historyIndex]?.[col] || 0;
 
         const height = Math.max(0.1, normalizedValue * 8);
         pos[idx + 1] = height;
@@ -175,8 +284,9 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
     }
 
     // Update instanced meshes - create cylinders between consecutive points
-    const dummy = new THREE.Object3D();
-    const tempColor = new THREE.Color();
+    // Reuse objects to avoid allocations every frame
+    const dummyObj = dummy.current;
+    const tempColorObj = tempColor.current;
 
     instancedMeshes.forEach(({ mesh, baseColor, col }) => {
       for (let row = 0; row < rows - 1; row++) {
@@ -196,7 +306,7 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
         const midY = (y1 + y2) / 2;
         const midZ = (z1 + z2) / 2;
 
-        dummy.position.set(midX, midY, midZ);
+        dummyObj.position.set(midX, midY, midZ);
 
         // Calculate length and rotation
         const dx = x2 - x1;
@@ -205,19 +315,19 @@ function FFTSpectrumPlanes({ micData }: { micData?: MicrophoneData }) {
         const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
         // Point cylinder from point1 to point2
-        dummy.lookAt(x2, y2, z2);
-        dummy.rotateX(Math.PI / 2);
+        dummyObj.lookAt(x2, y2, z2);
+        dummyObj.rotateX(Math.PI / 2);
 
         // Scale cylinder to match distance
-        dummy.scale.set(1, length, 1);
+        dummyObj.scale.set(1, length, 1);
 
-        // Apply fade based on distance
+        // Apply fade based on distance (pre-calculate fade factors could be optimized further)
         const fadeFactor = Math.pow(1 - row / rows, 3);
-        tempColor.copy(baseColor).multiplyScalar(fadeFactor);
+        tempColorObj.copy(baseColor).multiplyScalar(fadeFactor);
 
-        dummy.updateMatrix();
-        mesh.setMatrixAt(row, dummy.matrix);
-        mesh.setColorAt(row, tempColor);
+        dummyObj.updateMatrix();
+        mesh.setMatrixAt(row, dummyObj.matrix);
+        mesh.setColorAt(row, tempColorObj);
       }
 
       mesh.instanceMatrix.needsUpdate = true;
@@ -241,7 +351,10 @@ export default function FFTSpectrumVisualization({
   lyrics,
   currentTimeMs,
   isPlaying,
+  fps = 60,
 }: FFTSpectrumVisualizationProps) {
+  const [rows, setRows] = useState(200);
+  
   return (
     <div
       style={{
@@ -253,6 +366,29 @@ export default function FFTSpectrumVisualization({
         zIndex: 0,
       }}
     >
+      {/* Row count display */}
+      <div
+        style={{
+          position: "fixed",
+          top: "60px",
+          right: "16px",
+          zIndex: 101,
+          padding: "8px 16px",
+          background: "rgba(0, 0, 0, 0.7)",
+          backdropFilter: "blur(10px)",
+          borderRadius: "20px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          color: "#fff",
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "14px",
+          fontWeight: 600,
+          letterSpacing: "0.5px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        {rows} Rows
+      </div>
+      
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
         style={{
@@ -273,7 +409,7 @@ export default function FFTSpectrumVisualization({
           rotation={[0.3, Math.PI, 0]}
           scale={[-1.5, 1.5, 1.5]}
         >
-          <FFTSpectrumPlanes micData={micData} />
+          <FFTSpectrumPlanes micData={micData} fps={fps} onRowsChange={setRows} />
           {/* Grid floor */}
           <gridHelper
             args={[80, 80, "#333344", "#111122"]}
@@ -286,19 +422,11 @@ export default function FFTSpectrumVisualization({
           <Lyrics3D
             lyrics={lyrics}
             currentTimeMs={currentTimeMs || 0}
+            isPlaying={isPlaying || false}
+            syncedData={null}
             micData={micData}
           />
         )}
-
-        {/* Bloom effect for glow */}
-        <EffectComposer>
-          {/* <Bloom
-            intensity={0.1}
-            luminanceThreshold={0.8}
-            luminanceSmoothing={0.1}
-            radius={0}
-          /> */}
-        </EffectComposer>
       </Canvas>
     </div>
   );
