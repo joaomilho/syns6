@@ -8,4 +8,11 @@
     Which lights have "built-in effects (colorloop or advanced ones like Cosmos, Enchant, Sunbeam, Underwater)"?
 [ ] Get other HUE sensor 
     Brainstorm how to integrate them (motion, temperature, etc). IKEA also has those, cheaper now.
+[ ] Pre-lyrics download
+    We can check which songs will play next and pre-download lyrics in the client
+[ ] Mobile app
+    A mobile app could focus only on lyrics so people in a group 
+    can sing together. Could even capture the mic and send to the main view.
+[ ] Avoid screen saver 
+    Find a way to avoid the screen to go into screen saver mode from the browser, is that possible? Else what, use a wrapper and make it an app?
 [ ]
