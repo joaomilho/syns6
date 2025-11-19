@@ -97,14 +97,14 @@ function LyricText3D({
     let targetScale = 1.0;
     if (isCurrent) {
       const voiceStrength = micData?.voiceStrength || 0;
-      const voiceScale = 1 + voiceStrength * 1.5;
-      targetScale = 1.7 * voiceScale; // Reduced from 2.0 to 1.7
+      const voiceScale = 1 + voiceStrength/2;
+      targetScale = 1.6 * voiceScale; // Reduced from 2.0 to 1.7
       groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
       targetScale = 1.0;
       groupRef.current.position.y = position[1];
     } else if (offset === 1) {
-      targetScale = 1.5;
+      targetScale = 1.6;
       groupRef.current.position.y = position[1];
     } else if (offset === 2) {
       targetScale = 1.0;
