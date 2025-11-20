@@ -20,23 +20,13 @@ import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import HueControls from "@/components/HueControls";
+import VisualizationDropdown, {
+  VisualizationType,
+} from "@/components/VisualizationDropdown";
+import ModeDropdown, { VisualizationMode } from "@/components/ModeDropdown";
 import styles from "./player.module.css";
 import Link from "next/link";
 import Image from "next/image";
-
-type VisualizationType =
-  | "particles"
-  | "fractal"
-  | "psychedelic"
-  | "youtube"
-  | "waves"
-  | "blackmetal"
-  | "animated"
-  | "spectrum3d"
-  | "wavespectrum"
-  | "fftspectrum"
-  | "camera"
-  | "debug";
 
 interface Track {
   id: string;
@@ -83,19 +73,26 @@ export default function PlayerPage() {
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
+  const [visualizationMode, setVisualizationMode] =
+    useState<VisualizationMode>("STATIC");
   const [showHueControls, setShowHueControls] = useState(false);
   
-  // Load saved visualization type on mount
+  // Load saved visualization type and mode on mount
   useEffect(() => {
-    const loadVisualizationType = async () => {
-      const { getVisualizationType } = await import('@/lib/storage');
+    const loadPreferences = async () => {
+      const { getVisualizationType, getVisualizationMode } = await import('@/lib/storage');
       const savedType = await getVisualizationType();
+      const savedMode = await getVisualizationMode();
       if (savedType) {
         console.log(`🎨 Restoring visualization: ${savedType}`);
         setVisualizationType(savedType as VisualizationType);
       }
+      if (savedMode) {
+        console.log(`🎯 Restoring mode: ${savedMode}`);
+        setVisualizationMode(savedMode as VisualizationMode);
+      }
     };
-    loadVisualizationType();
+    loadPreferences();
   }, []);
   
   // Save visualization type when it changes
@@ -106,6 +103,50 @@ export default function PlayerPage() {
     };
     saveVisualizationType();
   }, [visualizationType]);
+
+  // Save visualization mode when it changes
+  useEffect(() => {
+    const saveMode = async () => {
+      const { saveVisualizationMode } = await import('@/lib/storage');
+      await saveVisualizationMode(visualizationMode);
+    };
+    saveMode();
+  }, [visualizationMode]);
+
+  // Handle RANDOM mode - change visualization when track changes
+  useEffect(() => {
+    const currentTrackId = playbackState?.item?.id;
+    
+    if (
+      visualizationMode === "RANDOM" &&
+      currentTrackId &&
+      currentTrackId !== lastRandomTrackId.current
+    ) {
+      const visualizations: VisualizationType[] = [
+        "fftspectrum",
+        "particles",
+        "fractal",
+        "psychedelic",
+        "waves",
+        "animated",
+        "spectrum3d",
+        "wavespectrum",
+        "camera",
+        "youtube",
+      ];
+      
+      // Pick a random visualization
+      const randomIndex = Math.floor(Math.random() * visualizations.length);
+      const newVisualization = visualizations[randomIndex];
+      
+      console.log(`🎲 RANDOM mode: Switching to ${newVisualization} for new track`);
+      setVisualizationType(newVisualization);
+      lastRandomTrackId.current = currentTrackId;
+    } else if (visualizationMode !== "RANDOM") {
+      // Reset tracking when mode changes away from RANDOM
+      lastRandomTrackId.current = null;
+    }
+  }, [playbackState?.item?.id, visualizationMode]);
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
   const [lastFetchedTrackId, setLastFetchedTrackId] = useState<string | null>(
     null
@@ -117,6 +158,7 @@ export default function PlayerPage() {
   } | null>(null);
   const fps = useFPS();
   const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
+  const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
 
   // Derive error state from session
   const sessionError =
@@ -523,108 +565,17 @@ export default function PlayerPage() {
           </button>
         </div>
 
-        {/* Visualization Selector */}
-        <div className={styles.vizSelector}>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "fftspectrum" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("fftspectrum")}
-            title="FFT Spectrum Grid"
-          >
-            ▥
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "particles" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("particles")}
-            title="Particles & Rings"
-          >
-            ◯
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "fractal" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("fractal")}
-            title="Fractal Tree"
-          >
-            ❋
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "psychedelic" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("psychedelic")}
-            title="Psychedelic"
-          >
-            ✧
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "waves" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("waves")}
-            title="Wavy Lines"
-          >
-            ≋
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "animated" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("animated")}
-            title="Morphing Blobs"
-          >
-            ◉
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "spectrum3d" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("spectrum3d")}
-            title="3D Spectrum"
-          >
-            ▦
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "wavespectrum" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("wavespectrum")}
-            title="Wave Spectrum"
-          >
-            ▬
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "camera" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("camera")}
-            title="Camera Effects"
-          >
-            ⊡
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "debug" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("debug")}
-            title="Debug View"
-          >
-            ▤
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "youtube" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("youtube")}
-            title="YouTube Videos"
-          >
-            ▶
-          </button>
-        </div>
+        {/* Visualization Dropdown */}
+        <VisualizationDropdown
+          value={visualizationType}
+          onChange={setVisualizationType}
+        />
+
+        {/* Mode Dropdown */}
+        <ModeDropdown
+          value={visualizationMode}
+          onChange={setVisualizationMode}
+        />
 
         {/* User Profile */}
         {session?.user && (

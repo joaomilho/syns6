@@ -15,6 +15,7 @@ localforage.config({
 // Keys
 const KEYS = {
   VISUALIZATION_TYPE: 'visualizationType',
+  VISUALIZATION_MODE: 'visualizationMode',
   MICROPHONE_ENABLED: 'microphoneEnabled',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
 } as const;
@@ -26,6 +27,15 @@ export async function saveVisualizationType(type: string): Promise<void> {
 
 export async function getVisualizationType(): Promise<string | null> {
   return await localforage.getItem<string>(KEYS.VISUALIZATION_TYPE);
+}
+
+// Visualization mode
+export async function saveVisualizationMode(mode: string): Promise<void> {
+  await localforage.setItem(KEYS.VISUALIZATION_MODE, mode);
+}
+
+export async function getVisualizationMode(): Promise<string | null> {
+  return await localforage.getItem<string>(KEYS.VISUALIZATION_MODE);
 }
 
 // Microphone preference
