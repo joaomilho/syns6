@@ -1,8 +1,8 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
-import { getCurrentlyPlaying } from "@/lib/spotify";
+import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
@@ -58,8 +58,13 @@ export default function PlayerPage() {
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(
     null
   );
+  const [lastKnownTrack, setLastKnownTrack] = useState<PlaybackState | null>(
+    null
+  ); // Keep last track even when Spotify stops reporting
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [nextTrack, setNextTrack] = useState<QueueItem | null>(null);
   const {
     micData,
     isEnabled: isMicEnabled,
@@ -109,6 +114,7 @@ export default function PlayerPage() {
     brightness: number;
   } | null>(null);
   const fps = useFPS();
+  const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
 
   // Derive error state from session
   const sessionError =
@@ -136,6 +142,7 @@ export default function PlayerPage() {
       const data = await getCurrentlyPlaying(session.accessToken);
       if (data && data.item) {
         setPlaybackState(data);
+        setLastKnownTrack(data); // Save as last known track
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
         setTokenRefreshAttempts(0); // Reset on success
@@ -147,17 +154,22 @@ export default function PlayerPage() {
             const cachedLyrics = lyricsCache.current.get(data.item.id);
             setLyrics(cachedLyrics || null);
             setLastFetchedTrackId(data.item.id);
-            console.log("📦 Using cached lyrics for track:", data.item.id);
+            if (cachedLyrics && cachedLyrics.length > 0) {
+              console.log(`📦 Using cached lyrics for: ${data.item.name} (${cachedLyrics.length} lines)`);
+            } else {
+              console.log(`📦 Cached lyrics for: ${data.item.name} is null/empty`);
+            }
           } else {
-            // Fetch from backend API
+            // Fetch from backend API (checks IndexedDB → PostgreSQL → Remote APIs)
             try {
               const lyricsLines = await fetchSyncedLyrics(
                 data.item.name,
                 data.item.artists[0].name,
-                data.item.duration_ms
+                data.item.duration_ms,
+                data.item.id // Pass Spotify ID for IndexedDB caching
               );
 
-              // Cache the result (even if null)
+              // Cache the result in memory (even if null)
               lyricsCache.current.set(data.item.id, lyricsLines);
               setLyrics(lyricsLines);
               setLastFetchedTrackId(data.item.id);
@@ -180,8 +192,10 @@ export default function PlayerPage() {
           }
         }
       } else {
+        // No current track from Spotify, but keep showing last known track
         setPlaybackState(null);
-        setError("No track currently playing");
+        console.log("⏸️ No current playback, keeping last known track visible");
+        // Don't clear lastKnownTrack - keep it visible!
       }
     } catch (err: any) {
       console.error("Error fetching playback:", err);
@@ -194,12 +208,14 @@ export default function PlayerPage() {
       ) {
         console.log("🔄 Token expired, please re-authenticate...");
         setTokenRefreshAttempts((prev) => prev + 1);
-        setPlaybackState(null); // Clear old playback state
+        setPlaybackState(null);
+        setLastKnownTrack(null); // Clear on auth error
         setError(
           "Session expired. Please sign out and sign in again to refresh your Spotify connection."
         );
       } else if (tokenRefreshAttempts >= 1) {
-        setPlaybackState(null); // Clear old playback state
+        setPlaybackState(null);
+        setLastKnownTrack(null); // Clear on auth error
         setError("Session expired. Please sign out and sign in again.");
       } else {
         setError("Failed to fetch playback state");
@@ -207,12 +223,78 @@ export default function PlayerPage() {
     }
   };
 
+  // Fetch queue and prefetch lyrics
+  const fetchQueueAndPrefetchLyrics = async () => {
+    if (!session?.accessToken) return;
+
+    try {
+      const queueData = await getUserQueue(session.accessToken);
+      
+      if (queueData && queueData.queue && queueData.queue.length > 0) {
+        setQueue(queueData.queue);
+        setNextTrack(queueData.queue[0] || null);
+        
+        console.log(`🎵 Queue fetched: ${queueData.queue.length} tracks`);
+        
+        // Prefetch lyrics for all songs in queue (background task)
+        queueData.queue.forEach(async (track, index) => {
+          // Only prefetch first 5 songs to avoid overwhelming the system
+          if (index >= 5) return;
+          
+          // Check if already cached
+          if (lyricsCache.current.has(track.id)) {
+            console.log(`📦 Lyrics already cached for: ${track.name}`);
+            return;
+          }
+          
+          try {
+            console.log(`🔄 Prefetching lyrics for: ${track.name}`);
+            const lyricsLines = await fetchSyncedLyrics(
+              track.name,
+              track.artists[0].name,
+              track.duration_ms,
+              track.id
+            );
+            
+            // Cache the result (even if null)
+            lyricsCache.current.set(track.id, lyricsLines);
+            
+            if (lyricsLines && lyricsLines.length > 0) {
+              console.log(`✅ Prefetched lyrics for: ${track.name} (${lyricsLines.length} lines)`);
+            } else {
+              console.log(`⚠️ No lyrics found during prefetch for: ${track.name}`);
+              // Don't cache null results - allow retry when song actually plays
+              lyricsCache.current.delete(track.id);
+            }
+          } catch (err) {
+            console.error(`❌ Failed to prefetch lyrics for: ${track.name}`, err);
+            // Don't cache errors
+            lyricsCache.current.delete(track.id);
+          }
+        });
+      } else {
+        setQueue([]);
+        setNextTrack(null);
+      }
+    } catch (err) {
+      console.error("Error fetching queue:", err);
+      // Don't set error state - queue is non-critical
+    }
+  };
+
   // Initial fetch and periodic updates
   useEffect(() => {
     if (session?.accessToken) {
       fetchPlaybackState();
-      const interval = setInterval(fetchPlaybackState, 5000);
-      return () => clearInterval(interval);
+      fetchQueueAndPrefetchLyrics(); // Fetch queue on mount
+      
+      const playbackInterval = setInterval(fetchPlaybackState, 5000);
+      const queueInterval = setInterval(fetchQueueAndPrefetchLyrics, 10000); // Update queue every 10s
+      
+      return () => {
+        clearInterval(playbackInterval);
+        clearInterval(queueInterval);
+      };
     }
   }, [session]);
 
@@ -354,6 +436,7 @@ export default function PlayerPage() {
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
           fps={fps}
+          onRowsChange={setFftRows}
         />
       )}
       {visualizationType === "camera" && (
@@ -377,10 +460,6 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* FPS Counter */}
-      <div className={styles.fpsCounter}>
-        {fps} FPS
-      </div>
 
       {/* Top Controls */}
       <div className={styles.topBar}>
@@ -543,83 +622,128 @@ export default function PlayerPage() {
         </div>
       )}
 
-      {/* Bottom Player Controls */}
-      {playbackState?.item ? (
-        <div className={styles.bottomControls}>
+      {/* Bottom Player Controls - with transition */}
+      <div 
+        className={`${styles.bottomControls} ${
+          (playbackState?.item || lastKnownTrack?.item) && !error && !sessionError ? styles.visible : styles.hidden
+        }`}
+      >
+        {(playbackState?.item || lastKnownTrack?.item) && (
           <div className={styles.controlsContainer}>
-            {/* Album Art */}
-            <div className={styles.albumArt}>
-              {playbackState.item.album.images[0] && (
-                <img
-                  src={playbackState.item.album.images[0].url}
-                  alt={playbackState.item.album.name}
-                />
-              )}
-            </div>
+            {(() => {
+              // Use current playback if available, otherwise use last known track
+              const displayTrack = playbackState?.item || lastKnownTrack?.item;
+              if (!displayTrack) return null;
+              
+              const timeRemaining = displayTrack.duration_ms - currentProgress;
+              const isNearEnd = timeRemaining <= 30000; // 30 seconds
+              const secondsRemaining = Math.ceil(timeRemaining / 1000);
+              
+              return (
+                <>
+                  {/* LEFT: Current Song */}
+                  <div className={styles.currentSection}>
+                    {/* Album Art */}
+                    <div className={styles.albumArt}>
+                      {displayTrack.album.images[0] && (
+                        <img
+                          src={displayTrack.album.images[0].url}
+                          alt={displayTrack.album.name}
+                        />
+                      )}
+                    </div>
 
-            {/* Track Info & Controls */}
-            <div className={styles.trackInfoContainer}>
-              <div className={styles.trackInfo}>
-                <h2 className={styles.trackName}>{playbackState.item.name}</h2>
-                <p className={styles.artistName}>
-                  {playbackState.item.artists.map((a) => a.name).join(", ")}
-                </p>
-              </div>
+                    {/* Track Info & Controls */}
+                    <div className={styles.trackInfoContainer}>
+                      <div className={styles.trackInfo}>
+                        <h2 className={styles.trackName}>{displayTrack.name}</h2>
+                        <p className={styles.artistName}>
+                          {displayTrack.artists.map((a) => a.name).join(", ")}
+                        </p>
+                      </div>
 
-              {/* Progress Bar */}
-              <div className={styles.progressContainer}>
-                <span className={styles.timeText}>
-                  {formatTime(currentProgress)}
-                </span>
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progressFill}
-                    style={{
-                      width: `${
-                        (currentProgress / playbackState.item.duration_ms) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
-                <span className={styles.timeText}>
-                  {formatTime(playbackState.item.duration_ms)}
-                </span>
-              </div>
+                      {/* Progress Bar */}
+                      <div className={styles.progressContainer}>
+                        <span className={styles.timeText}>
+                          {formatTime(currentProgress)}
+                        </span>
+                        <div className={styles.progressBar}>
+                          <div
+                            className={`${styles.progressFill} ${isNearEnd ? styles.nearEnd : ''}`}
+                            style={{
+                              width: `${
+                                (currentProgress / displayTrack.duration_ms) * 100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <span className={styles.timeText}>
+                          {formatTime(displayTrack.duration_ms)}
+                        </span>
+                      </div>
 
-              {/* Playback Status */}
-              <div className={styles.playbackStatus}>
-                {playbackState.is_playing ? (
-                  <span className={styles.statusBadge}>▶ Playing</span>
-                ) : (
-                  <span className={styles.statusBadge}>⏸ Paused</span>
-                )}
-              </div>
-            </div>
+                      {/* Bottom Row: Stats & Status */}
+                      <div className={styles.metaRow}>
+                        <div className={styles.statsRow}>
+                          <span className={styles.statBadge}>{fps} FPS</span>
+                          {visualizationType === "fftspectrum" && (
+                            <span className={styles.statBadge}>{fftRows} Rows</span>
+                          )}
+                        </div>
+
+                        <div className={styles.playbackStatus}>
+                          {playbackState?.is_playing ? (
+                            <span className={styles.statusBadge}>▶ Playing</span>
+                          ) : (
+                            <span className={styles.statusBadge}>⏸ Paused / Not Active</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT: Next Songs Queue */}
+                  {queue.length > 0 && (
+                    <div className={styles.queueSection}>
+                      <div className={styles.queueList}>
+                        {queue.slice(0, 3).map((track, index) => (
+                          <div 
+                            key={track.id} 
+                            className={`${styles.queueItem} ${index === 0 && isNearEnd ? styles.upcoming : ''}`}
+                          >
+                            {/* Album Art - smaller for 2nd/3rd tracks */}
+                            <div className={`${styles.queueAlbumArt} ${index > 0 ? styles.smaller : ''}`}>
+                              {track.album.images[0] && (
+                                <img
+                                  src={track.album.images[0].url}
+                                  alt={track.album.name}
+                                />
+                              )}
+                            </div>
+                            
+                            {/* Track Info */}
+                            <div className={styles.queueTrackInfo}>
+                              <span className={styles.queueTrackName}>{track.name}</span>
+                              <span className={styles.queueArtistName}>
+                                {track.artists[0].name}
+                              </span>
+                            </div>
+                            
+                            {/* Show countdown on first track when it's about to start */}
+                            {index === 0 && isNearEnd && (
+                              <div className={styles.nextUpTimer}>{secondsRemaining}s</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
-        </div>
-      ) : error || sessionError ? (
-        <div className={styles.bottomControls}>
-          <div className={styles.errorMessage}>
-            <p>{error || sessionError}</p>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className={styles.link}
-              style={{ marginTop: "16px", cursor: "pointer", border: "none" }}
-            >
-              Sign Out & Re-authenticate
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className={styles.bottomControls}>
-          <div className={styles.errorMessage}>
-            <p>No track currently playing</p>
-            <p className={styles.hint}>
-              Open Spotify and start playing a track
-            </p>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

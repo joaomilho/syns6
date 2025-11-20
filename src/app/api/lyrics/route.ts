@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 /**
  * API Route to fetch synced lyrics from multiple sources
- * Proxies requests to avoid CORS issues
+ * Strategy:
+ * 1. Check PostgreSQL DB first
+ * 2. If not found, fetch from remote APIs (LRCLIB, NetEase)
+ * 3. Save to DB before returning
  */
 
 interface LyricLine {
@@ -235,9 +239,39 @@ export async function GET(request: NextRequest) {
   const duration = parseInt(durationStr);
 
   console.log(`🔍 [API] Searching lyrics for: "${trackName}" by "${artistName}" (${Math.round(duration / 1000)}s)`);
-  console.log("📡 [API] Starting parallel search across all sources...");
 
-  // Run all API calls in parallel and return the first successful result
+  // 1. Check PostgreSQL DB first
+  try {
+    console.log("🗄️ [API] Checking database...");
+    const cachedLyrics = await prisma.lyrics.findFirst({
+      where: {
+        OR: [
+          { spotifyId: spotifyId || undefined },
+          {
+            AND: [
+              { title: { equals: trackName, mode: 'insensitive' } },
+              { artist: { equals: artistName, mode: 'insensitive' } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (cachedLyrics && cachedLyrics.lyrics) {
+      console.log(`✅ [API] Found in database! (source: ${cachedLyrics.source || 'unknown'})`);
+      return NextResponse.json({
+        lines: cachedLyrics.lyrics as LyricLine[],
+        source: `DB (${cachedLyrics.source || 'cached'})`,
+      });
+    }
+
+    console.log("📡 [API] Not in database, fetching from remote APIs...");
+  } catch (dbError) {
+    console.error("⚠️ [API] Database check failed:", dbError);
+    console.log("📡 [API] Proceeding to remote APIs...");
+  }
+
+  // 2. Fetch from remote APIs in parallel
   const results = await Promise.allSettled([
     fetchFromLRCLIB(trackName, artistName, duration).then((lines) => ({
       lines,
@@ -257,6 +291,32 @@ export async function GET(request: NextRequest) {
   for (const result of results) {
     if (result.status === "fulfilled" && result.value.lines && result.value.lines.length > 0) {
       console.log(`✅ [API] ${result.value.source} success: ${result.value.lines.length} lines`);
+      
+      // 3. Save to database before returning
+      try {
+        console.log("💾 [API] Saving to database...");
+        await prisma.lyrics.upsert({
+          where: {
+            spotifyId: spotifyId || `${trackName}-${artistName}`, // fallback if no Spotify ID
+          },
+          create: {
+            spotifyId: spotifyId || `${trackName}-${artistName}`,
+            title: trackName,
+            artist: artistName,
+            lyrics: result.value.lines as any, // Prisma Json type
+            source: result.value.source,
+          },
+          update: {
+            lyrics: result.value.lines as any,
+            source: result.value.source,
+          },
+        });
+        console.log("✅ [API] Saved to database");
+      } catch (dbError) {
+        console.error("⚠️ [API] Failed to save to database:", dbError);
+        // Continue anyway - don't block the response
+      }
+
       return NextResponse.json({
         lines: result.value.lines,
         source: result.value.source,

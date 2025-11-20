@@ -14,6 +14,7 @@ interface FFTSpectrumVisualizationProps {
   currentTimeMs?: number;
   isPlaying?: boolean;
   fps?: number;
+  onRowsChange?: (rows: number) => void;
 }
 
 /**
@@ -367,29 +368,6 @@ export default function FFTSpectrumVisualization({
         zIndex: 0,
       }}
     >
-      {/* Row count display */}
-      <div
-        style={{
-          position: "fixed",
-          top: "60px",
-          right: "16px",
-          zIndex: 101,
-          padding: "8px 16px",
-          background: "rgba(0, 0, 0, 0.7)",
-          backdropFilter: "blur(10px)",
-          borderRadius: "20px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          color: "#fff",
-          fontFamily: "var(--font-geist-mono)",
-          fontSize: "14px",
-          fontWeight: 600,
-          letterSpacing: "0.5px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-        }}
-      >
-        {rows} Rows
-      </div>
-      
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
         style={{
