@@ -1,0 +1,212 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #000000, #1a1a1a);
+  color: white;
+  font-family: var(--font-geist-sans);
+}
+
+.main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.backButton {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.profileCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatarSection {
+  flex-shrink: 0;
+}
+
+.avatar {
+  border-radius: 50%;
+  border: 3px solid #1db954;
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  color: white;
+  font-weight: bold;
+  font-size: 48px;
+  text-transform: uppercase;
+  border: 3px solid #1db954;
+}
+
+.info {
+  flex: 1;
+}
+
+.info h2 {
+  font-size: 2rem;
+  margin: 0 0 10px 0;
+}
+
+.email {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 5px 0;
+}
+
+.userId {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  font-family: var(--font-geist-mono);
+  margin: 5px 0;
+}
+
+.sessionInfo {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sessionInfo h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.value {
+  font-family: var(--font-geist-mono);
+  color: #1db954;
+  font-size: 0.9rem;
+  text-align: right;
+  word-break: break-all;
+  max-width: 60%;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.primaryButton {
+  padding: 15px 40px;
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(30, 215, 96, 0.4);
+}
+
+.dangerButton {
+  padding: 15px 40px;
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff5050;
+  border: 2px solid #ff5050;
+  border-radius: 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.dangerButton:hover {
+  background: #ff5050;
+  color: white;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .profileCard {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .infoItem {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .value {
+    max-width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .dangerButton {
+    width: 100%;
+  }
+}
+
