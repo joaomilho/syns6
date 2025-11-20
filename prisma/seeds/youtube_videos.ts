@@ -12,7 +12,15 @@ const prisma = new PrismaClient();
  * 4. Run: npx tsx prisma/seeds/youtube_videos.ts
  */
 
-const videos = [
+type VideoSeed = {
+  spotifyId: string;
+  title: string;
+  artist: string;
+  youtubeId: string;
+  source: string;
+};
+
+const videos: VideoSeed[] = [
   // Example format - replace with your actual data:
   // {
   //   spotifyId: '3n3Ppam7vgaVa1iaRUc9Lp', // Spotify track ID

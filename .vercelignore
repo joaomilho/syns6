@@ -1,0 +1,22 @@
+# Development files
+.env.local
+.env*.local
+
+# Database files
+prisma/*.db
+prisma/*.db-journal
+
+# Backup files
+lyrics-backup/
+failed-songs.json
+syns-source.zip
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Docker files
+docker-compose.yml
+DOCKER_SETUP.md
+
