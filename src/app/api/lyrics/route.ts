@@ -221,11 +221,13 @@ export async function GET(request: NextRequest) {
   const trackName = searchParams.get("track");
   const artistName = searchParams.get("artist");
   const durationStr = searchParams.get("duration");
+  const spotifyId = searchParams.get("spotifyId"); // Get spotifyId from params
 
   console.log("🎵 [API] Lyrics request received:", {
     track: trackName,
     artist: artistName,
     duration: durationStr,
+    spotifyId: spotifyId || '(not provided)',
   });
 
   if (!trackName || !artistName || !durationStr) {
@@ -238,40 +240,69 @@ export async function GET(request: NextRequest) {
 
   const duration = parseInt(durationStr);
 
-  console.log(`🔍 [API] Searching lyrics for: "${trackName}" by "${artistName}" (${Math.round(duration / 1000)}s)`);
-
-  // 1. Check PostgreSQL DB first
+  // 1. Check if we already know this song has no lyrics
   try {
-    console.log("🗄️ [API] Checking database...");
+    const notFoundEntry = await prisma.lyricsNotFound.findFirst({
+      where: spotifyId ? 
+        { spotifyId: spotifyId } : 
+        {
+          AND: [
+            { title: { equals: trackName, mode: 'insensitive' } },
+            { artist: { equals: artistName, mode: 'insensitive' } },
+          ],
+        },
+    });
+
+    if (notFoundEntry) {
+      // Skip verbose logging - just return 404 silently
+      return NextResponse.json(
+        { error: "No synced lyrics found", lines: null },
+        { status: 404 }
+      );
+    }
+  } catch (err) {
+    // Ignore errors, proceed to fetch
+  }
+
+  // 2. Check PostgreSQL DB for cached lyrics
+  try {
+    // Build query conditions
+    const whereConditions: any[] = [
+      {
+        AND: [
+          { title: { equals: trackName, mode: 'insensitive' } },
+          { artist: { equals: artistName, mode: 'insensitive' } },
+        ],
+      },
+    ];
+    
+    // Only add spotifyId condition if it's provided
+    if (spotifyId) {
+      whereConditions.unshift({ spotifyId: spotifyId });
+    }
+    
     const cachedLyrics = await prisma.lyrics.findFirst({
       where: {
-        OR: [
-          { spotifyId: spotifyId || undefined },
-          {
-            AND: [
-              { title: { equals: trackName, mode: 'insensitive' } },
-              { artist: { equals: artistName, mode: 'insensitive' } },
-            ],
-          },
-        ],
+        OR: whereConditions,
       },
     });
 
     if (cachedLyrics && cachedLyrics.lyrics) {
-      console.log(`✅ [API] Found in database! (source: ${cachedLyrics.source || 'unknown'})`);
+      // Parse lyrics from JSON string
+      const lyricsData = typeof cachedLyrics.lyrics === 'string' 
+        ? JSON.parse(cachedLyrics.lyrics) 
+        : cachedLyrics.lyrics;
+      
       return NextResponse.json({
-        lines: cachedLyrics.lyrics as LyricLine[],
+        lines: lyricsData as LyricLine[],
         source: `DB (${cachedLyrics.source || 'cached'})`,
       });
     }
-
-    console.log("📡 [API] Not in database, fetching from remote APIs...");
   } catch (dbError) {
-    console.error("⚠️ [API] Database check failed:", dbError);
-    console.log("📡 [API] Proceeding to remote APIs...");
+    // Ignore DB errors, proceed to remote fetch
   }
 
-  // 2. Fetch from remote APIs in parallel
+  // 3. Fetch from remote APIs in parallel
   const results = await Promise.allSettled([
     fetchFromLRCLIB(trackName, artistName, duration).then((lines) => ({
       lines,
@@ -303,11 +334,11 @@ export async function GET(request: NextRequest) {
             spotifyId: spotifyId || `${trackName}-${artistName}`,
             title: trackName,
             artist: artistName,
-            lyrics: result.value.lines as any, // Prisma Json type
+            lyrics: JSON.stringify(result.value.lines), // Convert to JSON string
             source: result.value.source,
           },
           update: {
-            lyrics: result.value.lines as any,
+            lyrics: JSON.stringify(result.value.lines), // Convert to JSON string
             source: result.value.source,
           },
         });
@@ -324,17 +355,25 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Log which sources failed
-  results.forEach((result, index) => {
-    const sources = ["LRCLIB", "LRCLIB Search", "NetEase"];
-    if (result.status === "rejected") {
-      console.log(`   ✗ ${sources[index]} failed: ${result.reason}`);
-    } else if (!result.value.lines || result.value.lines.length === 0) {
-      console.log(`   ✗ ${sources[index]}: No lyrics found`);
-    }
-  });
+  // No lyrics found - save to LyricsNotFound to avoid future lookups
+  try {
+    await prisma.lyricsNotFound.upsert({
+      where: spotifyId ? 
+        { spotifyId: spotifyId } : 
+        { id: `${trackName}-${artistName}` }, // Fallback unique ID
+      create: {
+        spotifyId: spotifyId,
+        title: trackName,
+        artist: artistName,
+      },
+      update: {
+        attemptedAt: new Date(),
+      },
+    });
+  } catch (err) {
+    // Ignore errors saving to not-found table
+  }
 
-  console.log("❌ [API] All sources exhausted - no lyrics found");
   return NextResponse.json(
     { error: "No synced lyrics found", lines: null },
     { status: 404 }
