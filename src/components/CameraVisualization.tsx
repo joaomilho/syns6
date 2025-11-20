@@ -346,6 +346,8 @@ export default function CameraVisualization({
             <Lyrics3D
               lyrics={lyrics}
               currentTimeMs={currentTimeMs || 0}
+              isPlaying={isPlaying || false}
+              syncedData={null}
               micData={micData}
               color="#000000"
             />

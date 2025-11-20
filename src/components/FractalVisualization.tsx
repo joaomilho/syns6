@@ -19,9 +19,9 @@ interface AudioFeatures {
 }
 
 interface VisualizationProps {
-  audioFeatures: AudioFeatures | null;
+  audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
-  syncedData: SyncedAudioData | null;
+  syncedData?: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
@@ -379,9 +379,9 @@ export default function FractalVisualization({
 
         {/* Main large Mandelbrot plane */}
         <MandelbrotPlane
-          audioFeatures={audioFeatures}
+          audioFeatures={audioFeatures || null}
           isPlaying={isPlaying}
-          syncedData={syncedData}
+          syncedData={syncedData || null}
           micData={micData}
           fps={fps}
         />
@@ -392,7 +392,7 @@ export default function FractalVisualization({
             lyrics={lyrics || null}
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
-            syncedData={syncedData}
+            syncedData={null}
             color="#fff"
             micData={micData}
           />

@@ -44,9 +44,9 @@ interface AudioFeatures {
 }
 
 interface VisualizationProps {
-  audioFeatures: AudioFeatures | null;
+  audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
-  syncedData: SyncedAudioData | null;
+  syncedData?: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
@@ -71,12 +71,12 @@ function WavyLine({
   micData?: MicrophoneData;
   instrumentType?: "bass" | "vocal" | "drums";
 }) {
-  const lineRef = useRef<THREE.Line>(null);
-  const materialRef = useRef<THREE.LineBasicMaterial>(null);
+  const lineRef = useRef<THREE.Line | null>(null);
+  const materialRef = useRef<THREE.LineBasicMaterial | null>(null);
   const pointCount = 200;
 
-  // Create line geometry
-  const geometry = useMemo(() => {
+  // Create line geometry and material
+  const [line, geometry, material] = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(pointCount * 3);
 
@@ -88,8 +88,20 @@ function WavyLine({
     }
 
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    return geometry;
+    
+    const material = new THREE.LineBasicMaterial({
+      color: "#6666ff",
+      transparent: true,
+      opacity: 0.6,
+    });
+    
+    const line = new THREE.Line(geometry, material);
+    return [line, geometry, material];
   }, [yPosition, zPosition]);
+  
+  // Set refs after line is created
+  lineRef.current = line;
+  materialRef.current = material;
 
   useFrame((state) => {
     if (!lineRef.current || !materialRef.current) return;
@@ -208,17 +220,7 @@ function WavyLine({
     materialRef.current.opacity = 0.5 + clampedIntensity * 0.45 + micBoost * 0.2;
   });
 
-  return (
-    <line ref={lineRef} geometry={geometry}>
-      <lineBasicMaterial
-        ref={materialRef}
-        color="#6666ff"
-        transparent
-        opacity={0.6}
-        linewidth={2}
-      />
-    </line>
-  );
+  return <primitive object={line} />;
 }
 
 function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: VisualizationProps) {
@@ -266,9 +268,9 @@ function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: Visual
           key={line.key}
           yPosition={line.yPosition}
           zPosition={line.zPosition}
-          audioFeatures={audioFeatures}
+          audioFeatures={audioFeatures || null}
           isPlaying={isPlaying}
-          syncedData={syncedData}
+          syncedData={syncedData || null}
           offset={line.offset}
           micData={micData}
           instrumentType={line.type}
@@ -343,6 +345,7 @@ function FlowingParticles({ audioFeatures, isPlaying, syncedData }: Visualizatio
           count={particleCount}
           array={positions}
           itemSize={3}
+          args={[positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -383,8 +386,8 @@ export default function WavyLinesVisualization({
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
 
-        <WavyLineField audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} micData={micData} />
-        <FlowingParticles audioFeatures={audioFeatures} isPlaying={isPlaying} syncedData={syncedData} />
+        <WavyLineField audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} micData={micData} />
+        <FlowingParticles audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} />
 
         {/* 3D Lyrics - always show, component handles "not found" */}
         {currentTimeMs !== undefined && (
@@ -392,7 +395,7 @@ export default function WavyLinesVisualization({
             lyrics={lyrics || null}
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
-            syncedData={syncedData}
+            syncedData={null}
             micData={micData}
           />
         )}
