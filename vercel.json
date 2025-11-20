@@ -1,0 +1,11 @@
+{
+  "buildCommand": "prisma generate && next build",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}
+
