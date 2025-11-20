@@ -18,6 +18,7 @@ import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualizatio
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
+import YouTubeVisualization from "@/components/YouTubeVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
 import Link from "next/link";
@@ -27,6 +28,7 @@ type VisualizationType =
   | "particles"
   | "fractal"
   | "psychedelic"
+  | "youtube"
   | "waves"
   | "blackmetal"
   | "animated"
@@ -459,11 +461,32 @@ export default function PlayerPage() {
           hueConfig={hue.config}
         />
       )}
+      {visualizationType === "youtube" && (
+        <YouTubeVisualization
+          trackName={playbackState?.item?.name || lastKnownTrack?.item?.name}
+          artistName={playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name}
+          spotifyId={(playbackState?.item as any)?.id || (lastKnownTrack?.item as any)?.id}
+          lyrics={lyrics}
+          currentTimeMs={currentProgress}
+          micData={micData}
+        />
+      )}
 
 
       {/* Top Controls */}
       <div className={styles.topBar}>
         <div className={styles.logo}>Syns</div>
+
+        {/* Status Icon */}
+        <div className={styles.statusIcon}>
+          {!playbackState?.item && !lastKnownTrack?.item ? (
+            <span title="No song playing">⏹</span>
+          ) : playbackState?.is_playing ? (
+            <span title="Playing">▶</span>
+          ) : (
+            <span title="Paused">⏸</span>
+          )}
+        </div>
 
         <div className={styles.controlGroups}>
         {/* Actions Group */}
@@ -592,6 +615,15 @@ export default function PlayerPage() {
           >
             ▤
           </button>
+          <button
+            className={`${styles.vizButton} ${
+              visualizationType === "youtube" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("youtube")}
+            title="YouTube Videos"
+          >
+            ▶
+          </button>
         </div>
 
         {/* User Profile */}
@@ -682,23 +714,6 @@ export default function PlayerPage() {
                         </span>
                       </div>
 
-                      {/* Bottom Row: Stats & Status */}
-                      <div className={styles.metaRow}>
-                        <div className={styles.statsRow}>
-                          <span className={styles.statBadge}>{fps} FPS</span>
-                          {visualizationType === "fftspectrum" && (
-                            <span className={styles.statBadge}>{fftRows} Rows</span>
-                          )}
-                        </div>
-
-                        <div className={styles.playbackStatus}>
-                          {playbackState?.is_playing ? (
-                            <span className={styles.statusBadge}>▶ Playing</span>
-                          ) : (
-                            <span className={styles.statusBadge}>⏸ Paused / Not Active</span>
-                          )}
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -706,7 +721,7 @@ export default function PlayerPage() {
                   {queue.length > 0 && (
                     <div className={styles.queueSection}>
                       <div className={styles.queueList}>
-                        {queue.slice(0, 3).map((track, index) => (
+                        {queue.slice(0, 2).map((track, index) => (
                           <div 
                             key={track.id} 
                             className={`${styles.queueItem} ${index === 0 && isNearEnd ? styles.upcoming : ''}`}
@@ -741,6 +756,20 @@ export default function PlayerPage() {
                 </>
               );
             })()}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Stats Panel */}
+      <div className={styles.floatingStats}>
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>FPS</span>
+          <span className={styles.statValue}>{fps}</span>
+        </div>
+        {visualizationType === "fftspectrum" && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Rows</span>
+            <span className={styles.statValue}>{fftRows}</span>
           </div>
         )}
       </div>

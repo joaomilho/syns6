@@ -121,6 +121,32 @@ model Lyrics {
   @@map("lyrics")
 }
 
+// Track songs where lyrics weren't found to avoid repeated lookups
+model LyricsNotFound {
+  id          String   @id @default(cuid())
+  spotifyId   String?  @unique
+  title       String
+  artist      String
+  attemptedAt DateTime @default(now())
+  
+  @@index([title, artist])
+  @@map("lyrics_not_found")
+}
+
+// Cached YouTube videos to avoid repeated API calls
+model YouTubeVideo {
+  id          String   @id @default(cuid())
+  spotifyId   String?  @unique
+  title       String
+  artist      String
+  youtubeId   String   // YouTube video ID
+  source      String   @default("api") // "api", "manual", or "default"
+  fetchedAt   DateTime @default(now())
+  
+  @@index([title, artist])
+  @@map("youtube_videos")
+}
+
 // Play history for analytics and pre-loading
 model PlayHistory {
   id              String   @id @default(cuid())

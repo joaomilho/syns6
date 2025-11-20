@@ -1,641 +1,680 @@
-.fullscreenPage {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: #000;
-  font-family: var(--font-geist-sans);
-}
-
-.centerMessage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: #fff;
-  z-index: 10;
-}
-
-.centerMessage h1 {
-  font-size: 32px;
-  margin-bottom: 16px;
-}
-
-.centerMessage p {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 24px;
-}
-
-.link {
-  display: inline-block;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  text-decoration: none;
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s;
-}
-
-.link:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-}
-
-/* Top Bar */
-.topBar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 24px 32px;
-  z-index: 100;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.logo {
-  color: #fff;
-  font-size: 24px;
-  font-weight: 200;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, #1ed760, #1db954);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  flex-shrink: 0;
-}
-
-.controlGroups {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.userProfile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  background: rgba(0, 0, 0, 0.5);
-  flex-shrink: 0;
-}
-
-.userProfile:hover {
-  border-color: #1db954;
-  transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
-}
-
-.userAvatar {
-  display: block;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  object-fit: cover;
-}
-
-.userAvatarPlaceholder {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
-  color: white;
-  font-weight: bold;
-  font-size: 16px;
-  text-transform: uppercase;
-}
-
-/* Mode Toggle */
-.modeToggle {
-  display: flex;
-  gap: 8px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modeButton {
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: 20px;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modeButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.05);
-}
-
-.modeButton.active {
-  background: rgba(29, 185, 84, 0.3);
-  color: #1ed760;
-  border: 1px solid rgba(29, 185, 84, 0.5);
-  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
-}
-
-/* Visualization Selector */
-.vizSelector {
-  display: flex;
-  gap: 8px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.vizButton {
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: 20px;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vizButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.05);
-}
-
-.vizButton.active {
-  background: rgba(29, 185, 84, 0.3);
-  color: #1ed760;
-  border: 1px solid rgba(29, 185, 84, 0.5);
-  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
-}
-
-.vizButton.highlighted {
-  background: rgba(102, 126, 234, 0.2);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(102, 126, 234, 0.6);
-  }
-}
-
-.huePanel {
-  position: fixed;
-  top: 100px;
-  right: 32px;
-  width: 380px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  z-index: 99;
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Karaoke Container */
-.karaokeContainer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%);
-  z-index: 0;
-}
-
-/* Bottom Controls */
-.bottomControls {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.8));
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px 24px 20px;
-  transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.bottomControls.visible {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.bottomControls.hidden {
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.controlsContainer {
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.currentSection {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex: 1;
-  min-width: 0;
-}
-
-.queueSection {
-  flex: 0 0 380px;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding-left: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.albumArt {
-  flex-shrink: 0;
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.albumArt img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.trackInfoContainer {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.trackInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.trackName {
-  font-size: 24px;
-  font-weight: 600;
-  color: #fff;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.artistName {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.progressContainer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.timeText {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  font-family: var(--font-geist-mono);
-  min-width: 40px;
-}
-
-.progressBar {
-  flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.progressFill {
-  height: 100%;
-  background: linear-gradient(90deg, #1db954, #1ed760);
-  border-radius: 3px;
-  transition: width 1s linear, background 0.5s ease;
-  box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
-}
-
-.progressFill.nearEnd {
-  background: linear-gradient(90deg, #ff6b35, #ff9a3c);
-  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
-  animation: pulseWarning 1s ease-in-out infinite;
-}
-
-@keyframes pulseWarning {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.9);
-  }
-}
-
-.metaRow {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nextUpTimer {
-  font-size: 14px;
-  font-weight: 500;
-  color: #ff6b35;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-family: var(--font-geist-mono);
-  animation: pulseTimer 1s ease-in-out infinite;
-  flex-shrink: 0;
-  margin-left: auto;
-
-}
-
-@keyframes pulseTimer {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-.queueList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.queueItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: all 0.2s ease;
-}
-
-.queueItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateX(4px);
-}
-
-.queueItem.upcoming {
-  background: rgba(255, 107, 53, 0.15);
-  border: 1px solid rgba(255, 107, 53, 0.3);
-  animation: pulseUpcoming 1s ease-in-out infinite;
-}
-
-@keyframes pulseUpcoming {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(255, 107, 53, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
-  }
-}
-
-.queueAlbumArt {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-}
-
-
-
-.queueAlbumArt img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.queueTrackInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.queueTrackName {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.queueArtistName {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.statsRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.statBadge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: var(--font-geist-mono);
-  letter-spacing: 0.5px;
-}
-
-.playbackStatus {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.statusBadge {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 16px;
-  border-radius: 16px;
-  background: rgba(29, 185, 84, 0.2);
-  color: #1ed760;
-  border: 1px solid rgba(29, 185, 84, 0.3);
-}
-
-.errorMessage {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 24px;
-}
-
-.errorMessage p {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-}
-
-.hint {
-  font-size: 14px !important;
-  opacity: 0.6;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .topBar {
-    padding: 16px 20px;
-    flex-wrap: wrap;
-  }
-
-  .modeToggle {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .vizSelector {
-    order: 2;
-  }
-
-  .bottomControls {
-    padding: 16px 20px 24px;
-  }
-
-  .controlsContainer {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 24px;
-  }
-
-  .currentSection {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .albumArt {
-    width: 100%;
-    max-width: 200px;
-    height: auto;
-    aspect-ratio: 1;
-    align-self: center;
-  }
-
-  .queueSection {
-    flex: 1;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-left: 0;
-    padding-top: 24px;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .trackName {
-    font-size: 20px;
-  }
-
-  .artistName {
-    font-size: 14px;
-  }
-
-  .trackInfoContainer {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .backLink {
-    font-size: 14px;
-    padding: 6px 12px;
-  }
-
-  .albumArt {
-    max-width: 160px;
-  }
-
-  .trackName {
-    font-size: 18px;
-  }
-
-  .timeText {
-    font-size: 11px;
-    min-width: 35px;
-  }
-
-  .progressBar {
-    height: 4px;
-  }
-}
+ .fullscreenPage {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100vw;
+   height: 100vh;
+   overflow: hidden;
+   background: #000;
+   font-family: var(--font-geist-sans);
+ }
+
+ .centerMessage {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   text-align: center;
+   color: #fff;
+   z-index: 10;
+ }
+
+ .centerMessage h1 {
+   font-size: 32px;
+   margin-bottom: 16px;
+ }
+
+ .centerMessage p {
+   font-size: 16px;
+   color: rgba(255, 255, 255, 0.7);
+   margin-bottom: 24px;
+ }
+
+ .link {
+   display: inline-block;
+   padding: 12px 24px;
+   background: rgba(255, 255, 255, 0.1);
+   color: #fff;
+   text-decoration: none;
+   border-radius: 24px;
+   backdrop-filter: blur(10px);
+   transition: all 0.3s;
+ }
+
+ .link:hover {
+   background: rgba(255, 255, 255, 0.2);
+   transform: translateY(-2px);
+ }
+
+ /* Top Bar */
+ .topBar {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   padding: 24px 32px;
+   z-index: 100;
+   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   gap: 16px;
+ }
+
+ .logo {
+   color: #fff;
+   font-size: 24px;
+   font-weight: 200;
+   letter-spacing: 0.5px;
+   text-transform: uppercase;
+   background: linear-gradient(135deg, #1ed760, #1db954);
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+   background-clip: text;
+   flex-shrink: 0;
+ }
+
+ .statusIcon {
+   width: 44px;
+   height: 44px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 20px;
+   color: #1ed760;
+   background: rgba(29, 185, 84, 0.3);
+   border: 1px solid rgba(29, 185, 84, 0.5);
+   border-radius: 20px;
+   margin-left: 16px;
+   flex-shrink: 0;
+   box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+   transition: all 0.3s ease;
+ }
+
+ .statusIcon span {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+ }
+
+ .controlGroups {
+   display: flex;
+   align-items: center;
+   gap: 20px;
+   flex: 1;
+   justify-content: flex-end;
+ }
+
+ .userProfile {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border-radius: 50%;
+   overflow: hidden;
+   border: 2px solid rgba(255, 255, 255, 0.2);
+   transition: all 0.3s ease;
+   cursor: pointer;
+   background: rgba(0, 0, 0, 0.5);
+   flex-shrink: 0;
+ }
+
+ .userProfile:hover {
+   border-color: #1db954;
+   transform: scale(1.05);
+   box-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
+ }
+
+ .userAvatar {
+   display: block;
+   border-radius: 50%;
+   width: 36px;
+   height: 36px;
+   object-fit: cover;
+ }
+
+ .userAvatarPlaceholder {
+   width: 36px;
+   height: 36px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+   color: white;
+   font-weight: bold;
+   font-size: 16px;
+   text-transform: uppercase;
+ }
+
+ /* Mode Toggle */
+ .modeToggle {
+   display: flex;
+   gap: 8px;
+   padding: 4px;
+   background: rgba(0, 0, 0, 0.5);
+   backdrop-filter: blur(10px);
+   border-radius: 24px;
+   border: 1px solid rgba(255, 255, 255, 0.1);
+ }
+
+ .modeButton {
+   width: 44px;
+   height: 44px;
+   border: none;
+   background: transparent;
+   color: rgba(255, 255, 255, 0.5);
+   font-size: 20px;
+   cursor: pointer;
+   border-radius: 20px;
+   transition: all 0.3s;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+ }
+
+ .modeButton:hover {
+   background: rgba(255, 255, 255, 0.1);
+   color: rgba(255, 255, 255, 0.8);
+   transform: scale(1.05);
+ }
+
+ .modeButton.active {
+   background: rgba(29, 185, 84, 0.3);
+   color: #1ed760;
+   border: 1px solid rgba(29, 185, 84, 0.5);
+   box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+ }
+
+ /* Visualization Selector */
+ .vizSelector {
+   display: flex;
+   gap: 8px;
+   padding: 4px;
+   background: rgba(0, 0, 0, 0.5);
+   backdrop-filter: blur(10px);
+   border-radius: 24px;
+   border: 1px solid rgba(255, 255, 255, 0.1);
+ }
+
+ .vizButton {
+   width: 44px;
+   height: 44px;
+   border: none;
+   background: transparent;
+   color: rgba(255, 255, 255, 0.5);
+   font-size: 20px;
+   cursor: pointer;
+   border-radius: 20px;
+   transition: all 0.3s;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+ }
+
+ .vizButton:hover {
+   background: rgba(255, 255, 255, 0.1);
+   color: rgba(255, 255, 255, 0.8);
+   transform: scale(1.05);
+ }
+
+ .vizButton.active {
+   background: rgba(29, 185, 84, 0.3);
+   color: #1ed760;
+   border: 1px solid rgba(29, 185, 84, 0.5);
+   box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+ }
+
+ .vizButton.highlighted {
+   background: rgba(102, 126, 234, 0.2);
+   animation: pulse 2s infinite;
+ }
+
+ @keyframes pulse {
+
+   0%,
+   100% {
+     box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
+   }
+
+   50% {
+     box-shadow: 0 0 16px rgba(102, 126, 234, 0.6);
+   }
+ }
+
+ .huePanel {
+   position: fixed;
+   top: 100px;
+   right: 32px;
+   width: 380px;
+   max-height: calc(100vh - 200px);
+   overflow-y: auto;
+   z-index: 99;
+   animation: slideIn 0.3s ease-out;
+ }
+
+ @keyframes slideIn {
+   from {
+     opacity: 0;
+     transform: translateX(100%);
+   }
+
+   to {
+     opacity: 1;
+     transform: translateX(0);
+   }
+ }
+
+ /* Karaoke Container */
+ .karaokeContainer {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100vw;
+   height: 100vh;
+   background: linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%);
+   z-index: 0;
+ }
+
+ /* Bottom Controls */
+ .bottomControls {
+   position: fixed;
+   bottom: 0;
+   left: 0;
+   width: 100%;
+   z-index: 100;
+   /* background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.8)); */
+
+   backdrop-filter: blur(9px);
+   border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+   padding: 18px;
+   transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1),
+     opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+ }
+
+ .bottomControls.visible {
+   transform: translateY(0);
+   opacity: 1;
+ }
+
+ .bottomControls.hidden {
+   transform: translateY(100%);
+   opacity: 0;
+   pointer-events: none;
+ }
+
+ .controlsContainer {
+   display: flex;
+   align-items: stretch;
+   gap: 24px;
+   max-width: 1400px;
+   margin: 0 auto;
+ }
+
+ .currentSection {
+   display: flex;
+   align-items: center;
+   gap: 20px;
+   flex: 1;
+   min-width: 0;
+ }
+
+ .queueSection {
+   flex: 0 0 380px;
+   padding-left: 24px;
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+ }
+
+ .albumArt {
+   flex-shrink: 0;
+   width: 90px;
+   height: 90px;
+   border-radius: 9px;
+   overflow: hidden;
+   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+ }
+
+ .albumArt img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+ }
+
+ .trackInfoContainer {
+   flex: 1;
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
+   min-width: 0;
+ }
+
+ .trackInfo {
+   display: flex;
+   flex-direction: column;
+   gap: 2px;
+ }
+
+ .trackName {
+   font-size: 22px;
+   font-weight: 600;
+   color: #fff;
+   margin: 0;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+
+ .artistName {
+   font-size: 16px;
+   color: rgba(255, 255, 255, 0.7);
+   margin: 0;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+
+ .progressContainer {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+ }
+
+ .timeText {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.6);
+   font-family: var(--font-geist-mono);
+   min-width: 40px;
+ }
+
+ .progressBar {
+   flex: 1;
+   height: 6px;
+   background: rgba(255, 255, 255, 0.2);
+   border-radius: 3px;
+   overflow: hidden;
+   cursor: pointer;
+ }
+
+ .progressFill {
+   height: 100%;
+   background: linear-gradient(90deg, #1db954, #1ed760);
+   border-radius: 3px;
+   transition: width 1s linear, background 0.5s ease;
+   box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+ }
+
+ .progressFill.nearEnd {
+   background: linear-gradient(90deg, #ff6b35, #ff9a3c);
+   box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+   animation: pulseWarning 1s ease-in-out infinite;
+ }
+
+ @keyframes pulseWarning {
+
+   0%,
+   100% {
+     box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+   }
+
+   50% {
+     box-shadow: 0 0 20px rgba(255, 107, 53, 0.9);
+   }
+ }
+
+ .nextUpTimer {
+   font-size: 14px;
+   font-weight: 500;
+   color: #ff6b35;
+   padding: 4px 10px;
+   border-radius: 10px;
+   font-family: var(--font-geist-mono);
+   animation: pulseTimer 1s ease-in-out infinite;
+   flex-shrink: 0;
+   margin-left: auto;
+
+ }
+
+ @keyframes pulseTimer {
+
+   0%,
+   100% {
+     transform: scale(1);
+     opacity: 1;
+   }
+
+   50% {
+     transform: scale(1.05);
+     opacity: 0.8;
+   }
+ }
+
+ .queueList {
+   display: flex;
+   flex-direction: column;
+   gap: 3px;
+ }
+
+ .queueItem {
+   display: flex;
+   align-items: center;
+   gap: 9px;
+   padding: 6px 8px;
+   border-radius: 6px;
+   background: rgba(255, 255, 255, 0.03);
+   transition: all 0.2s ease;
+ }
+
+ .queueItem:hover {
+   background: rgba(255, 255, 255, 0.08);
+   transform: translateX(4px);
+ }
+
+ .queueItem.upcoming {
+   background: rgba(255, 107, 53, 0.15);
+   border: 1px solid rgba(255, 107, 53, 0.3);
+   animation: pulseUpcoming 1s ease-in-out infinite;
+ }
+
+ @keyframes pulseUpcoming {
+
+   0%,
+   100% {
+     box-shadow: 0 0 0 rgba(255, 107, 53, 0.4);
+   }
+
+   50% {
+     box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+   }
+ }
+
+ .queueAlbumArt {
+   flex-shrink: 0;
+   width: 36px;
+   height: 36px;
+   border-radius: 4px;
+   overflow: hidden;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+   transition: all 0.2s ease;
+ }
+
+ .queueAlbumArt.smaller {
+   width: 24px;
+   height: 24px;
+ }
+
+
+ .queueAlbumArt img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+ }
+
+ .queueTrackInfo {
+   flex: 1;
+   min-width: 0;
+   display: flex;
+   flex-direction: column;
+   gap: 2px;
+ }
+
+ .queueTrackName {
+   font-size: 14px;
+   font-weight: 600;
+   color: #fff;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+
+ .queueArtistName {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.6);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+
+ .errorMessage {
+   text-align: center;
+   color: rgba(255, 255, 255, 0.7);
+   padding: 24px;
+ }
+
+ .errorMessage p {
+   margin: 0 0 8px 0;
+   font-size: 16px;
+ }
+
+ .hint {
+   font-size: 14px !important;
+   opacity: 0.6;
+ }
+
+ /* Responsive Design */
+ @media (max-width: 768px) {
+   .topBar {
+     padding: 16px 20px;
+     flex-wrap: wrap;
+   }
+
+   .modeToggle {
+     order: 3;
+     width: 100%;
+     justify-content: center;
+   }
+
+   .vizSelector {
+     order: 2;
+   }
+
+   .bottomControls {
+     padding: 16px 20px 24px;
+   }
+
+   .controlsContainer {
+     flex-direction: column;
+     align-items: stretch;
+     gap: 24px;
+   }
+
+   .currentSection {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 16px;
+   }
+
+   .albumArt {
+     width: 100%;
+     max-width: 200px;
+     height: auto;
+     aspect-ratio: 1;
+     align-self: center;
+   }
+
+   .queueSection {
+     flex: 1;
+     border-left: none;
+     border-top: 1px solid rgba(255, 255, 255, 0.1);
+     padding-left: 0;
+     padding-top: 24px;
+     max-height: 300px;
+     overflow-y: auto;
+   }
+
+   .trackName {
+     font-size: 20px;
+   }
+
+   .artistName {
+     font-size: 14px;
+   }
+
+   .trackInfoContainer {
+     width: 100%;
+   }
+ }
+
+ /* Floating Stats Panel */
+ .floatingStats {
+   position: fixed;
+   top: 100px;
+   right: 20px;
+   background: rgba(0, 0, 0, 0.8);
+   backdrop-filter: blur(20px);
+   border: 1px solid rgba(255, 255, 255, 0.1);
+   border-radius: 12px;
+   padding: 16px;
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   z-index: 100;
+   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+ }
+
+ .statItem {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 4px;
+ }
+
+ .statLabel {
+   font-size: 11px;
+   font-weight: 600;
+   color: rgba(255, 255, 255, 0.6);
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+   font-family: var(--font-geist-mono);
+ }
+
+ .statValue {
+   font-size: 20px;
+   font-weight: 700;
+   color: #1ed760;
+   font-family: var(--font-geist-mono);
+ }
+
+ @media (max-width: 480px) {
+   .backLink {
+     font-size: 14px;
+     padding: 6px 12px;
+   }
+
+   .albumArt {
+     max-width: 160px;
+   }
+
+   .trackName {
+     font-size: 18px;
+   }
+
+   .timeText {
+     font-size: 11px;
+     min-width: 35px;
+   }
+
+   .progressBar {
+     height: 4px;
+   }
+ }
