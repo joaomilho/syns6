@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -25,7 +25,7 @@ interface VisualizationProps {
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
-  micData?: MicrophoneData;
+  fps?: number;
 }
 
 // Mandelbrot set shader
@@ -44,6 +44,7 @@ const mandelbrotFragmentShader = `
   uniform vec2 center;
   uniform float micEnergy;
   uniform float micBass;
+  uniform float maxIterations;
   varying vec2 vUv;
 
   vec3 hsv2rgb(vec3 c) {
@@ -58,11 +59,10 @@ const mandelbrotFragmentShader = `
     
     vec2 z = vec2(0.0);
     float iterations = 0.0;
-    float maxIterations = 256.0;
     
-    // Mandelbrot iteration with more iterations for deeper zoom
-    for(float i = 0.0; i < 256.0; i++) {
-      if(length(z) > 2.0) break;
+    // Mandelbrot iteration - dynamic based on performance
+    for(float i = 0.0; i < 512.0; i++) {
+      if(i >= maxIterations || length(z) > 2.0) break;
       
       // z = z^2 + c
       z = vec2(
@@ -116,9 +116,27 @@ function MandelbrotPlane({
   isPlaying,
   syncedData,
   micData,
+  fps = 60,
 }: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  
+  // Dynamic iterations based on FPS
+  const [maxIterations, setMaxIterations] = React.useState(128);
+  
+  React.useEffect(() => {
+    if (fps <= 0) return;
+    
+    // Adjust iterations based on FPS
+    if (fps < 30) {
+      setMaxIterations(64); // Low detail
+      console.log(`⬇️ FPS low (${fps.toFixed(1)}), reducing fractal detail: 64 iterations`);
+    } else if (fps < 45) {
+      setMaxIterations(128); // Medium detail
+    } else if (fps > 55) {
+      setMaxIterations(256); // High detail
+    }
+  }, [fps]);
 
   // Famous Mandelbrot locations with infinite detail and mini-mandelbrots
   const interestingLocations = useMemo(
@@ -141,9 +159,17 @@ function MandelbrotPlane({
       center: { value: new THREE.Vector2(-0.7463, 0.1102) },
       micEnergy: { value: 0 },
       micBass: { value: 0 },
+      maxIterations: { value: 128 },
     }),
     []
   );
+  
+  // Update maxIterations uniform when it changes
+  React.useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.maxIterations.value = maxIterations;
+    }
+  }, [maxIterations]);
 
   useFrame((state) => {
     if (!materialRef.current) return;
@@ -288,7 +314,7 @@ function SpiralParticles({ audioFeatures, isPlaying }: VisualizationProps) {
   }, []);
 
   useFrame((state) => {
-    if (!pointsRef.current || !isPlaying) return;
+    if (!pointsRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const tempo = audioFeatures?.tempo || 120;
@@ -326,6 +352,7 @@ export default function FractalVisualization({
   lyrics,
   currentTimeMs,
   micData,
+  fps = 60,
 }: VisualizationProps) {
   return (
     <div
@@ -356,6 +383,7 @@ export default function FractalVisualization({
           isPlaying={isPlaying}
           syncedData={syncedData}
           micData={micData}
+          fps={fps}
         />
 
         {/* 3D Lyrics - always show, component handles "not found" */}

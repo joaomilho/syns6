@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import React, { useRef, useMemo, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
@@ -13,184 +13,563 @@ interface VisualizationProps {
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
+  fps?: number;
 }
 
-function ParticleField({ micData }: { micData?: MicrophoneData }) {
-  const pointsRef = useRef<THREE.Points>(null);
-  const particleCount = 2000;
+// Camera shake component
+function CameraShake({ micData }: { micData?: MicrophoneData }) {
+  const { camera } = useThree();
+  const originalPosition = useRef(new THREE.Vector3(0, 0, 30));
+  const shakeIntensity = useRef(0);
 
-  // Create particle positions
-  const positions = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3;
-      const radius = 10 + Math.random() * 20;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-
-      positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i3 + 2] = radius * Math.cos(phi);
+  useFrame(() => {
+    const bass = micData?.bass || 0;
+    
+    // Smooth shake intensity with more dampening
+    shakeIntensity.current = shakeIntensity.current * 0.9 + bass * 0.1;
+    
+    // Apply subtle shake
+    if (shakeIntensity.current > 0.01) {
+      const shake = shakeIntensity.current * 0.3; // Reduced from 2 to 0.3
+      camera.position.x = originalPosition.current.x + (Math.random() - 0.5) * shake;
+      camera.position.y = originalPosition.current.y + (Math.random() - 0.5) * shake;
+      camera.position.z = originalPosition.current.z + (Math.random() - 0.5) * shake * 0.3;
+    } else {
+      camera.position.lerp(originalPosition.current, 0.15);
     }
-    return positions;
-  }, []);
-
-  useFrame((state) => {
-    if (!pointsRef.current) return;
-
-    const time = state.clock.getElapsedTime();
-
-    // MIC DATA
-    const micEnergy = micData?.energy || 0;
-    const micVolume = micData?.volume || 0;
-    const micBass = micData?.bass || 0;
-
-    // Rotate based on mic - SUPER CHILL baseline, subtle mic boost
-    const micSpinBoost = micEnergy * 2; // 0 to 2x with mic
-    const rotationSpeed = 0.002 * (1 + micSpinBoost);
-    pointsRef.current.rotation.y = time * rotationSpeed;
-    pointsRef.current.rotation.x = time * rotationSpeed * 0.6;
-    pointsRef.current.rotation.z = time * micBass * 0.3;
-
-    // Scale with mic
-    const micScale = 1 + micVolume * 0.4;
-    pointsRef.current.scale.set(micScale, micScale, micScale);
-
-    // Update particle positions for wave effect - SUBTLE baseline, EXPLOSIVE with mic
-    const positionAttribute = pointsRef.current.geometry.attributes.position;
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3;
-      const x = positions[i3];
-      const y = positions[i3 + 1];
-      const z = positions[i3 + 2];
-
-      // Base wave motion - minimal
-      const wave = Math.sin(time * 2 + i * 0.001) * 0.5;
-
-      // MIC WAVE - creates subtle particle movement
-      const micWave = Math.sin(time * 5 + i * 0.02) * micEnergy * 1;
-      const micBassWave = Math.cos(time * 3 + i * 0.03) * micBass * 0.7;
-
-      positionAttribute.setXYZ(
-        i,
-        x + wave + micWave,
-        y + wave + micBassWave,
-        z + wave + micWave
-      );
-    }
-
-    positionAttribute.needsUpdate = true;
   });
 
-  // Simple color based on mic
-  const color = useMemo(() => {
-    return new THREE.Color(0.6, 0.6, 1.0); // Blue-ish
-  }, []);
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particleCount}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.1}
-        color={color}
-        transparent
-        opacity={0.6}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
+  return null;
 }
 
-function CenterSphere({ micData }: { micData?: MicrophoneData }) {
+// Frequency band circle - follows its orbital ring
+function FrequencyCircle({ 
+  index, 
+  total, 
+  micData,
+  ringPositions,
+  useDistortion = true
+}: { 
+  index: number; 
+  total: number; 
+  micData?: MicrophoneData;
+  ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
+  useDistortion?: boolean;
+}) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const materialRef = useRef<any>(null);
+
+  // Get the frequency band for this circle
+  const getFrequencyIntensity = () => {
+    if (!micData?.frequencyData) return 0;
+    
+    const fftSize = micData.frequencyData.length;
+    const bandSize = Math.floor(fftSize / total);
+    const startIdx = index * bandSize;
+    const endIdx = Math.min(startIdx + bandSize, fftSize);
+    
+    // Average the frequency band
+    let sum = 0;
+    for (let i = startIdx; i < endIdx; i++) {
+      sum += micData.frequencyData[i];
+    }
+    return (sum / (endIdx - startIdx)) / 255; // Normalize to 0-1
+  };
 
   useFrame((state) => {
     if (!meshRef.current || !materialRef.current) return;
 
     const time = state.clock.getElapsedTime();
-
-    // MIC DATA
-    const micEnergy = micData?.energy || 0;
-    const micVolume = micData?.volume || 0;
-
-    // Rotate - subtle mic boost
-    const micSpinBoost = 1 + micEnergy * 0.8;
-    meshRef.current.rotation.y += 0.015 * micSpinBoost;
-    meshRef.current.rotation.x += 0.008 * micSpinBoost;
-
-    // Pulsate with mic
-    const basePulse = 1 + Math.sin(time * 3) * 0.2;
-    const micPulse = 1 + micVolume * 0.3;
-    const scale = basePulse * micPulse;
-
-    meshRef.current.scale.set(scale, scale, scale);
-
-    // Color shift based on time
-    const hue = (time * 0.1) % 1;
-    materialRef.current.color.setHSL(hue, 1, 0.5);
-    materialRef.current.emissive.setHSL(hue, 1, 0.2);
-    materialRef.current.emissiveIntensity = 0.3 + micEnergy * 0.5;
+    const intensity = getFrequencyIntensity();
+    
+    // Get the ring positions for this band
+    const positions = ringPositions.current.get(index);
+    if (positions) {
+      const segments = positions.length / 3;
+      
+      // Orbital speed varies by band
+      const orbitSpeed = 0.5 + (index / total) * 0.5;
+      const angle = time * orbitSpeed + (index / total) * Math.PI * 2;
+      
+      // Map angle to segment index (0 to segments-1)
+      const normalizedAngle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const segmentFloat = (normalizedAngle / (Math.PI * 2)) * segments;
+      const segment = Math.floor(segmentFloat) % segments;
+      
+      // Get position from the ring at this segment
+      const idx = segment * 3;
+      meshRef.current.position.x = positions[idx];
+      meshRef.current.position.y = positions[idx + 1];
+      meshRef.current.position.z = positions[idx + 2];
+    }
+    
+    // Size varies with intensity - MORE dramatic
+    const size = 0.8 + intensity * 2;
+    meshRef.current.scale.set(size, size, size);
+    
+    // Color shifts based on frequency band and intensity
+    const hue = (index / total);
+    const saturation = 0.8 + intensity * 0.2;
+    const lightness = 0.3 + intensity * 0.5;
+    
+    materialRef.current.color.setHSL(hue, saturation, lightness);
+    materialRef.current.emissive.setHSL(hue, saturation, lightness * 0.5);
+    materialRef.current.emissiveIntensity = 0.5 + intensity * 3;
+    
+    // Rotation - faster with intensity
+    meshRef.current.rotation.x += 0.02 * (1 + intensity * 2);
+    meshRef.current.rotation.y += 0.03 * (1 + intensity * 2);
   });
 
   return (
     <mesh ref={meshRef}>
-      <dodecahedronGeometry args={[3, 0]} />
-      <meshStandardMaterial
-        ref={materialRef}
-        color="#ff00ff"
-        emissive="#ff00ff"
-      />
+      <icosahedronGeometry args={[1, 2]} />
+      {useDistortion ? (
+        <MeshDistortMaterial
+          ref={materialRef}
+          color="#ff00ff"
+          emissive="#ff00ff"
+          distort={0.3}
+          speed={1.5}
+          roughness={0.1}
+          metalness={1.0}
+        />
+      ) : (
+        <meshStandardMaterial
+          ref={materialRef}
+          color="#ff00ff"
+          emissive="#ff00ff"
+          roughness={0.1}
+          metalness={1.0}
+        />
+      )}
     </mesh>
   );
 }
 
-function WireframeRings({ micData }: { micData?: MicrophoneData }) {
+// Multiple frequency circles
+function FrequencyCircles({ 
+  micData,
+  ringPositions,
+  fps = 60
+}: { 
+  micData?: MicrophoneData;
+  ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
+  fps?: number;
+}) {
+  const circleCount = 16; // Number of frequency bands
+  
+  // Disable distortion if FPS is low
+  const useDistortion = fps > 50;
+
+  return (
+    <group>
+      {Array.from({ length: circleCount }).map((_, i) => (
+        <FrequencyCircle
+          key={i}
+          index={i}
+          total={circleCount}
+          micData={micData}
+          ringPositions={ringPositions}
+          useDistortion={useDistortion}
+        />
+      ))}
+    </group>
+  );
+}
+
+// Center core that reacts to overall energy
+function CenterCore({ micData }: { micData?: MicrophoneData }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const pointLightRef = useRef<THREE.PointLight>(null);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+
+    const time = state.clock.getElapsedTime();
+    const bass = micData?.bass || 0;
+    const energy = micData?.energy || 0;
+
+    // Pulse with music
+    const scale = 1 + bass * 0.8 + energy * 0.3;
+    meshRef.current.scale.setScalar(scale);
+
+    // Rotate slowly
+    meshRef.current.rotation.x = time * 0.2;
+    meshRef.current.rotation.y = time * 0.3;
+
+    // Change color with energy
+    const material = meshRef.current.material as THREE.MeshStandardMaterial;
+    const hue = (time * 0.1 + energy * 0.5) % 1;
+    material.color.setHSL(hue, 0.8, 0.5);
+    material.emissive.setHSL(hue, 0.8, 0.3);
+
+    // Emissive intensity based on energy
+    material.emissiveIntensity = 0.5 + energy * 0.5;
+
+    // Update point light at sphere center
+    if (pointLightRef.current) {
+      pointLightRef.current.color.setHSL(hue, 1.0, 0.5);
+      pointLightRef.current.intensity = 50 + energy * 50;
+    }
+  });
+
+  return (
+    <group position={[0, 0, 0]}>
+      <mesh ref={meshRef}>
+        <icosahedronGeometry args={[3, 3]} />
+        <meshStandardMaterial
+          metalness={0.9}
+          roughness={0.1}
+          emissiveIntensity={0.5}
+        />
+      </mesh>
+      <pointLight
+        ref={pointLightRef}
+        position={[0, 0, 0]}
+        intensity={50}
+        decay={2}
+      />
+    </group>
+  );
+}
+
+// Single orbital ring that shows frequency band history in a circle using cylinders
+function OrbitalRing({ 
+  index, 
+  total, 
+  baseRadius, 
+  micData,
+  bandHistory,
+  ringPositions,
+  segments
+}: { 
+  index: number; 
+  total: number; 
+  baseRadius: number; 
+  micData?: MicrophoneData;
+  bandHistory: React.MutableRefObject<number[][]>;
+  ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
+  segments: number;
+}) {
+  
+  // Store positions for each point around the circle
+  const positions = useRef(new Float32Array(segments * 3));
+  
+  // Share positions with planets
+  useEffect(() => {
+    ringPositions.current.set(index, positions.current);
+    return () => {
+      ringPositions.current.delete(index);
+    };
+  }, [index, ringPositions]);
+  
+  // Create instanced mesh for cylinders
+  const instancedMesh = useMemo(() => {
+    const geometry = new THREE.CylinderGeometry(0.08, 0.08, 1, 8); // Thicker cylinders
+    const hue = index / total;
+    const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.5,
+      roughness: 0.3,
+      metalness: 0.7,
+    });
+    const mesh = new THREE.InstancedMesh(geometry, material, segments);
+    return mesh;
+  }, [index, total, segments]);
+
+  const dummy = useRef(new THREE.Object3D());
+  const tempColor = useRef(new THREE.Color());
+
+  useFrame(() => {
+    if (!micData?.frequencyData) return;
+
+    const history = bandHistory.current;
+    const pos = positions.current;
+    
+    // Update positions based on history
+    for (let i = 0; i < segments; i++) {
+      const historyIndex = Math.min(i, history.length - 1);
+      const intensity = history[historyIndex]?.[index] || 0;
+      
+      // Calculate HEIGHT variation based on intensity
+      const height = intensity * 8;
+      
+      const angle = (i / segments) * Math.PI * 2;
+      pos[i * 3] = Math.cos(angle) * baseRadius;
+      pos[i * 3 + 1] = height;
+      pos[i * 3 + 2] = Math.sin(angle) * baseRadius;
+    }
+    
+    // Create cylinders between consecutive points
+    const dummyObj = dummy.current;
+    const tempColorObj = tempColor.current;
+    const hue = index / total;
+    const baseColor = new THREE.Color().setHSL(hue, 0.8, 0.5);
+    
+    for (let i = 0; i < segments - 1; i++) {
+      const idx1 = i * 3;
+      const idx2 = (i + 1) * 3;
+      
+      const x1 = pos[idx1];
+      const y1 = pos[idx1 + 1];
+      const z1 = pos[idx1 + 2];
+      
+      const x2 = pos[idx2];
+      const y2 = pos[idx2 + 1];
+      const z2 = pos[idx2 + 2];
+      
+      // Position cylinder between two points
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const midZ = (z1 + z2) / 2;
+      
+      dummyObj.position.set(midX, midY, midZ);
+      
+      // Calculate length and rotation
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const dz = z2 - z1;
+      const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      
+      // Point cylinder from point1 to point2
+      dummyObj.lookAt(x2, y2, z2);
+      dummyObj.rotateX(Math.PI / 2);
+      
+      // Scale cylinder to match distance
+      dummyObj.scale.set(1, length, 1);
+      
+      // Color intensity based on height
+      const intensity = Math.max(y1, y2) / 8;
+      const lightness = 0.3 + intensity * 0.5;
+      tempColorObj.setHSL(hue, 0.8, lightness);
+      
+      dummyObj.updateMatrix();
+      instancedMesh.setMatrixAt(i, dummyObj.matrix);
+      instancedMesh.setColorAt(i, tempColorObj);
+    }
+    
+    // Connect last point to first to close the circle
+    const idx1 = (segments - 1) * 3;
+    const idx2 = 0;
+    
+    const x1 = pos[idx1];
+    const y1 = pos[idx1 + 1];
+    const z1 = pos[idx1 + 2];
+    
+    const x2 = pos[idx2];
+    const y2 = pos[idx2 + 1];
+    const z2 = pos[idx2 + 2];
+    
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    const midZ = (z1 + z2) / 2;
+    
+    dummyObj.position.set(midX, midY, midZ);
+    
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dz = z2 - z1;
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    
+    dummyObj.lookAt(x2, y2, z2);
+    dummyObj.rotateX(Math.PI / 2);
+    dummyObj.scale.set(1, length, 1);
+    
+    const intensity = Math.max(y1, y2) / 8;
+    const lightness = 0.3 + intensity * 0.5;
+    tempColorObj.setHSL(hue, 0.8, lightness);
+    
+    dummyObj.updateMatrix();
+    instancedMesh.setMatrixAt(segments - 1, dummyObj.matrix);
+    instancedMesh.setColorAt(segments - 1, tempColorObj);
+    
+    instancedMesh.instanceMatrix.needsUpdate = true;
+    if (instancedMesh.instanceColor) {
+      instancedMesh.instanceColor.needsUpdate = true;
+    }
+  });
+
+  return <primitive object={instancedMesh} />;
+}
+
+// Orbital paths visualization - shows frequency band history in circles
+function OrbitalPaths({ 
+  micData,
+  ringPositions,
+  fps = 60
+}: { 
+  micData?: MicrophoneData;
+  ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
+  fps?: number;
+}) {
   const groupRef = useRef<THREE.Group>(null);
+  const circleCount = 16; // Number of frequency bands
+  
+  // Dynamic segments based on FPS
+  const [segments, setSegments] = React.useState(64); // Start moderate
+  
+  // Track FPS history for stable averaging
+  const fpsHistory = useRef<number[]>([]);
+  const lastAdjustTime = useRef<number>(0);
+  
+  // Adjust segments based on FPS
+  useEffect(() => {
+    if (fps <= 0) return;
+    
+    const now = Date.now();
+    
+    // Add to history
+    fpsHistory.current.push(fps);
+    if (fpsHistory.current.length > 30) {
+      fpsHistory.current.shift();
+    }
+    
+    // Only adjust every 2 seconds
+    if (now - lastAdjustTime.current < 2000) return;
+    if (fpsHistory.current.length < 10) return;
+    
+    // Calculate average FPS
+    const avgFps = fpsHistory.current.reduce((a, b) => a + b, 0) / fpsHistory.current.length;
+    
+    // Adjust segments based on FPS
+    if (avgFps < 45 && segments > 16) {
+      // Struggling - reduce segments
+      const newSegments = Math.max(16, Math.floor(segments * 0.75));
+      console.log(`⬇️ FPS too low (${avgFps.toFixed(1)}), reducing segments: ${segments} → ${newSegments}`);
+      setSegments(newSegments);
+      lastAdjustTime.current = now;
+      fpsHistory.current = [];
+    } else if (avgFps > 55 && segments < 128) {
+      // Doing well - can increase quality
+      const newSegments = Math.min(128, Math.floor(segments * 1.25));
+      console.log(`⬆️ FPS good (${avgFps.toFixed(1)}), increasing segments: ${segments} → ${newSegments}`);
+      setSegments(newSegments);
+      lastAdjustTime.current = now;
+      fpsHistory.current = [];
+    }
+  }, [fps, segments]);
+  
+  const maxHistoryLength = segments; // Match history to segments
+  
+  // History buffer: array of frequency snapshots [newest...oldest]
+  // Each snapshot is an array of frequency band values
+  const bandHistory = useRef<number[][]>([]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
 
     const time = state.clock.getElapsedTime();
+    const treble = micData?.treble || 0;
 
-    // MIC DATA
-    const micEnergy = micData?.energy || 0;
-    const micTreble = micData?.treble || 0;
+    // Calculate current frequency values for all bands
+    if (micData?.frequencyData) {
+      const frequencyData = micData.frequencyData;
+      const currentBands: number[] = [];
+      
+      for (let i = 0; i < circleCount; i++) {
+        const fftSize = frequencyData.length;
+        const bandSize = Math.floor(fftSize / circleCount);
+        const startIdx = i * bandSize;
+        const endIdx = Math.min(startIdx + bandSize, fftSize);
+        
+        // Average the frequency band
+        let sum = 0;
+        for (let j = startIdx; j < endIdx; j++) {
+          sum += frequencyData[j];
+        }
+        const intensity = (sum / (endIdx - startIdx)) / 255;
+        currentBands.push(intensity);
+      }
+      
+      // Add to history (newest at front)
+      bandHistory.current.unshift(currentBands);
+      if (bandHistory.current.length > maxHistoryLength) {
+        bandHistory.current.pop();
+      }
+    }
 
-    // Rotate - subtle mic boost
-    const micSpinBoost = 1 + micEnergy * 0.8;
-    groupRef.current.rotation.z = time * 0.6 * micSpinBoost;
-    groupRef.current.rotation.x =
-      Math.sin(time * 0.7) * 0.6 * (1 + micTreble * 0.4);
-
-    // Scale with mic
-    const micPulse = 1 + micEnergy * 0.25;
-    groupRef.current.scale.setScalar(micPulse);
+    // Slow rotation
+    groupRef.current.rotation.y = time * 0.1;
+    groupRef.current.rotation.x = Math.sin(time * 0.2) * 0.2 * (1 + treble * 0.5);
   });
 
   return (
     <group ref={groupRef}>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[8, 0.2, 16, 100]} />
-        <meshBasicMaterial color="#00ffff" wireframe />
-      </mesh>
-      <mesh rotation={[0, Math.PI / 2, 0]}>
-        <torusGeometry args={[8, 0.2, 16, 100]} />
-        <meshBasicMaterial color="#ff00ff" wireframe />
-      </mesh>
-      <mesh>
-        <torusGeometry args={[8, 0.2, 16, 100]} />
-        <meshBasicMaterial color="#ffff00" wireframe />
-      </mesh>
+      {Array.from({ length: circleCount }).map((_, i) => {
+        const radius = 8 + (i / circleCount) * 30; // Increased spacing: 8-38 instead of 5-20
+        return (
+          <OrbitalRing
+            key={`${i}-${segments}`} // Re-create when segments change
+            index={i}
+            total={circleCount}
+            baseRadius={radius}
+            micData={micData}
+            bandHistory={bandHistory}
+            ringPositions={ringPositions}
+            segments={segments}
+          />
+        );
+      })}
     </group>
+  );
+}
+
+function SceneContent({
+  isPlaying,
+  lyrics,
+  currentTimeMs,
+  micData,
+  fps = 60,
+}: VisualizationProps) {
+  // Shared positions map so planets can follow their rings
+  const ringPositions = useRef(new Map<number, Float32Array>());
+
+  return (
+    <>
+      <CameraShake micData={micData} />
+      
+      <ambientLight intensity={0.3} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
+      <pointLight
+        position={[-10, -10, -10]}
+        color="#ff00ff"
+        intensity={0.5}
+      />
+
+      {/* Orbital path guides - must render first to create positions */}
+      <OrbitalPaths micData={micData} ringPositions={ringPositions} fps={fps} />
+      
+      {/* Frequency circles orbiting - follow the rings */}
+      <FrequencyCircles micData={micData} ringPositions={ringPositions} fps={fps} />
+      
+      {/* Center core */}
+      <CenterCore micData={micData} />
+
+      {/* 3D Lyrics - positioned closer to camera */}
+      {currentTimeMs !== undefined && (
+        <group position={[0, 0, 15]}>
+          <Lyrics3D
+            lyrics={lyrics || null}
+            currentTimeMs={currentTimeMs}
+            isPlaying={isPlaying}
+            syncedData={null}
+            micData={micData}
+          />
+        </group>
+      )}
+
+      <OrbitControls
+        enableZoom={true}
+        enablePan={false}
+        minDistance={20}
+        maxDistance={80}
+        autoRotate={false}
+        autoRotateSpeed={0}
+      />
+    </>
   );
 }
 
@@ -199,6 +578,7 @@ export default function MusicVisualization({
   lyrics,
   currentTimeMs,
   micData,
+  fps = 60,
 }: VisualizationProps) {
   return (
     <div
@@ -212,41 +592,17 @@ export default function MusicVisualization({
       }}
     >
       <Canvas
-        camera={{ position: [0, 0, 30], fov: 75 }}
+        camera={{ position: [0, 0, 40], fov: 80 }}
         style={{
           background: "radial-gradient(circle, #0a0a0a 0%, #000000 100%)",
         }}
       >
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <pointLight
-          position={[-10, -10, -10]}
-          color="#ff00ff"
-          intensity={0.5}
-        />
-
-        <ParticleField micData={micData} />
-        <CenterSphere micData={micData} />
-        <WireframeRings micData={micData} />
-
-        {/* 3D Lyrics - always show, component handles "not found" */}
-        {currentTimeMs !== undefined && (
-          <Lyrics3D
-            lyrics={lyrics || null}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
-            syncedData={null}
-            micData={micData}
-          />
-        )}
-
-        <OrbitControls
-          enableZoom={true}
-          enablePan={false}
-          minDistance={15}
-          maxDistance={50}
-          autoRotate={false}
-          autoRotateSpeed={0}
+        <SceneContent
+          isPlaying={isPlaying}
+          lyrics={lyrics}
+          currentTimeMs={currentTimeMs}
+          micData={micData}
+          fps={fps}
         />
       </Canvas>
     </div>

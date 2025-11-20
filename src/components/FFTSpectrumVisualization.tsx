@@ -215,9 +215,10 @@ function FFTSpectrumPlanes({
   }, [cols, rows, spacingX, spacingZ]);
 
   useFrame(() => {
-    if (!micData?.frequencyData || !groupRef.current) return;
+    if (!groupRef.current) return;
 
-    const frequencyData = micData.frequencyData;
+    // Use silent mic data if no mic is available
+    const frequencyData = micData?.frequencyData || new Uint8Array(512).fill(0);
     const binsPerBar = Math.floor(frequencyData.length / cols);
 
     // Calculate bass intensity (first 12 bins for sub-bass/bass)
