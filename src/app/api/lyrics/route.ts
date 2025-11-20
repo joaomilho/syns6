@@ -49,7 +49,7 @@ async function fetchFromLRCLIB(
     console.log(`   → Fetching: ${url}`);
 
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(3000), // 3 second timeout per API
+      signal: AbortSignal.timeout(10000), // 10 second timeout per API
     });
 
     console.log(`   → LRCLIB response: ${response.status} ${response.statusText}`);
@@ -87,13 +87,25 @@ async function fetchFromNetease(
     console.log(`   → NetEase searching: ${searchUrl}`);
 
     const searchResponse = await fetch(searchUrl, {
-      signal: AbortSignal.timeout(3000), // 3 second timeout per API
+      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
     });
 
     console.log(`   → NetEase search response: ${searchResponse.status}`);
 
     if (!searchResponse.ok) {
       console.log("   ✗ NetEase: Search failed");
+      return null;
+    }
+
+    // Check content type before parsing JSON
+    const contentType = searchResponse.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log(`   ✗ NetEase: Invalid response type: ${contentType}`);
+      const text = await searchResponse.text();
+      console.log(`   ✗ NetEase response preview: ${text.substring(0, 100)}`);
       return null;
     }
 
@@ -112,13 +124,23 @@ async function fetchFromNetease(
     console.log(`   → Fetching lyrics: ${lyricsUrl}`);
     
     const lyricsResponse = await fetch(lyricsUrl, {
-      signal: AbortSignal.timeout(3000), // 3 second timeout per API
+      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
     });
 
     console.log(`   → NetEase lyrics response: ${lyricsResponse.status}`);
 
     if (!lyricsResponse.ok) {
       console.log("   ✗ NetEase: Lyrics fetch failed");
+      return null;
+    }
+
+    // Check content type before parsing JSON
+    const lyricsContentType = lyricsResponse.headers.get('content-type');
+    if (!lyricsContentType || !lyricsContentType.includes('application/json')) {
+      console.log(`   ✗ NetEase: Invalid lyrics response type: ${lyricsContentType}`);
       return null;
     }
 
@@ -155,7 +177,7 @@ async function fetchFromLRCLIBSearch(
     console.log(`   → LRCLIB Search: ${url}`);
 
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(3000), // 3 second timeout per API
+      signal: AbortSignal.timeout(10000), // 10 second timeout per API
     });
 
     console.log(`   → LRCLIB Search response: ${response.status}`);

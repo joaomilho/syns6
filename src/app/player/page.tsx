@@ -12,7 +12,6 @@ import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
-import BlackMetalVisualization from "@/components/BlackMetalVisualization";
 import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
@@ -76,7 +75,7 @@ export default function PlayerPage() {
   const hue = useHueLights();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] =
-    useState<VisualizationType>("particles");
+    useState<VisualizationType>("fftspectrum");
   const [showHueControls, setShowHueControls] = useState(false);
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
   const [lastFetchedTrackId, setLastFetchedTrackId] = useState<string | null>(
@@ -274,6 +273,7 @@ export default function PlayerPage() {
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
+          fps={fps}
         />
       )}
       {visualizationType === "fractal" && (
@@ -282,6 +282,7 @@ export default function PlayerPage() {
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
+          fps={fps}
         />
       )}
       {visualizationType === "psychedelic" && (
@@ -294,14 +295,6 @@ export default function PlayerPage() {
       )}
       {visualizationType === "waves" && (
         <WavyLinesVisualization
-          isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          micData={micData}
-        />
-      )}
-      {visualizationType === "blackmetal" && (
-        <BlackMetalVisualization
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
@@ -410,6 +403,15 @@ export default function PlayerPage() {
         <div className={styles.vizSelector}>
           <button
             className={`${styles.vizButton} ${
+              visualizationType === "fftspectrum" ? styles.active : ""
+            }`}
+            onClick={() => setVisualizationType("fftspectrum")}
+            title="FFT Spectrum Grid"
+          >
+            ▥
+          </button>
+          <button
+            className={`${styles.vizButton} ${
               visualizationType === "particles" ? styles.active : ""
             }`}
             onClick={() => setVisualizationType("particles")}
@@ -446,15 +448,6 @@ export default function PlayerPage() {
           </button>
           <button
             className={`${styles.vizButton} ${
-              visualizationType === "blackmetal" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("blackmetal")}
-            title="Black Metal"
-          >
-            ⛧
-          </button>
-          <button
-            className={`${styles.vizButton} ${
               visualizationType === "animated" ? styles.active : ""
             }`}
             onClick={() => setVisualizationType("animated")}
@@ -479,15 +472,6 @@ export default function PlayerPage() {
             title="Wave Spectrum"
           >
             ▬
-          </button>
-          <button
-            className={`${styles.vizButton} ${
-              visualizationType === "fftspectrum" ? styles.active : ""
-            }`}
-            onClick={() => setVisualizationType("fftspectrum")}
-            title="FFT Spectrum Grid"
-          >
-            ▥
           </button>
           <button
             className={`${styles.vizButton} ${

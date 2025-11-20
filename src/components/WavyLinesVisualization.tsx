@@ -1,12 +1,39 @@
 "use client";
 
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import Lyrics3D from "./Lyrics3D";
+
+// Camera shake component
+function CameraShake({ micData }: { micData?: MicrophoneData }) {
+  const { camera } = useThree();
+  const originalPosition = useRef(new THREE.Vector3(0, 0, 25));
+  const shakeIntensity = useRef(0);
+
+  useFrame(() => {
+    const bass = micData?.bass || 0;
+    
+    // Smooth shake intensity with dampening
+    shakeIntensity.current = shakeIntensity.current * 0.9 + bass * 0.1;
+    
+    // Apply subtle shake
+    if (shakeIntensity.current > 0.01) {
+      const shake = shakeIntensity.current * 0.3;
+      camera.position.x = originalPosition.current.x + (Math.random() - 0.5) * shake;
+      camera.position.y = originalPosition.current.y + (Math.random() - 0.5) * shake;
+      camera.position.z = originalPosition.current.z + (Math.random() - 0.5) * shake * 0.3;
+    } else {
+      camera.position.lerp(originalPosition.current, 0.15);
+    }
+  });
+
+  return null;
+}
 
 interface AudioFeatures {
   energy: number;
@@ -33,6 +60,7 @@ function WavyLine({
   syncedData,
   offset,
   micData,
+  instrumentType = "bass",
 }: {
   yPosition: number;
   zPosition: number;
@@ -41,6 +69,7 @@ function WavyLine({
   syncedData: SyncedAudioData | null;
   offset: number;
   micData?: MicrophoneData;
+  instrumentType?: "bass" | "vocal" | "drums";
 }) {
   const lineRef = useRef<THREE.Line>(null);
   const materialRef = useRef<THREE.LineBasicMaterial>(null);
@@ -63,7 +92,7 @@ function WavyLine({
   }, [yPosition, zPosition]);
 
   useFrame((state) => {
-    if (!lineRef.current || !materialRef.current || !isPlaying) return;
+    if (!lineRef.current || !materialRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const energy = audioFeatures?.energy || 0.5;
@@ -75,31 +104,50 @@ function WavyLine({
     const timbreEnergy = syncedData?.timbreEnergy || 0.5;
     const anticipation = syncedData?.anticipation || 0;
 
-    // MIC DATA - makes lines go WILD and RED!
+    // MIC DATA - instrument-specific
     const micEnergy = micData?.energy || 0;
     const micVolume = micData?.volume || 0;
     const micBass = micData?.bass || 0;
+    const micDrums = micData?.instruments?.drums || 0;
+    const micVocal = micData?.vocal?.strength || 0;
 
-    // AGGRESSIVE beat pulse - MUCH bigger impact
-    const onBeatMultiplier = syncedData?.isOnBeat ? 2.5 : 1.0;
-    const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 2); // Exponential decay
+    // Get instrument-specific intensity
+    let instrumentIntensity = 0;
+    let micBoost = 0;
+    
+    switch (instrumentType) {
+      case "bass":
+        // Bass reacts to OVERALL energy + bass specifically
+        instrumentIntensity = micEnergy + micBass;
+        micBoost = micBass + micVolume;
+        break;
+      case "drums":
+        instrumentIntensity = micDrums;
+        micBoost = micDrums;
+        break;
+      case "vocal":
+        instrumentIntensity = micVocal;
+        micBoost = micVocal;
+        break;
+    }
+
+    // Beat pulse - more reactive
+    const onBeatMultiplier = syncedData?.isOnBeat ? 2.0 : 1.0;
+    const beatDecay = Math.pow(1 - (syncedData?.beatProgress || 0), 2);
     const beatPulse = 1 + (onBeatMultiplier - 1) * beatDecay;
 
-    // Anticipation effect - build up before beat
-    const anticipationBoost = 1 + anticipation * 0.5;
+    // Anticipation effect
+    const anticipationBoost = 1 + anticipation * 0.4;
 
-    // MIC BOOST - adds to wave intensity
-    const micWaveBoost = 1 + micEnergy * 2; // Up to 3x more wavy with mic!
+    // Instrument-specific wave boost - more reactive
+    const instrumentWaveBoost = 1 + instrumentIntensity * 1.2;
 
-    // Calculate wave intensity - MUCH MORE AGGRESSIVE + MIC
-    const baseWaveAmount = (tempo / 100) * 1.5; // Increased from 120 divisor
-    const waveIntensity = baseWaveAmount * 
-                          energy * 
-                          loudness * 
-                          beatPulse * 
-                          anticipationBoost *
-                          (0.8 + timbreEnergy * 0.4) * // Timbre adds variation
-                          micWaveBoost; // MIC MAKES IT WILD!
+    // Calculate wave intensity - GUARANTEE minimum movement
+    const baseWaveAmount = (tempo / 100) * 0.8;
+    const musicIntensity = energy * loudness * beatPulse * anticipationBoost * instrumentWaveBoost;
+    
+    // Always have at least 1.0 wave intensity, scale up with music
+    const waveIntensity = Math.max(1.0, baseWaveAmount + musicIntensity * 3);
 
     // Update line positions to create waves
     const positionAttribute = lineRef.current.geometry.attributes.position;
@@ -107,13 +155,13 @@ function WavyLine({
     for (let i = 0; i < pointCount; i++) {
       const x = (i / pointCount) * 60 - 30;
       
-      // Multiple wave frequencies for complexity - MORE DRAMATIC
-      const wave1 = Math.sin(x * 0.3 + time * 2 + offset) * waveIntensity * 5; // Increased from 3
-      const wave2 = Math.sin(x * 0.5 - time * 1.5 + offset * 2) * waveIntensity * 3.5; // Increased from 2
-      const wave3 = Math.sin(x * 0.8 + time * 3 + offset * 1.5) * waveIntensity * 2; // Increased from 1
+      // Multiple wave frequencies - calm baseline, reactive with music
+      const wave1 = Math.sin(x * 0.3 + time * 1 + offset) * waveIntensity * 2.5;
+      const wave2 = Math.sin(x * 0.5 - time * 0.8 + offset * 2) * waveIntensity * 1.5;
+      const wave3 = Math.sin(x * 0.8 + time * 1.2 + offset * 1.5) * waveIntensity * 1;
       
       // Add beat pulse directly to y position
-      const beatWave = syncedData?.isOnBeat ? Math.sin(x * 0.2) * beatPulse * 2 : 0;
+      const beatWave = syncedData?.isOnBeat ? Math.sin(x * 0.2) * beatPulse * 1 : 0;
       
       const y = yPosition + wave1 + wave2 + wave3 + beatWave;
 
@@ -122,25 +170,42 @@ function WavyLine({
 
     positionAttribute.needsUpdate = true;
 
-    // Color based on intensity - MORE DRAMATIC SHIFT + MIC FORCES RED!
-    const intensity = energy * loudness * beatPulse * (1 + anticipation);
+    // Color based on instrument type - RESTORE ORIGINAL BASS LOGIC
+    let intensity, clampedIntensity, hue, saturation, lightness;
     
-    // Clamp intensity for color calculation
-    const clampedIntensity = Math.min(1, intensity);
-    
-    // MIC DOMINATES COLOR - when mic hits, GO RED!
-    const micRedForce = micVolume * 3; // Massive red shift with mic
-    
-    // Low intensity: deep blue/purple (hue ~0.7)
-    // High intensity: moves toward red
-    // MIC HIT: FORCES BRIGHT RED (hue = 0.0)
-    const baseHue = 0.7 - clampedIntensity * 0.7; // Music intensity
-    const hue = micVolume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES EVERYTHING!
-    const saturation = 0.7 + clampedIntensity * 0.3 + micEnergy * 0.3; // Max saturation with mic
-    const lightness = 0.35 + clampedIntensity * 0.45 + micVolume * 0.4; // Much brighter with mic
+    switch (instrumentType) {
+      case "bass":
+        // ORIGINAL: Blue to Red gradient that actually worked
+        intensity = energy * loudness * beatPulse * (1 + anticipation);
+        clampedIntensity = Math.min(1, intensity);
+        
+        // MIC DOMINATES COLOR - when mic hits, GO RED! (ORIGINAL WORKING LOGIC)
+        const micRedForce = micVolume * 3;
+        const baseHue = 0.7 - clampedIntensity * 0.7; // Music intensity: Blue to Red
+        hue = micVolume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES!
+        saturation = 0.7 + clampedIntensity * 0.3 + micEnergy * 0.3;
+        lightness = 0.35 + clampedIntensity * 0.45 + micVolume * 0.4;
+        break;
+      case "vocal":
+        // Blue to Dark Blue gradient
+        intensity = (micVocal + energy * 0.3) * loudness;
+        clampedIntensity = Math.min(1, intensity);
+        hue = 0.6 + clampedIntensity * 0.05; // Light blue to darker blue
+        saturation = 0.8 + clampedIntensity * 0.2;
+        lightness = 0.5 - clampedIntensity * 0.3; // Gets darker
+        break;
+      case "drums":
+        // Blue to Yellow to Orange gradient
+        intensity = (micDrums + energy * 0.3) * loudness * beatPulse;
+        clampedIntensity = Math.min(1, intensity);
+        hue = 0.6 - clampedIntensity * 0.45; // Blue (0.6) to Orange (0.15)
+        saturation = 0.8 + clampedIntensity * 0.2;
+        lightness = 0.45 + clampedIntensity * 0.4;
+        break;
+    }
 
     materialRef.current.color.setHSL(hue, saturation, lightness);
-    materialRef.current.opacity = 0.5 + clampedIntensity * 0.45 + micEnergy * 0.4; // More visible with mic
+    materialRef.current.opacity = 0.5 + clampedIntensity * 0.45 + micBoost * 0.2;
   });
 
   return (
@@ -157,26 +222,46 @@ function WavyLine({
 }
 
 function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: VisualizationProps) {
-  const lineCount = 40;
-
-  const lines = useMemo(() => {
-    return Array.from({ length: lineCount }, (_, i) => {
-      const yPosition = (i / lineCount) * 30 - 15; // Spread vertically
-      const zPosition = -5 + (i / lineCount) * 10; // Depth variation
-      const offset = i * 0.5; // Phase offset for each line
-      
-      return {
-        key: i,
-        yPosition,
-        zPosition,
-        offset,
-      };
-    });
+  const linesPerSet = 60; // 5x more lines (was 12)
+  
+  // Original bass-reactive waves (Blue → Red) - main layer
+  const bassLines = useMemo(() => {
+    return Array.from({ length: linesPerSet }, (_, i) => ({
+      key: `bass-${i}`,
+      yPosition: (i / linesPerSet) * 25 - 12.5,
+      zPosition: -5 + (i / linesPerSet) * 10, // Center layer
+      offset: i * 0.1,
+      type: "bass" as const,
+    }));
   }, []);
+
+  // Vocal waves (Blue → Dark Blue) - back layer
+  const vocalLines = useMemo(() => {
+    return Array.from({ length: linesPerSet }, (_, i) => ({
+      key: `vocal-${i}`,
+      yPosition: (i / linesPerSet) * 25 - 12.5,
+      zPosition: -10 + (i / linesPerSet) * 8, // Further back
+      offset: i * 0.08 + 1,
+      type: "vocal" as const,
+    }));
+  }, []);
+
+  // Drum waves (Blue → Yellow → Orange) - front layer
+  const drumLines = useMemo(() => {
+    return Array.from({ length: linesPerSet }, (_, i) => ({
+      key: `drum-${i}`,
+      yPosition: (i / linesPerSet) * 25 - 12.5,
+      zPosition: 2 + (i / linesPerSet) * 8, // Front
+      offset: i * 0.12 + 2,
+      type: "drums" as const,
+    }));
+  }, []);
+
+  const allLines = [...vocalLines, ...bassLines, ...drumLines];
 
   return (
     <>
-      {lines.map((line) => (
+      {allLines.map((line) => (
         <WavyLine
           key={line.key}
           yPosition={line.yPosition}
@@ -186,6 +271,7 @@ function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: Visual
           syncedData={syncedData}
           offset={line.offset}
           micData={micData}
+          instrumentType={line.type}
         />
       ))}
     </>
@@ -212,7 +298,7 @@ function FlowingParticles({ audioFeatures, isPlaying, syncedData }: Visualizatio
   }, []);
 
   useFrame((state) => {
-    if (!pointsRef.current || !isPlaying) return;
+    if (!pointsRef.current) return;
 
     const energy = audioFeatures?.energy || 0.5;
     const loudness = syncedData?.interpolatedLoudness || 0.5;
@@ -310,6 +396,14 @@ export default function WavyLinesVisualization({
             micData={micData}
           />
         )}
+
+        <OrbitControls
+          enableZoom={true}
+          enablePan={false}
+          minDistance={10}
+          maxDistance={50}
+          autoRotate={false}
+        />
       </Canvas>
     </div>
   );
