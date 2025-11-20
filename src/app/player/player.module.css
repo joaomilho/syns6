@@ -46,25 +46,6 @@
   transform: translateY(-2px);
 }
 
-/* FPS Counter */
-.fpsCounter {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 101;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-family: var(--font-geist-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
 /* Top Bar */
 .topBar {
   position: fixed;
@@ -277,15 +258,45 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.8));
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 24px 32px 32px;
+  padding: 16px 24px 20px;
+  transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottomControls.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.bottomControls.hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .controlsContainer {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 24px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+.currentSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.queueSection {
+  flex: 0 0 380px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .albumArt {
@@ -362,8 +373,152 @@
   height: 100%;
   background: linear-gradient(90deg, #1db954, #1ed760);
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 1s linear, background 0.5s ease;
   box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+}
+
+.progressFill.nearEnd {
+  background: linear-gradient(90deg, #ff6b35, #ff9a3c);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  animation: pulseWarning 1s ease-in-out infinite;
+}
+
+@keyframes pulseWarning {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.9);
+  }
+}
+
+.metaRow {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nextUpTimer {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ff6b35;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-family: var(--font-geist-mono);
+  animation: pulseTimer 1s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-left: auto;
+
+}
+
+@keyframes pulseTimer {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+}
+
+.queueItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.queueItem.upcoming {
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  animation: pulseUpcoming 1s ease-in-out infinite;
+}
+
+@keyframes pulseUpcoming {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 107, 53, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+  }
+}
+
+.queueAlbumArt {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+
+
+.queueAlbumArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.queueTrackInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.queueTrackName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queueArtistName {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statsRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.statBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-geist-mono);
+  letter-spacing: 0.5px;
 }
 
 .playbackStatus {
@@ -420,7 +575,14 @@
 
   .controlsContainer {
     flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .currentSection {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
 
   .albumArt {
@@ -429,6 +591,16 @@
     height: auto;
     aspect-ratio: 1;
     align-self: center;
+  }
+
+  .queueSection {
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 0;
+    padding-top: 24px;
+    max-height: 300px;
+    overflow-y: auto;
   }
 
   .trackName {

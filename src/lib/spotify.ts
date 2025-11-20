@@ -181,3 +181,27 @@ export async function getAudioAnalysis(accessToken: string, trackId: string) {
   });
 }
 
+export interface QueueItem {
+  id: string;
+  name: string;
+  artists: Array<{ name: string }>;
+  album: {
+    name: string;
+    images: Array<{ url: string }>;
+  };
+  duration_ms: number;
+  uri: string;
+}
+
+export interface SpotifyQueue {
+  currently_playing: QueueItem | null;
+  queue: QueueItem[];
+}
+
+export async function getUserQueue(accessToken: string): Promise<SpotifyQueue> {
+  return spotifyApi({
+    accessToken,
+    endpoint: "/me/player/queue",
+  });
+}
+

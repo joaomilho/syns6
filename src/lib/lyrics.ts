@@ -1,6 +1,9 @@
 /**
  * Lyrics client-side utilities
- * Fetching is now done via backend API route
+ * 3-tier caching strategy:
+ * 1. Frontend IndexedDB (checked here)
+ * 2. Backend PostgreSQL DB (checked by API)
+ * 3. Remote APIs (LRCLIB, NetEase - fetched by API if not in DB)
  */
 
 export interface LyricLine {
@@ -9,22 +12,42 @@ export interface LyricLine {
 }
 
 /**
- * Fetch synced lyrics from backend API
- * Backend tries multiple sources: LRCLIB → NetEase → LRCLIB Search
+ * Fetch synced lyrics with 3-tier caching
+ * Order: IndexedDB → Backend (PostgreSQL → Remote APIs)
+ * Also saves to IndexedDB after successful backend fetch
  */
 export async function fetchSyncedLyrics(
   trackName: string,
   artistName: string,
-  duration: number
+  duration: number,
+  spotifyId?: string
 ): Promise<LyricLine[] | null> {
   try {
     console.log(`🔍 Fetching lyrics for: ${trackName} by ${artistName}`);
 
+    // 1. Check IndexedDB first (fastest, offline-capable)
+    const { getLyrics, saveLyrics } = await import('./lyricsStorage');
+    
+    if (spotifyId) {
+      const cached = await getLyrics(spotifyId, trackName, artistName);
+      if (cached) {
+        console.log(`✅ Lyrics from local DB (${cached.source}): ${cached.lyrics.length} lines`);
+        return cached.lyrics.map(line => ({ time: line.timeMs, text: line.text }));
+      }
+    }
+
+    console.log("📡 Not in local DB, checking backend...");
+
+    // 2. Fetch from backend (checks PostgreSQL DB → Remote APIs)
     const params = new URLSearchParams({
       track: trackName,
       artist: artistName,
       duration: duration.toString(),
     });
+
+    if (spotifyId) {
+      params.append('spotifyId', spotifyId);
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
@@ -48,7 +71,17 @@ export async function fetchSyncedLyrics(
       const data = await response.json();
       
       if (data.lines && data.lines.length > 0) {
-        console.log(`✅ Lyrics found from ${data.source}: ${data.lines.length} lines`);
+        console.log(`✅ Lyrics from backend (${data.source}): ${data.lines.length} lines`);
+        
+        // 3. Save to local IndexedDB for next time
+        if (spotifyId) {
+          const lyricsForStorage = data.lines.map((line: LyricLine) => ({
+            timeMs: line.time,
+            text: line.text,
+          }));
+          await saveLyrics(spotifyId, trackName, artistName, lyricsForStorage, data.source);
+        }
+
         return data.lines;
       }
 
