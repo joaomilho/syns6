@@ -58,6 +58,19 @@ async function main() {
   });
   
 
+  await prisma.youTubeVideo.upsert({
+    where: { spotifyId: '3V8nBJQ29jLhnOytk8xqSz' },
+    update: {},
+    create: {
+      spotifyId: '3V8nBJQ29jLhnOytk8xqSz',
+      title: 'Special K',
+      artist: 'BLP KOSHER',
+      youtubeId: '5cHuBPRNr8E',
+    },
+  });
+
+  
+
 //   await prisma.youTubeVideo.upsert({
 //     where: { spotifyId: 'SPOTIFY_ID_2' },
 //     update: {},
