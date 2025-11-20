@@ -18,9 +18,9 @@ interface AudioFeatures {
 }
 
 interface VisualizationProps {
-  audioFeatures: AudioFeatures | null;
+  audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
-  syncedData: SyncedAudioData | null;
+  syncedData?: SyncedAudioData | null;
   lyrics?: LyricLine[] | null;
   currentTimeMs?: number;
   micData?: MicrophoneData;
@@ -108,7 +108,7 @@ function KaleidoscopePlanes({ audioFeatures, isPlaying }: VisualizationProps) {
           key={i}
           rotation={plane.rotation}
           hue={plane.hue}
-          audioFeatures={audioFeatures}
+          audioFeatures={audioFeatures || null}
           isPlaying={isPlaying}
           index={i}
         />
@@ -227,6 +227,7 @@ function LiquidParticles({ audioFeatures, isPlaying }: VisualizationProps) {
           count={particleCount}
           array={positions}
           itemSize={3}
+          args={[positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -279,7 +280,7 @@ export default function PsychedelicVisualization({
             lyrics={lyrics || null}
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
-            syncedData={syncedData}
+            syncedData={null}
             micData={micData}
           />
         )}

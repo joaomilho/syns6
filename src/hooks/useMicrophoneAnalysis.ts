@@ -32,6 +32,8 @@ export interface MicrophoneData {
   bass: number; // 0-1, bass frequencies
   mid: number; // 0-1, mid frequencies
   treble: number; // 0-1, treble frequencies
+  subBass: number; // 0-1, sub-bass frequencies (20-80Hz)
+  presence: number; // 0-1, presence frequencies (4-6kHz)
   energy: number; // 0-1, overall energy
   isLoud: boolean; // sudden loud sound detected
   isVoice: boolean; // voice detected (human vocal range)
@@ -49,6 +51,8 @@ export function useMicrophoneAnalysis() {
     bass: 0,
     mid: 0,
     treble: 0,
+    subBass: 0,
+    presence: 0,
     energy: 0,
     isLoud: false,
     isVoice: false,
@@ -80,8 +84,8 @@ export function useMicrophoneAnalysis() {
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const timeDataArrayRef = useRef<Uint8Array | null>(null);
+  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const timeDataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const previousVolumeRef = useRef(0);
   const previousEnergyRef = useRef<number[]>([]);
@@ -185,9 +189,11 @@ export function useMicrophoneAnalysis() {
           };
 
           // === STEP 4: Calculate frequency bands ===
+          const subBass = getEnergy(20, 80); // Sub-bass (very low frequencies)
           const bass = getEnergy(20, 250);
           const mid = getEnergy(250, 2000);
           const treble = getEnergy(2000, 8000);
+          const presence = getEnergy(4000, 6000); // Presence (vocal clarity)
           const energy = bass * 0.3 + mid * 0.4 + treble * 0.3;
 
           // === STEP 5: VOICE DETECTION (BACK TO BASICS) ===
@@ -196,7 +202,7 @@ export function useMicrophoneAnalysis() {
           const vocalHarmonics = getEnergy(300, 3400); // Overtones
           const vocalLowMid = getEnergy(300, 1000); // Important for speech clarity
           const vocalHighMid = getEnergy(1000, 3400); // Sibilance and brightness
-          const subBass = getEnergy(20, 80); // Voice doesn't produce this
+          // subBass already calculated above
 
           // Original calculation that worked well
           const rawVocalStrength =
@@ -302,6 +308,8 @@ export function useMicrophoneAnalysis() {
             bass,
             mid,
             treble,
+            subBass,
+            presence,
             energy,
             isLoud,
             isVoice,

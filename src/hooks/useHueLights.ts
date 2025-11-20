@@ -6,6 +6,7 @@ import {
   createUser,
   getLights,
   setLightState,
+  setMultipleLights,
   lightConfigToState,
   HueBridge,
   HueLight,
@@ -45,6 +46,22 @@ export interface HueConnection {
     subBass: number;
     presence: number;
     voiceStrength?: number;
+    frequencyData?: Uint8Array;
+    instruments?: {
+      drums: number;
+      drumComponents: {
+        kick: number;
+        snare: number;
+        hihat: number;
+        cymbal: number;
+        toms: number;
+      };
+      bass: number;
+      guitar: number;
+      piano: number;
+      brass: number;
+      strings: number;
+    };
   }, force?: boolean) => void;
   setActive: (active: boolean) => void;
   setMode: (mode: HueMode) => void;
@@ -251,6 +268,7 @@ export function useHueLights(): HueConnection {
       subBass: number;
       presence: number;
       voiceStrength?: number;
+      frequencyData?: Uint8Array;
       instruments?: {
         drums: number;
         drumComponents: {
