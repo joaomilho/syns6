@@ -282,6 +282,8 @@ export default function Spectrum3DVisualization({
           <Lyrics3D
             lyrics={lyrics}
             currentTimeMs={currentTimeMs || 0}
+            isPlaying={isPlaying || false}
+            syncedData={null}
             micData={micData}
           />
         )}

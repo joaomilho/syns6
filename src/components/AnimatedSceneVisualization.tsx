@@ -265,18 +265,13 @@ export default function AnimatedSceneVisualization({
       ))}
 
       {/* 3D Lyrics */}
-      {lyrics && lyrics.length > 0 && micData && (
+      {lyrics && lyrics.length > 0 && (
         <Lyrics3D
           lyrics={lyrics}
           currentTimeMs={currentTimeMs || 0}
           isPlaying={isPlaying || false}
           syncedData={null}
-          micData={{
-            ...micData,
-            isLoud: false,
-            isVoice: false,
-            voiceStrength: 0,
-          }}
+          micData={undefined}
         />
       )}
     </Canvas>

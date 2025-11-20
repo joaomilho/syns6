@@ -11,7 +11,7 @@ interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
   currentTimeMs: number;
   isPlaying: boolean;
-  syncedData: null; // Deprecated, kept for compatibility
+  syncedData?: null; // Deprecated, kept for compatibility (optional)
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
