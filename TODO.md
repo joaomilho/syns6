@@ -15,4 +15,6 @@
     can sing together. Could even capture the mic and send to the main view.
 [ ] Avoid screen saver 
     Find a way to avoid the screen to go into screen saver mode from the browser, is that possible? Else what, use a wrapper and make it an app?
-[ ]
+[ ] Check Spotify device
+    If phone we can amplify, else amplify can be done by calculating the basic input
+[ ] Download lyrics

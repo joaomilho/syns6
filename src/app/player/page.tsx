@@ -22,6 +22,7 @@ import DebugVisualization from "@/components/DebugVisualization";
 import HueControls from "@/components/HueControls";
 import styles from "./player.module.css";
 import Link from "next/link";
+import Image from "next/image";
 
 type VisualizationType =
   | "particles"
@@ -370,6 +371,7 @@ export default function PlayerPage() {
       <div className={styles.topBar}>
         <div className={styles.logo}>Syns</div>
 
+        <div className={styles.controlGroups}>
         {/* Actions Group */}
         <div className={styles.vizSelector}>
           {/* Microphone Toggle */}
@@ -505,6 +507,26 @@ export default function PlayerPage() {
           >
             ▤
           </button>
+        </div>
+
+        {/* User Profile */}
+        {session?.user && (
+          <Link href="/profile" className={styles.userProfile}>
+            {session.user.image ? (
+              <Image
+                src={session.user.image}
+                alt={session.user.name || "User"}
+                width={36}
+                height={36}
+                className={styles.userAvatar}
+              />
+            ) : (
+              <div className={styles.userAvatarPlaceholder}>
+                {session.user.name?.charAt(0) || "U"}
+              </div>
+            )}
+          </Link>
+        )}
         </div>
       </div>
 

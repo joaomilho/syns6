@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -40,6 +41,23 @@ export default function Home() {
 
   return (
     <div className={styles.page}>
+      {session?.user && (
+        <Link href="/profile" className={styles.userProfile}>
+          {session.user.image ? (
+            <Image
+              src={session.user.image}
+              alt={session.user.name || "User"}
+              width={40}
+              height={40}
+              className={styles.userAvatar}
+            />
+          ) : (
+            <div className={styles.userAvatarPlaceholder}>
+              {session.user.name?.charAt(0) || "U"}
+            </div>
+          )}
+        </Link>
+      )}
       <main className={styles.main}>
         <div className={styles.intro}>
           <h1>Welcome, {session.user?.name || "User"}!</h1>

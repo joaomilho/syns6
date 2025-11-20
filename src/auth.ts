@@ -1,5 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import prisma from "@/lib/prisma";
 
 // All valid Spotify authorization scopes
 const SPOTIFY_SCOPES = [
@@ -40,6 +42,7 @@ const SPOTIFY_SCOPES = [
 ].join(" ");
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID!,
@@ -52,66 +55,85 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, trigger }) {
-      // Initial sign in
-      if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        token.expiresAt = account.expires_at;
-        return token;
-      }
-
-      // Token is still valid
-      if (Date.now() < (token.expiresAt as number) * 1000) {
-        return token;
-      }
-
-      // Token has expired, try to refresh it
-      console.log("🔄 Token expired, refreshing...");
-      try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Basic ${Buffer.from(
-              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-            ).toString("base64")}`,
+    async session({ session, user }) {
+      // With database sessions, we need to get tokens from the database
+      if (user) {
+        session.user.id = user.id;
+        
+        // Get Spotify account with tokens
+        const account = await prisma.account.findFirst({
+          where: {
+            userId: user.id,
+            provider: "spotify",
           },
-          body: new URLSearchParams({
-            grant_type: "refresh_token",
-            refresh_token: token.refreshToken as string,
-          }),
         });
 
-        const refreshedTokens = await response.json();
+        if (account) {
+          // Check if token needs refresh
+          const now = Math.floor(Date.now() / 1000);
+          const expiresAt = account.expires_at || 0;
 
-        if (!response.ok) {
-          throw new Error("Failed to refresh token");
+          if (now >= expiresAt) {
+            // Token expired, refresh it
+            console.log("🔄 Token expired, refreshing...");
+            try {
+              const response = await fetch("https://accounts.spotify.com/api/token", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  Authorization: `Basic ${Buffer.from(
+                    `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+                  ).toString("base64")}`,
+                },
+                body: new URLSearchParams({
+                  grant_type: "refresh_token",
+                  refresh_token: account.refresh_token!,
+                }),
+              });
+
+              const refreshedTokens = await response.json();
+
+              if (response.ok) {
+                console.log("✅ Token refreshed successfully");
+                
+                // Update tokens in database
+                await prisma.account.update({
+                  where: { id: account.id },
+                  data: {
+                    access_token: refreshedTokens.access_token,
+                    expires_at: Math.floor(Date.now() / 1000 + refreshedTokens.expires_in),
+                    refresh_token: refreshedTokens.refresh_token ?? account.refresh_token,
+                  },
+                });
+
+                session.accessToken = refreshedTokens.access_token;
+                session.refreshToken = refreshedTokens.refresh_token ?? account.refresh_token!;
+                session.expiresAt = Math.floor(Date.now() / 1000 + refreshedTokens.expires_in);
+              } else {
+                console.error("❌ Failed to refresh token");
+                session.error = "RefreshAccessTokenError";
+              }
+            } catch (error) {
+              console.error("❌ Error refreshing token:", error);
+              session.error = "RefreshAccessTokenError";
+            }
+          } else {
+            // Token still valid
+            session.accessToken = account.access_token!;
+            session.refreshToken = account.refresh_token!;
+            session.expiresAt = account.expires_at!;
+          }
         }
-
-        console.log("✅ Token refreshed successfully");
-        return {
-          ...token,
-          accessToken: refreshedTokens.access_token,
-          expiresAt: Math.floor(Date.now() / 1000 + refreshedTokens.expires_in),
-          refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-        };
-      } catch (error) {
-        console.error("❌ Error refreshing token:", error);
-        return {
-          ...token,
-          error: "RefreshAccessTokenError",
-        };
       }
-    },
-    async session({ session, token }) {
-      // Send properties to the client
-      session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
-      session.expiresAt = token.expiresAt as number;
-      session.error = token.error as string | undefined;
+      
       return session;
     },
+  },
+  // Store sessions in database
+  session: {
+    strategy: "database",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
 };
 
