@@ -85,6 +85,12 @@ export function useMicrophoneAnalysis() {
   const animationFrameRef = useRef<number | null>(null);
   const previousVolumeRef = useRef(0);
   const previousEnergyRef = useRef<number[]>([]);
+  
+  // Auto-request microphone on page load - ALWAYS
+  useEffect(() => {
+    console.log('🎤 Auto-requesting microphone access (required for app)');
+    setIsEnabled(true);
+  }, []);
 
   useEffect(() => {
     if (!isEnabled) return;
@@ -93,8 +99,10 @@ export function useMicrophoneAnalysis() {
 
     const setupMicrophone = async () => {
       try {
+        console.log('🎤 Requesting microphone permission...');
         // Request microphone access
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ Microphone access granted!');
 
         // Create audio context and analyser
         const audioContext = new AudioContext();
@@ -320,10 +328,13 @@ export function useMicrophoneAnalysis() {
 
         analyze();
       } catch (err) {
-        console.error("Error accessing microphone:", err);
+        console.error("❌ Error accessing microphone:", err);
+        console.log("💡 Please click the microphone button or check browser permissions");
         setError(
           err instanceof Error ? err.message : "Failed to access microphone"
         );
+        // Don't mark as denied - app needs mic, will request again on next load
+        localStorage.removeItem('microphoneEnabled');
         setIsEnabled(false);
       }
     };
@@ -344,8 +355,15 @@ export function useMicrophoneAnalysis() {
     };
   }, [isEnabled]);
 
-  const enable = () => setIsEnabled(true);
-  const disable = () => setIsEnabled(false);
+  const enable = () => {
+    localStorage.setItem('microphoneEnabled', 'true');
+    setIsEnabled(true);
+  };
+  
+  const disable = () => {
+    localStorage.removeItem('microphoneEnabled');
+    setIsEnabled(false);
+  };
 
   return {
     micData,
