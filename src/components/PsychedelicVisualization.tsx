@@ -32,7 +32,7 @@ function PsychedelicBlob({ audioFeatures, isPlaying }: VisualizationProps) {
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
   useFrame((state) => {
-    if (!meshRef.current || !materialRef.current || !isPlaying) return;
+    if (!meshRef.current || !materialRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const energy = audioFeatures?.energy || 0.5;
@@ -82,7 +82,7 @@ function KaleidoscopePlanes({ audioFeatures, isPlaying }: VisualizationProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (!groupRef.current || !isPlaying) return;
+    if (!groupRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const tempo = audioFeatures?.tempo || 120;
@@ -134,7 +134,7 @@ function AnimatedPlane({
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
 
   useFrame((state) => {
-    if (!meshRef.current || !materialRef.current || !isPlaying) return;
+    if (!meshRef.current || !materialRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const energy = audioFeatures?.energy || 0.5;
@@ -186,7 +186,7 @@ function LiquidParticles({ audioFeatures, isPlaying }: VisualizationProps) {
   }, []);
 
   useFrame((state) => {
-    if (!pointsRef.current || !isPlaying) return;
+    if (!pointsRef.current) return;
 
     const time = state.clock.getElapsedTime();
     const energy = audioFeatures?.energy || 0.5;
