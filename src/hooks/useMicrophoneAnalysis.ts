@@ -86,10 +86,19 @@ export function useMicrophoneAnalysis() {
   const previousVolumeRef = useRef(0);
   const previousEnergyRef = useRef<number[]>([]);
   
-  // Auto-request microphone on page load - ALWAYS
+  // Auto-request microphone on page load - check saved preference
   useEffect(() => {
-    console.log('🎤 Auto-requesting microphone access (required for app)');
-    setIsEnabled(true);
+    const checkMicrophonePreference = async () => {
+      const { getMicrophoneEnabled } = await import('@/lib/storage');
+      const savedPreference = await getMicrophoneEnabled();
+      
+      // Always try to enable mic (app requires it)
+      console.log('🎤 Auto-requesting microphone access (required for app)');
+      console.log(`📱 Saved preference: ${savedPreference === true ? 'enabled' : savedPreference === false ? 'disabled' : 'none'}`);
+      
+      setIsEnabled(true);
+    };
+    checkMicrophonePreference();
   }, []);
 
   useEffect(() => {
@@ -334,7 +343,8 @@ export function useMicrophoneAnalysis() {
           err instanceof Error ? err.message : "Failed to access microphone"
         );
         // Don't mark as denied - app needs mic, will request again on next load
-        localStorage.removeItem('microphoneEnabled');
+        const { saveMicrophoneEnabled } = await import('@/lib/storage');
+        await saveMicrophoneEnabled(false);
         setIsEnabled(false);
       }
     };
@@ -355,13 +365,15 @@ export function useMicrophoneAnalysis() {
     };
   }, [isEnabled]);
 
-  const enable = () => {
-    localStorage.setItem('microphoneEnabled', 'true');
+  const enable = async () => {
+    const { saveMicrophoneEnabled } = await import('@/lib/storage');
+    await saveMicrophoneEnabled(true);
     setIsEnabled(true);
   };
   
-  const disable = () => {
-    localStorage.removeItem('microphoneEnabled');
+  const disable = async () => {
+    const { saveMicrophoneEnabled } = await import('@/lib/storage');
+    await saveMicrophoneEnabled(false);
     setIsEnabled(false);
   };
 

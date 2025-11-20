@@ -77,6 +77,28 @@ export default function PlayerPage() {
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
   const [showHueControls, setShowHueControls] = useState(false);
+  
+  // Load saved visualization type on mount
+  useEffect(() => {
+    const loadVisualizationType = async () => {
+      const { getVisualizationType } = await import('@/lib/storage');
+      const savedType = await getVisualizationType();
+      if (savedType) {
+        console.log(`🎨 Restoring visualization: ${savedType}`);
+        setVisualizationType(savedType as VisualizationType);
+      }
+    };
+    loadVisualizationType();
+  }, []);
+  
+  // Save visualization type when it changes
+  useEffect(() => {
+    const saveVisualizationType = async () => {
+      const { saveVisualizationType: save } = await import('@/lib/storage');
+      await save(visualizationType);
+    };
+    saveVisualizationType();
+  }, [visualizationType]);
   const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
   const [lastFetchedTrackId, setLastFetchedTrackId] = useState<string | null>(
     null
