@@ -1,117 +1,114 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import styles from "./page.module.css";
+import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
+import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
+import { useFPS } from "@/hooks/useFPS";
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const { micData, enable: enableMic } = useMicrophoneAnalysis();
+  const fps = useFPS();
 
-  if (status === "loading") {
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <h1>Loading...</h1>
-        </main>
-      </div>
-    );
-  }
+  // Auto-enable microphone on mount for background visualization
+  useEffect(() => {
+    enableMic();
+  }, [enableMic]);
 
-  if (!session) {
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <div className={styles.intro}>
-            <h1>Spotify Authentication Demo</h1>
-            <p>Connect your Spotify account to get started</p>
-          </div>
-          <div className={styles.ctas}>
-            <button
-              className={styles.primary}
-              onClick={() => signIn("spotify")}
-            >
-              Sign in with Spotify
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // Force body to be black
+  useEffect(() => {
+    document.body.style.backgroundColor = '#000000';
+    document.documentElement.style.backgroundColor = '#000000';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    return () => {
+      document.body.style.backgroundColor = '';
+      document.documentElement.style.backgroundColor = '';
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStatus("success");
+        setMessage("Thanks for subscribing! We'll keep you updated.");
+        setEmail("");
+      } else {
+        setStatus("error");
+        setMessage(data.error || "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    }
+  };
 
   return (
-    <div className={styles.page}>
-      {session?.user && (
-        <Link href="/profile" className={styles.userProfile}>
-          {session.user.image ? (
-            <Image
-              src={session.user.image}
-              alt={session.user.name || "User"}
-              width={40}
-              height={40}
-              className={styles.userAvatar}
-            />
-          ) : (
-            <div className={styles.userAvatarPlaceholder}>
-              {session.user.name?.charAt(0) || "U"}
-            </div>
-          )}
-        </Link>
-      )}
-      <main className={styles.main}>
-        <div className={styles.intro}>
-          <h1>Welcome, {session.user?.name || "User"}!</h1>
-          <p>You are now authenticated with Spotify</p>
-          {session.user?.email && <p>Email: {session.user.email}</p>}
-        </div>
+    <div className={styles.landingPage}>
+      {/* Background Visualization */}
+      <div className={styles.backgroundViz}>
+        <FFTSpectrumVisualization
+          micData={micData}
+          lyrics={null}
+          currentTimeMs={0}
+          isPlaying={true}
+          fps={fps}
+          onRowsChange={() => {}}
+        />
+      </div>
 
-        <div className={styles.tokenInfo}>
-          <h2>Session Information</h2>
-          <div className={styles.tokenDetails}>
-            <p>
-              <strong>Access Token:</strong>{" "}
-              {session.accessToken
-                ? `${session.accessToken.substring(0, 20)}...`
-                : "Not available"}
-            </p>
-            <p>
-              <strong>Refresh Token:</strong>{" "}
-              {session.refreshToken ? "Available" : "Not available"}
-            </p>
-            {session.expiresAt && (
-              <p>
-                <strong>Expires At:</strong>{" "}
-                {new Date(session.expiresAt * 1000).toLocaleString()}
+      <main className={styles.landingMain}>
+        <div className={styles.landingContent}>
+          
+          
+          <form onSubmit={handleSubmit} className={styles.emailForm}>
+            <div className={styles.inputGroup}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                disabled={status === "loading"}
+                className={styles.emailInput}
+              />
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className={styles.submitButton}
+              >
+                {status === "loading" ? "..." : "FOMO"}
+              </button>
+            </div>
+            
+            {message && (
+              <p className={`${styles.statusMessage} ${
+                status === "success" ? styles.success : styles.error
+              }`}>
+                {message}
               </p>
             )}
-          </div>
-        </div>
+          </form>
 
-        <div className={styles.scopes}>
-          <h2>Granted Scopes</h2>
-          <p>Your app has been granted all Spotify permissions including:</p>
-          <ul>
-            <li>Read and modify playback state</li>
-            <li>Read and write playlists</li>
-            <li>Manage library</li>
-            <li>Access listening history</li>
-            <li>Follow/unfollow artists and users</li>
-            <li>Upload images</li>
-            <li>Streaming access</li>
-            <li>And all other available Spotify scopes</li>
-          </ul>
-        </div>
-
-        <div className={styles.ctas}>
-          <Link href="/player" className={styles.primary}>
-            Open Spotify Player
-          </Link>
-          <button
-            className={styles.secondary}
-            onClick={() => signOut()}
-          >
-            Sign Out
-          </button>
+          
         </div>
       </main>
     </div>
