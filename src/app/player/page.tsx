@@ -535,7 +535,7 @@ export default function PlayerPage() {
       }
     }
 
-    // Create a clean object with only serializable data
+    // Create a clean object with only serializable data (no thumbnail yet)
     const newViz: CustomVizType = {
       id: `custom_${Date.now()}`,
       name: String(name),
@@ -544,13 +544,13 @@ export default function PlayerPage() {
       compiledCode: compiledCode,
       createdAt: Date.now(),
       icon: "✦",
-      thumbnail: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      thumbnail: undefined, // Will capture after rendering
     };
 
     console.log('📦 Object to save:', JSON.stringify(newViz).substring(0, 200));
 
     try {
-      // Save to IndexedDB
+      // Save to IndexedDB first
       await saveCustomVisualization(newViz);
       console.log('✅ Saved to IndexedDB');
       
@@ -565,11 +565,37 @@ export default function PlayerPage() {
       setCurrentPrompt("");
       setGenerationError(null);
 
-      // Then switch to the new visualization (after a tiny delay to ensure creator closes)
-      setTimeout(() => {
-        console.log('🎨 Switching to new visualization:', newViz.id);
-        setVisualizationType(newViz.id);
-      }, 100);
+      // Switch to the new visualization to render it
+      console.log('🎨 Switching to new visualization:', newViz.id);
+      setVisualizationType(newViz.id);
+
+      // Capture screenshot after visualization renders
+      setTimeout(async () => {
+        try {
+          console.log('📸 Capturing screenshot for viz:', newViz.id);
+          const { captureAndCompressThumbnail } = await import('@/lib/screenshotCapture');
+          const thumbnail = await captureAndCompressThumbnail('body');
+          
+          console.log('📸 Screenshot captured, size:', thumbnail.length, 'chars');
+          console.log('📸 Screenshot preview:', thumbnail.substring(0, 50) + '...');
+          
+          // Update visualization with thumbnail
+          newViz.thumbnail = thumbnail;
+          await saveCustomVisualization(newViz);
+          console.log('💾 Updated viz with thumbnail in database');
+          
+          // Reload to show new thumbnail
+          const updated = await getAllCustomVisualizations();
+          setCustomVisualizations(updated);
+          
+          console.log('✅ Screenshot captured and saved, updated list has', updated.length, 'vizs');
+          console.log('📋 Updated viz:', updated.find(v => v.id === newViz.id));
+        } catch (error) {
+          console.error('⚠️ Failed to capture screenshot:', error);
+          console.error('⚠️ Error details:', error instanceof Error ? error.message : error);
+          // Continue anyway - viz is still usable
+        }
+      }, 3000); // Wait 3 seconds for viz to render
 
       console.log(`✅ Successfully saved and loaded: ${name}`);
     } catch (error) {
@@ -1106,6 +1132,43 @@ export default function PlayerPage() {
                   title="Recompile with latest compiler"
                 >
                   🔄 Recompile
+                </button>
+                
+                {/* Retake Screenshot Button */}
+                <button
+                  className={styles.vizButton}
+                  style={{ marginTop: '8px' }}
+                  onClick={async () => {
+                    if (!customViz) return;
+                    try {
+                      console.log('📸 Retaking screenshot for:', customViz.name);
+                      
+                      // Wait a moment for viz to render
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                      
+                      const { captureAndCompressThumbnail } = await import('@/lib/screenshotCapture');
+                      const thumbnail = await captureAndCompressThumbnail('body');
+                      
+                      console.log('📸 Screenshot captured, size:', thumbnail.length, 'chars');
+                      
+                      // Save updated visualization with new thumbnail
+                      const updatedViz = { ...customViz, thumbnail };
+                      await saveCustomVisualization(updatedViz);
+                      
+                      // Reload custom visualizations
+                      const updated = await getAllCustomVisualizations();
+                      setCustomVisualizations(updated);
+                      
+                      console.log('✅ Screenshot updated!');
+                      alert('✅ Screenshot captured and saved!');
+                    } catch (error) {
+                      console.error('❌ Screenshot capture failed:', error);
+                      alert('❌ Failed to capture screenshot: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                    }
+                  }}
+                  title="Retake screenshot for this visualization"
+                >
+                  📸 Retake Screenshot
                 </button>
                 
                 {/* Performance Toggle */}
