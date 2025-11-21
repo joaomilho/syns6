@@ -3,11 +3,16 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { Canvas } from "@react-three/fiber";
+import Lyrics3D from "./Lyrics3D";
+import { LyricLine } from "@/lib/lyrics";
 
 interface CompiledVisualizationProps {
   compiledCode: string;
   micData?: any;
   isPlaying?: boolean;
+  lyrics?: LyricLine[];
+  currentTimeMs?: number;
 }
 
 /**
@@ -24,6 +29,8 @@ export default function CompiledVisualization({
   compiledCode,
   micData,
   isPlaying,
+  lyrics,
+  currentTimeMs,
 }: CompiledVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -177,29 +184,8 @@ export default function CompiledVisualization({
       // Execute compiled update function
       if (updateFunctionRef.current && sceneRef.current && cameraRef.current && rendererRef.current) {
         try {
-          // EXACT COPY from DSLVisualization - Use ref to get CURRENT micData value (not captured)
-          const currentMicData = micDataRef.current;
-          
-          // Debug every second
-          if (Math.floor(time) % 1 === 0 && Math.floor(time * 10) % 10 === 0) {
-            console.log('🎵 COMPILED MicData (raw):', currentMicData ? {
-              bass: currentMicData.bass?.toFixed(3),
-              energy: currentMicData.energy?.toFixed(3),
-              hasData: !!currentMicData
-            } : 'NULL');
-          }
-          
-          // EXACT COPY from DSLVisualization - Amplify micData for more dramatic effects (2x multiplier)
-          const amplifiedMicData = currentMicData ? {
-            bass: (currentMicData.bass || 0) * 2,
-            mid: (currentMicData.mid || 0) * 2,
-            treble: (currentMicData.treble || 0) * 2,
-            subBass: (currentMicData.subBass || 0) * 2,
-            presence: (currentMicData.presence || 0) * 2,
-            voiceStrength: (currentMicData.voiceStrength || 0) * 2,
-            drums: (currentMicData.drums || 0) * 2,
-            energy: (currentMicData.energy || 0) * 2,
-          } : {
+          // Use ref to get CURRENT micData value (not captured)
+          const currentMicData = micDataRef.current || {
             bass: 0,
             mid: 0,
             treble: 0,
@@ -214,7 +200,7 @@ export default function CompiledVisualization({
             sceneRef.current,
             cameraRef.current,
             rendererRef.current,
-            amplifiedMicData,
+            currentMicData,
             time,
             THREE
           );
@@ -279,6 +265,38 @@ export default function CompiledVisualization({
           zIndex: 0,
         }}
       />
+      {/* Lyrics Display - EXACT COPY from DSLVisualization */}
+      {lyrics && lyrics.length > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        >
+          <Canvas
+            camera={{ position: [0, 0, 30], fov: 75 }}
+            style={{
+              background: "transparent",
+            }}
+          >
+            <group position={[0, -2, -10]} scale={2}>
+              <Lyrics3D
+                lyrics={lyrics}
+                currentTimeMs={currentTimeMs || 0}
+                isPlaying={isPlaying || false}
+                syncedData={null}
+                micData={micData}
+              />
+            </group>
+          </Canvas>
+        </div>
+      )}
+      
       {/* Debug overlay */}
       {errorRef.current && (
         <div
