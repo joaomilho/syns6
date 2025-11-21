@@ -51,6 +51,7 @@ export default function CustomVisualization({
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.domElement.style.backgroundColor = '#000';
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -226,50 +227,20 @@ export default function CustomVisualization({
 
     // Cleanup
     return () => {
-      console.log('🧹 Cleaning up custom visualization WebGL context');
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
 
-      // Dispose of scene objects first
-      if (sceneRef.current) {
-        sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
-            object.geometry?.dispose();
-            if (Array.isArray(object.material)) {
-              object.material.forEach((material) => material.dispose());
-            } else {
-              object.material?.dispose();
-            }
-          }
-        });
-        // Clear the scene
-        while(sceneRef.current.children.length > 0) {
-          sceneRef.current.remove(sceneRef.current.children[0]);
-        }
-      }
-
-      // Dispose of controls
       if (controlsRef.current) {
         controlsRef.current.dispose();
-        controlsRef.current = null;
       }
 
-      // Dispose of renderer and force context loss
       if (rendererRef.current) {
         rendererRef.current.dispose();
-        rendererRef.current.forceContextLoss();
-        rendererRef.current = null;
       }
 
-      // Remove canvas from DOM
-      if (containerRef.current) {
-        while (containerRef.current.firstChild) {
-          containerRef.current.removeChild(containerRef.current.firstChild);
-        }
+      if (containerRef.current && containerRef.current.firstChild) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
       }
-
-      sceneRef.current = null;
-      cameraRef.current = null;
     };
   }, [code]);
 
@@ -294,13 +265,14 @@ export default function CustomVisualization({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(220, 38, 38, 0.9)",
             color: "white",
             padding: "20px",
             borderRadius: "12px",
             zIndex: 100,
             maxWidth: "80%",
             fontFamily: "monospace",
+            backgroundColor: "#000",
+            border: "3px solid #dc2626",
           }}
         >
           <strong>❌ Visualization Error:</strong>
