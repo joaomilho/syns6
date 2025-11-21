@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -19,11 +19,21 @@ import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
+import CustomVisualization from "@/components/CustomVisualization";
+import DSLVisualization from "@/components/DSLVisualization";
+import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
+import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
   VisualizationType,
 } from "@/components/VisualizationDropdown";
 import ModeDropdown, { VisualizationMode } from "@/components/ModeDropdown";
+import VisualizationCreator from "@/components/VisualizationCreator";
+import {
+  CustomVisualization as CustomVizType,
+  getAllCustomVisualizations,
+  saveCustomVisualization,
+} from "@/lib/customVisualizations";
 import styles from "./player.module.css";
 import Link from "next/link";
 import Image from "next/image";
@@ -76,6 +86,12 @@ export default function PlayerPage() {
   const [visualizationMode, setVisualizationMode] =
     useState<VisualizationMode>("STATIC");
   const [showHueControls, setShowHueControls] = useState(false);
+  const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
+  const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [currentPrompt, setCurrentPrompt] = useState<string>("");
   
   // Load saved visualization type and mode on mount
   useEffect(() => {
@@ -93,6 +109,16 @@ export default function PlayerPage() {
       }
     };
     loadPreferences();
+  }, []);
+
+  // Load custom visualizations
+  useEffect(() => {
+    const loadCustomViz = async () => {
+      const customViz = await getAllCustomVisualizations();
+      setCustomVisualizations(customViz);
+      console.log(`✨ Loaded ${customViz.length} custom visualizations`);
+    };
+    loadCustomViz();
   }, []);
   
   // Save visualization type when it changes
@@ -159,6 +185,44 @@ export default function PlayerPage() {
   const fps = useFPS();
   const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
+
+  // Memoize parsed configs to prevent re-renders
+  const previewConfig = useMemo(() => {
+    if (isCreatingVisualization && generatedCode && isDSLFormat(generatedCode)) {
+      try {
+        return JSON.parse(generatedCode);
+      } catch (error) {
+        console.error('Failed to parse preview DSL:', error);
+        return null;
+      }
+    }
+    return null;
+  }, [generatedCode, isCreatingVisualization]);
+
+  const customVizConfig = useMemo(() => {
+    const customViz = customVisualizations.find((v) => v.id === visualizationType);
+    if (customViz && isDSLFormat(customViz.code)) {
+      try {
+        return JSON.parse(customViz.code);
+      } catch (error) {
+        console.error('Failed to parse custom DSL:', error);
+        return null;
+      }
+    }
+    return null;
+  }, [customVisualizations, visualizationType]);
+
+  // Force body to be black (override any light mode styles)
+  useEffect(() => {
+    document.body.style.backgroundColor = '#000000';
+    document.documentElement.style.backgroundColor = '#000000';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    return () => {
+      document.body.style.backgroundColor = '';
+      document.documentElement.style.backgroundColor = '';
+    };
+  }, []);
 
   // Derive error state from session
   const sessionError =
@@ -371,6 +435,102 @@ export default function PlayerPage() {
     }
   }, [micData, hue.isActive, hue.reactToMusic]);
 
+  // Handle creating new visualization
+  const handleCreateNew = () => {
+    setIsCreatingVisualization(true);
+    setGeneratedCode("");
+    setGenerationError(null);
+    setCurrentPrompt("");
+  };
+
+  // Handle cancelling visualization creation
+  const handleCancelCreate = () => {
+    setIsCreatingVisualization(false);
+    setGeneratedCode("");
+    setGenerationError(null);
+    setCurrentPrompt("");
+  };
+
+  // Handle generating visualization code from prompt
+  const handleGenerate = async (prompt: string) => {
+    setIsGenerating(true);
+    setGenerationError(null);
+    setCurrentPrompt(prompt);
+
+    try {
+      const response = await fetch("/api/generate-visualization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate visualization");
+      }
+
+      const data = await response.json();
+      setGeneratedCode(data.code);
+      console.log("✅ Generated visualization code");
+    } catch (error) {
+      console.error("Error generating visualization:", error);
+      setGenerationError(
+        error instanceof Error ? error.message : "Failed to generate"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Handle saving custom visualization
+  const handleSave = async (name: string) => {
+    if (!generatedCode) return;
+
+    console.log('💾 Saving custom visualization:', name);
+
+    // Create a clean object with only serializable data
+    const newViz: CustomVizType = {
+      id: `custom_${Date.now()}`,
+      name: String(name),
+      prompt: String(currentPrompt),
+      code: String(generatedCode),
+      createdAt: Date.now(),
+      icon: "✨",
+      thumbnail: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    };
+
+    console.log('📦 Object to save:', JSON.stringify(newViz).substring(0, 200));
+
+    try {
+      // Save to IndexedDB
+      await saveCustomVisualization(newViz);
+      console.log('✅ Saved to IndexedDB');
+      
+      // Reload custom visualizations
+      const customViz = await getAllCustomVisualizations();
+      console.log('📦 Loaded custom visualizations:', customViz.length);
+      setCustomVisualizations(customViz);
+
+      // Close creator first
+      setIsCreatingVisualization(false);
+      setGeneratedCode("");
+      setCurrentPrompt("");
+      setGenerationError(null);
+
+      // Then switch to the new visualization (after a tiny delay to ensure creator closes)
+      setTimeout(() => {
+        console.log('🎨 Switching to new visualization:', newViz.id);
+        setVisualizationType(newViz.id);
+      }, 100);
+
+      console.log(`✅ Successfully saved and loaded: ${name}`);
+    } catch (error) {
+      console.error('❌ Failed to save visualization:', error);
+      setGenerationError('Failed to save visualization');
+    }
+  };
+
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -412,69 +572,153 @@ export default function PlayerPage() {
       ]
     : null;
 
-  return (
-    <div className={styles.fullscreenPage}>
-      {/* Background Visualization with 3D Lyrics - Always render */}
-      {visualizationType === "particles" && (
+  // Determine which visualization to show
+  const renderVisualization = () => {
+    // Priority 1: Create mode overrides everything
+    if (isCreatingVisualization && generatedCode) {
+      // Check if it's DSL or JavaScript
+      const isDSL = isDSLFormat(generatedCode);
+      
+      if (isDSL && previewConfig) {
+        return (
+          <DSLVisualization
+            key="preview"
+            config={previewConfig}
+            micData={micData}
+            isPlaying={playbackState?.is_playing || false}
+            lyrics={(lyrics || noTrackLyrics) ?? undefined}
+            currentTimeMs={currentProgress}
+          />
+        );
+      } else if (isDSL && !previewConfig) {
+        return <BlankGridVisualization key="blank-error" micData={micData} />;
+      } else {
+        // JavaScript fallback
+        return (
+          <CustomVisualization
+            key="preview"
+            code={generatedCode}
+            micData={micData}
+            isPlaying={playbackState?.is_playing || false}
+          />
+        );
+      }
+    }
+
+    if (isCreatingVisualization && !generatedCode) {
+      return <BlankGridVisualization key="blank" micData={micData} />;
+    }
+
+    // Priority 2: Custom visualizations
+    const customViz = customVisualizations.find((v) => v.id === visualizationType);
+    if (customViz) {
+      // Check if it's DSL JSON or JavaScript
+      const isDSL = isDSLFormat(customViz.code);
+      
+      if (isDSL && customVizConfig) {
+        return (
+          <DSLVisualization
+            key={customViz.id}
+            config={customVizConfig}
+            micData={micData}
+            isPlaying={playbackState?.is_playing || false}
+            lyrics={(lyrics || noTrackLyrics) ?? undefined}
+            currentTimeMs={currentProgress}
+          />
+        );
+      } else if (isDSL && !customVizConfig) {
+        return null; // Failed to parse
+      } else {
+        // Fallback to JavaScript execution (legacy)
+        return (
+          <CustomVisualization
+            key={customViz.id}
+            code={customViz.code}
+            micData={micData}
+            isPlaying={playbackState?.is_playing || false}
+          />
+        );
+      }
+    }
+
+    // Priority 3: Built-in visualizations
+    switch (visualizationType) {
+      case "particles":
+        return (
         <MusicVisualization
+            key="particles"
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
           fps={fps}
         />
-      )}
-      {visualizationType === "fractal" && (
+        );
+      case "fractal":
+        return (
         <FractalVisualization
+            key="fractal"
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
           fps={fps}
         />
-      )}
-      {visualizationType === "psychedelic" && (
+        );
+      case "psychedelic":
+        return (
         <PsychedelicVisualization
+            key="psychedelic"
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
         />
-      )}
-      {visualizationType === "waves" && (
+        );
+      case "waves":
+        return (
         <WavyLinesVisualization
+            key="waves"
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           micData={micData}
         />
-      )}
-      {visualizationType === "animated" && (
+        );
+      case "animated":
+        return (
         <AnimatedSceneVisualization
+            key="animated"
           micData={micData}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
         />
-      )}
-      {visualizationType === "spectrum3d" && (
+        );
+      case "spectrum3d":
+        return (
         <Spectrum3DVisualization
+            key="spectrum3d"
           micData={micData}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
         />
-      )}
-      {visualizationType === "wavespectrum" && (
+        );
+      case "wavespectrum":
+        return (
         <WaveSpectrum3DVisualization
+            key="wavespectrum"
           micData={micData}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
         />
-      )}
-      {visualizationType === "fftspectrum" && (
+        );
+      case "fftspectrum":
+        return (
         <FFTSpectrumVisualization
+            key="fftspectrum"
           micData={micData}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
@@ -482,18 +726,22 @@ export default function PlayerPage() {
           fps={fps}
           onRowsChange={setFftRows}
         />
-      )}
-      {visualizationType === "camera" && (
+        );
+      case "camera":
+        return (
         <CameraVisualization
+            key="camera"
           videoElement={videoElement}
           micData={micData}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
         />
-      )}
-      {visualizationType === "debug" && (
+        );
+      case "debug":
+        return (
         <DebugVisualization
+            key="debug"
           isPlaying={playbackState?.is_playing || false}
           lyrics={lyrics || noTrackLyrics}
           currentTimeMs={currentProgress}
@@ -502,9 +750,11 @@ export default function PlayerPage() {
           hueIsActive={hue.isActive}
           hueConfig={hue.config}
         />
-      )}
-      {visualizationType === "youtube" && (
+        );
+      case "youtube":
+        return (
         <YouTubeVisualization
+            key="youtube"
           trackName={playbackState?.item?.name || lastKnownTrack?.item?.name}
           artistName={playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name}
           spotifyId={(playbackState?.item as any)?.id || (lastKnownTrack?.item as any)?.id}
@@ -512,7 +762,16 @@ export default function PlayerPage() {
           currentTimeMs={currentProgress}
           micData={micData}
         />
-      )}
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={styles.fullscreenPage}>
+      {/* Background Visualization - Only render ONE at a time */}
+      {renderVisualization()}
 
 
       {/* Top Controls */}
@@ -569,6 +828,8 @@ export default function PlayerPage() {
         <VisualizationDropdown
           value={visualizationType}
           onChange={setVisualizationType}
+          customVisualizations={customVisualizations}
+          onCreateNew={handleCreateNew}
         />
 
         {/* Mode Dropdown */}
@@ -724,6 +985,18 @@ export default function PlayerPage() {
           </div>
         )}
       </div>
+
+      {/* Visualization Creator */}
+      {isCreatingVisualization && (
+        <VisualizationCreator
+          onGenerate={handleGenerate}
+          onSave={handleSave}
+          onCancel={handleCancelCreate}
+          isGenerating={isGenerating}
+          hasCode={!!generatedCode}
+          error={generationError}
+        />
+      )}
     </div>
   );
 }
