@@ -168,3 +168,13 @@ model PlayHistory {
   @@index([trackId])
   @@map("play_history")
 }
+
+// Email subscribers from landing page
+model EmailSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+  
+  @@index([email])
+  @@map("email_subscribers")
+}
