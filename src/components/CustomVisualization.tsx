@@ -93,7 +93,7 @@ export default function CustomVisualization({
       renderer: THREE.WebGLRenderer,
       micData: any,
       time: number,
-      THREE: typeof THREE
+      THREE: any
     ) => void) | null = null;
 
     try {

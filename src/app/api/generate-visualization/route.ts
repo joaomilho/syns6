@@ -131,7 +131,6 @@ export async function POST(request: Request) {
       system: SYSTEM_PROMPT,
       prompt: fullPrompt,
       temperature: 0.7,
-      maxTokens: 2000,
     });
 
     return NextResponse.json({ code: text });
