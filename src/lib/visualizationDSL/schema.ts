@@ -118,10 +118,17 @@ export function validateDSL(dsl: any): dsl is VisualizationDSL {
   return true;
 }
 
+// Helper to strip markdown code fences
+function stripCodeFences(code: string): string {
+  return code.replace(/^```(?:json|javascript|js)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+}
+
 // Type guard to check if code is DSL or JavaScript
 export function isDSLFormat(code: string): boolean {
   try {
-    const parsed = JSON.parse(code);
+    // Strip code fences first (in case they're present)
+    const cleanCode = stripCodeFences(code);
+    const parsed = JSON.parse(cleanCode);
     return validateDSL(parsed);
   } catch {
     return false;

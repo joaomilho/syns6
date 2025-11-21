@@ -97,6 +97,33 @@ export default function CustomVisualization({
     ) => void) | null = null;
 
     try {
+      // Validate code is not empty
+      if (!code || code.trim().length === 0) {
+        throw new Error('Visualization code is empty');
+      }
+
+      // Strip markdown code fences if present
+      const stripCodeFences = (c: string): string => {
+        return c.replace(/^```(?:json|javascript|js)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+      };
+      const cleanCode = stripCodeFences(code);
+
+      // Check if code looks like JSON (DSL format) - should be handled by DSLVisualization instead
+      const trimmedCode = cleanCode.trim();
+      if (trimmedCode.startsWith('{') || trimmedCode.startsWith('[')) {
+        try {
+          JSON.parse(trimmedCode);
+          throw new Error('This appears to be JSON DSL format. It should be handled by DSLVisualization component, not CustomVisualization.');
+        } catch (jsonError) {
+          if (jsonError instanceof SyntaxError) {
+            // Not valid JSON, continue with JavaScript execution
+          } else {
+            // Valid JSON, throw the error
+            throw jsonError;
+          }
+        }
+      }
+
       // Create function from user code - DON'T wrap with try-catch here
       // We'll wrap the function CALL instead
       userAnimateFunction = new Function(
@@ -106,7 +133,7 @@ export default function CustomVisualization({
         'micData',
         'time',
         'THREE',
-        code // Just the raw code, no try-catch wrapper
+        cleanCode // Use cleaned code without fences
       ) as any;
       errorRef.current = null;
       console.log('✅ Successfully compiled visualization code');

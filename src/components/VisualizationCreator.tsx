@@ -22,13 +22,13 @@ export default function VisualizationCreator({
 }: VisualizationCreatorProps) {
   const [showNameInput, setShowNameInput] = useState(false);
   const [vizName, setVizName] = useState("");
+  const [promptText, setPromptText] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const promptText = formData.get("prompt") as string;
     if (promptText.trim()) {
       onGenerate(promptText.trim());
+      setPromptText(""); // Clear input after submitting
     }
   };
 
@@ -52,13 +52,12 @@ export default function VisualizationCreator({
   return (
     <div className={styles.overlay}>
       <div className={styles.panel}>
-        <h2 className={styles.title}>Create Your Own Visualization</h2>
-        
         <form onSubmit={handleSubmit} className={styles.form}>
           <textarea
-            name="prompt"
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
             className={styles.textarea}
-            placeholder="Describe your visualization... (e.g., 'A spinning cube that pulses with the bass')"
+            placeholder={hasCode ? "Refine your visualization... (e.g., 'make it faster', 'add more colors', 'increase size')" : "Describe your visualization..."}
             rows={4}
             disabled={isGenerating}
             required
@@ -66,11 +65,20 @@ export default function VisualizationCreator({
           
           <div className={styles.buttons}>
             <button
+              type="button"
+              onClick={onCancel}
+              className={styles.cancelButton}
+              disabled={isGenerating}
+            >
+              Cancel
+            </button>
+            
+            <button
               type="submit"
               className={styles.generateButton}
-              disabled={isGenerating || hasCode}
+              disabled={isGenerating}
             >
-              {isGenerating ? "Generating..." : hasCode ? "Generated ✓" : "Generate"}
+              {isGenerating ? "Generating..." : hasCode ? "Improve" : "Generate"}
             </button>
             
             {hasCode && !showNameInput && (
@@ -83,15 +91,6 @@ export default function VisualizationCreator({
                 Save & Use
               </button>
             )}
-            
-            <button
-              type="button"
-              onClick={onCancel}
-              className={styles.cancelButton}
-              disabled={isGenerating}
-            >
-              Cancel
-            </button>
           </div>
         </form>
         
@@ -103,7 +102,13 @@ export default function VisualizationCreator({
         
         {isGenerating && (
           <div className={styles.status}>
-            Generating your visualization...
+            {hasCode ? "Improving your visualization..." : "Generating your visualization..."}
+          </div>
+        )}
+        
+        {hasCode && !isGenerating && !showNameInput && (
+          <div className={styles.hint}>
+            💡 Try refining: "make it faster", "more colors", "bigger objects", "slower rotation", etc.
           </div>
         )}
         

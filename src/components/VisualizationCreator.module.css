@@ -1,27 +1,18 @@
 .overlay {
   position: fixed;
-  bottom: 100px;
+  bottom: 150px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
   width: 90%;
-  max-width: 600px;
+  max-width: 700px;
 }
 
 .panel {
-  background: rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  color: #fff;
 }
 
 .form {
@@ -32,15 +23,16 @@
 
 .textarea {
   width: 100%;
-  padding: 12px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   color: #fff;
-  font-size: 14px;
+  font-size: 18px;
   font-family: inherit;
   resize: vertical;
-  min-height: 80px;
+  min-height: 120px;
+  line-height: 1.5;
 }
 
 .textarea:focus {
@@ -56,30 +48,35 @@
 
 .buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
 }
 
 .generateButton,
 .saveButton,
 .cancelButton {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.generateButton {
-  flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
   color: #fff;
 }
 
+.generateButton {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
 .generateButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
 }
 
 .generateButton:disabled {
@@ -88,23 +85,27 @@
 }
 
 .saveButton {
-  flex: 1;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: #fff;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
 }
 
 .saveButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: translateY(-1px);
 }
 
 .cancelButton {
   background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
 .cancelButton:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .error {
@@ -161,35 +162,51 @@
 
 .confirmButton {
   flex: 1;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 22px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: #fff;
+  transition: all 0.3s;
+  background: rgba(16, 185, 129, 0.2);
+  backdrop-filter: blur(20px);
+  color: #10b981;
 }
 
 .confirmButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
 }
 
 .cancelNameButton {
   flex: 1;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
   background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
   color: #fff;
 }
 
 .cancelNameButton:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.hint {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 8px;
+  color: #c084fc;
+  font-size: 13px;
+  text-align: center;
 }

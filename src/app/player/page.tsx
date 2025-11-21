@@ -186,11 +186,17 @@ export default function PlayerPage() {
   const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
 
+  // Helper function to strip markdown code fences
+  const stripCodeFences = (code: string): string => {
+    return code.replace(/^```(?:json|javascript|js)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+  };
+
   // Memoize parsed configs to prevent re-renders
   const previewConfig = useMemo(() => {
     if (isCreatingVisualization && generatedCode && isDSLFormat(generatedCode)) {
       try {
-        return JSON.parse(generatedCode);
+        const cleanCode = stripCodeFences(generatedCode);
+        return JSON.parse(cleanCode);
       } catch (error) {
         console.error('Failed to parse preview DSL:', error);
         return null;
@@ -203,7 +209,8 @@ export default function PlayerPage() {
     const customViz = customVisualizations.find((v) => v.id === visualizationType);
     if (customViz && isDSLFormat(customViz.code)) {
       try {
-        return JSON.parse(customViz.code);
+        const cleanCode = stripCodeFences(customViz.code);
+        return JSON.parse(cleanCode);
       } catch (error) {
         console.error('Failed to parse custom DSL:', error);
         return null;
@@ -458,12 +465,18 @@ export default function PlayerPage() {
     setCurrentPrompt(prompt);
 
     try {
+      // If we already have generated code, send it as context for improvements
+      const previousCode = generatedCode ? stripCodeFences(generatedCode) : undefined;
+      
       const response = await fetch("/api/generate-visualization", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          previousCode // Send previous code for iterative improvements
+        }),
       });
 
       if (!response.ok) {
@@ -472,7 +485,7 @@ export default function PlayerPage() {
 
       const data = await response.json();
       setGeneratedCode(data.code);
-      console.log("✅ Generated visualization code");
+      console.log(previousCode ? "✅ Improved visualization code" : "✅ Generated visualization code");
     } catch (error) {
       console.error("Error generating visualization:", error);
       setGenerationError(
@@ -489,14 +502,17 @@ export default function PlayerPage() {
 
     console.log('💾 Saving custom visualization:', name);
 
+    // Strip markdown code fences before saving
+    const cleanCode = stripCodeFences(generatedCode);
+
     // Create a clean object with only serializable data
     const newViz: CustomVizType = {
       id: `custom_${Date.now()}`,
       name: String(name),
       prompt: String(currentPrompt),
-      code: String(generatedCode),
+      code: String(cleanCode),
       createdAt: Date.now(),
-      icon: "✨",
+      icon: "✦",
       thumbnail: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     };
 
@@ -778,20 +794,20 @@ export default function PlayerPage() {
       <div className={styles.topBar}>
         <div className={styles.logo}>Syns</div>
 
-        {/* Status Icon */}
-        <div className={styles.statusIcon}>
-          {!playbackState?.item && !lastKnownTrack?.item ? (
-            <span title="No song playing">⏹</span>
-          ) : playbackState?.is_playing ? (
-            <span title="Playing">▶</span>
-          ) : (
-            <span title="Paused">⏸</span>
-          )}
-        </div>
-
         <div className={styles.controlGroups}>
         {/* Actions Group */}
         <div className={styles.vizSelector}>
+          {/* Play/Pause Status Indicator */}
+          <div className={styles.statusIcon}>
+            {!playbackState?.item && !lastKnownTrack?.item ? (
+              <span title="No song playing">⏹</span>
+            ) : playbackState?.is_playing ? (
+              <span title="Playing">▶</span>
+            ) : (
+              <span title="Paused">⏸</span>
+            )}
+          </div>
+
           {/* Microphone Toggle */}
           <button
             className={`${styles.vizButton} ${
@@ -824,12 +840,21 @@ export default function PlayerPage() {
           </button>
         </div>
 
+        {/* AI Create Button */}
+        <button
+          className={styles.aiButton}
+          onClick={handleCreateNew}
+          title="Create AI Visualization"
+        >
+          <span className={styles.sparkles}>✦</span>
+          <span>AI</span>
+        </button>
+
         {/* Visualization Dropdown */}
         <VisualizationDropdown
           value={visualizationType}
           onChange={setVisualizationType}
           customVisualizations={customVisualizations}
-          onCreateNew={handleCreateNew}
         />
 
         {/* Mode Dropdown */}
