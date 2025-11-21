@@ -6,6 +6,7 @@ import styles from "./page.module.css";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useFPS } from "@/hooks/useFPS";
+import { track } from "@vercel/analytics";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -51,6 +52,12 @@ export default function Home() {
         setStatus("success");
         setMessage("Thanks for subscribing! We'll keep you updated.");
         setEmail("");
+        
+        // Track email signup event
+        track("email_signup", {
+          email: email,
+          timestamp: new Date().toISOString(),
+        });
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong. Please try again.");
