@@ -134,21 +134,44 @@
   filter: drop-shadow(0 0 3px rgba(102, 126, 234, 0.5));
 }
 
-.thumbnail {
+.thumbnailContainer {
   width: 100%;
   aspect-ratio: 16/9;
   border-radius: 8px;
+  overflow: hidden;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  position: relative;
+}
+
+.thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  transition: opacity 0.3s ease;
+}
+
+.thumbnailAnimated {
+  opacity: 0;
+  z-index: 2;
+}
+
+/* Show animated version on hover */
+.vizOption:hover .thumbnailAnimated {
+  opacity: 1;
 }
 
 .thumbnailIcon {
   font-size: 32px;
   color: rgba(255, 255, 255, 0.9);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
 }
 
 /* Style for custom viz sparkle icon */

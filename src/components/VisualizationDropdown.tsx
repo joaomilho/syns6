@@ -26,72 +26,121 @@ interface VisualizationOption {
   thumbnail: string; // SVG or emoji representation
 }
 
-const visualizations: VisualizationOption[] = [
+interface VisualizationAssets {
+  static: string;
+  animated: string;
+}
+
+const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] = [
   {
     id: "fftspectrum",
     name: "FFT Spectrum Grid",
     icon: "▥",
-    thumbnail: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    thumbnail: "/viz-thumbnails/fftspectrum.png",
+    assets: {
+      static: "/viz-thumbnails/fftspectrum.png",
+      animated: "/viz-thumbnails/fftspectrum.webp",
+    },
   },
   {
     id: "particles",
     name: "Particles & Rings",
     icon: "◯",
-    thumbnail: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    thumbnail: "/viz-thumbnails/particles.png",
+    assets: {
+      static: "/viz-thumbnails/particles.png",
+      animated: "/viz-thumbnails/particles.webp",
+    },
   },
   {
     id: "fractal",
     name: "Fractal Tree",
     icon: "❋",
-    thumbnail: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    thumbnail: "/viz-thumbnails/fractal.png",
+    assets: {
+      static: "/viz-thumbnails/fractal.png",
+      animated: "/viz-thumbnails/fractal.webp",
+    },
   },
   {
     id: "psychedelic",
     name: "Psychedelic",
     icon: "✧",
-    thumbnail: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    thumbnail: "/viz-thumbnails/psychedelic.png",
+    assets: {
+      static: "/viz-thumbnails/psychedelic.png",
+      animated: "/viz-thumbnails/psychedelic.webp",
+    },
   },
   {
     id: "waves",
     name: "Wavy Lines",
     icon: "≋",
-    thumbnail: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
+    thumbnail: "/viz-thumbnails/waves.png",
+    assets: {
+      static: "/viz-thumbnails/waves.png",
+      animated: "/viz-thumbnails/waves.webp",
+    },
   },
   {
     id: "animated",
     name: "Morphing Blobs",
     icon: "◉",
-    thumbnail: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+    thumbnail: "/viz-thumbnails/animated.png",
+    assets: {
+      static: "/viz-thumbnails/animated.png",
+      animated: "/viz-thumbnails/animated.webp",
+    },
   },
   {
     id: "spectrum3d",
     name: "3D Spectrum",
     icon: "▦",
-    thumbnail: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
+    thumbnail: "/viz-thumbnails/spectrum3d.png",
+    assets: {
+      static: "/viz-thumbnails/spectrum3d.png",
+      animated: "/viz-thumbnails/spectrum3d.webp",
+    },
   },
   {
     id: "wavespectrum",
     name: "Wave Spectrum",
     icon: "▬",
-    thumbnail: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+    thumbnail: "/viz-thumbnails/wavespectrum.png",
+    assets: {
+      static: "/viz-thumbnails/wavespectrum.png",
+      animated: "/viz-thumbnails/wavespectrum.webp",
+    },
   },
   {
     id: "camera",
     name: "Camera Effects",
     icon: "⊡",
-    thumbnail: "linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)",
+    thumbnail: "/viz-thumbnails/camera.png",
+    assets: {
+      static: "/viz-thumbnails/camera.png",
+      animated: "/viz-thumbnails/camera.webp",
+    },
   },
   {
     id: "youtube",
     name: "YouTube Videos",
     icon: "▶",
-    thumbnail: "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)",
+    thumbnail: "/viz-thumbnails/youtube.png",
+    assets: {
+      static: "/viz-thumbnails/youtube.png",
+      animated: "/viz-thumbnails/youtube.webp",
+    },
   },
   {
     id: "debug",
     name: "Debug View",
     icon: "▤",
-    thumbnail: "linear-gradient(135deg, #434343 0%, #000000 100%)",
+    thumbnail: "/viz-thumbnails/debug.png",
+    assets: {
+      static: "/viz-thumbnails/debug.png",
+      animated: "/viz-thumbnails/debug.webp",
+    },
   },
 ];
 
@@ -173,11 +222,23 @@ export default function VisualizationDropdown({
                 }`}
                 onClick={() => handleSelect(viz.id)}
               >
-                <div
-                  className={styles.thumbnail}
-                  style={{ background: viz.thumbnail }}
-                >
-                  <span className={styles.thumbnailIcon}>{viz.icon}</span>
+                <div className={styles.thumbnailContainer}>
+                  <div
+                    className={styles.thumbnail}
+                    style={{ 
+                      backgroundImage: `url(${viz.assets.static})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  />
+                  <div
+                    className={`${styles.thumbnail} ${styles.thumbnailAnimated}`}
+                    style={{ 
+                      backgroundImage: `url(${viz.assets.animated})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  />
                 </div>
                 <span className={styles.vizName}>{viz.name}</span>
               </button>
@@ -199,17 +260,16 @@ export default function VisualizationDropdown({
                     } ${styles.customViz}`}
                     onClick={() => handleSelect(viz.id as VisualizationType)}
                   >
-                    <div
-                      className={styles.thumbnail}
-                      style={{
-                        background:
-                          viz.thumbnail ||
-                          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      }}
-                    >
-                      <span className={styles.thumbnailIcon}>
-                        {viz.icon || "✦"}
-                      </span>
+                    <div className={styles.thumbnailContainer}>
+                      <div
+                        className={styles.thumbnail}
+                        style={{
+                          background:
+                            viz.thumbnail ||
+                            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        }}
+                      >
+                      </div>
                     </div>
                     <span className={styles.vizName}>{viz.name}</span>
                   </button>
