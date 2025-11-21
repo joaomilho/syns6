@@ -142,23 +142,11 @@ export default function DSLVisualization({
         controlsRef.current.update();
       }
 
-      // Update interpreter with amplified audio data
+      // Update interpreter with audio data
       if (interpreterRef.current) {
         try {
           // Use ref to get CURRENT micData value (not captured)
-          const currentMicData = micDataRef.current;
-          
-          // Amplify micData for more dramatic effects (2x multiplier - balanced for visibility)
-          const amplifiedMicData = currentMicData ? {
-            bass: (currentMicData.bass || 0) * 2,
-            mid: (currentMicData.mid || 0) * 2,
-            treble: (currentMicData.treble || 0) * 2,
-            subBass: (currentMicData.subBass || 0) * 2,
-            presence: (currentMicData.presence || 0) * 2,
-            voiceStrength: (currentMicData.voiceStrength || 0) * 2,
-            drums: (currentMicData.drums || 0) * 2,
-            energy: (currentMicData.energy || 0) * 2,
-          } : {
+          const currentMicData = micDataRef.current || {
             bass: 0,
             mid: 0,
             treble: 0,
@@ -169,7 +157,7 @@ export default function DSLVisualization({
             energy: 0,
           };
           
-          interpreterRef.current.update(time, amplifiedMicData);
+          interpreterRef.current.update(time, currentMicData);
         } catch (error) {
           console.error('⚠️ DSL animation error:', error);
         }

@@ -207,6 +207,20 @@ export default function PlayerPage() {
     return null;
   }, [generatedCode, isCreatingVisualization]);
 
+  // Compile preview DSL immediately for better performance
+  const previewCompiledCode = useMemo(() => {
+    if (previewConfig) {
+      try {
+        const { compileDSL } = require('@/lib/visualizationDSL/compiler');
+        return compileDSL(previewConfig);
+      } catch (error) {
+        console.error('Failed to compile preview DSL:', error);
+        return null;
+      }
+    }
+    return null;
+  }, [previewConfig]);
+
   const customVizConfig = useMemo(() => {
     const customViz = customVisualizations.find((v) => v.id === visualizationType);
     if (customViz && isDSLFormat(customViz.code)) {
@@ -612,11 +626,12 @@ export default function PlayerPage() {
       // Check if it's DSL or JavaScript
       const isDSL = isDSLFormat(generatedCode);
       
-      if (isDSL && previewConfig) {
+      // Always use compiled version for AI-generated DSL visualizations
+      if (isDSL && previewCompiledCode) {
         return (
-          <DSLVisualization
-            key="preview"
-            config={previewConfig}
+          <CompiledVisualization
+            key="preview-compiled"
+            compiledCode={previewCompiledCode}
             micData={micData}
             isPlaying={playbackState?.is_playing || false}
             lyrics={(lyrics || noTrackLyrics) ?? undefined}
@@ -657,6 +672,8 @@ export default function PlayerPage() {
               compiledCode={customViz.compiledCode}
               micData={micData}
               isPlaying={playbackState?.is_playing || false}
+              lyrics={(lyrics || noTrackLyrics) ?? undefined}
+              currentTimeMs={playbackState?.progress_ms || 0}
             />
           );
         }
@@ -822,7 +839,7 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <div className={styles.logo}>Syns</div>
+        <div className={styles.logo}>Syns6</div>
 
         <div className={styles.controlGroups}>
         {/* Actions Group */}
@@ -868,66 +885,6 @@ export default function PlayerPage() {
           >
             ◐
           </button>
-          {/* Performance Mode Toggle (for AI visualizations) */}
-          {(() => {
-            const customViz = customVisualizations.find((v) => v.id === visualizationType);
-            const isDSL = customViz && isDSLFormat(customViz.code);
-            const hasCompiled = customViz?.compiledCode;
-            
-            if (isDSL) {
-              return (
-                <>
-                  {/* Recompile Button */}
-                  <button
-                    className={styles.vizButton}
-                    onClick={async () => {
-                      if (!customViz) return;
-                      try {
-                        console.log('🔄 Recompiling visualization...');
-                        const cleanCode = stripCodeFences(customViz.code);
-                        const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
-                        const dslConfig = JSON.parse(cleanCode);
-                        const compiledCode = compileDSL(dslConfig);
-                        
-                        // Save updated visualization
-                        const updatedViz = { ...customViz, compiledCode };
-                        await saveCustomVisualization(updatedViz);
-                        
-                        // Update state
-                        setCustomVisualizations(prev => 
-                          prev.map(v => v.id === customViz.id ? updatedViz : v)
-                        );
-                        
-                        console.log('✅ Recompiled successfully!');
-                        alert('✅ Visualization recompiled! The page will refresh.');
-                        window.location.reload();
-                      } catch (error) {
-                        console.error('❌ Recompile failed:', error);
-                        alert('❌ Failed to recompile');
-                      }
-                    }}
-                    title="Recompile with latest compiler"
-                  >
-                    🔄
-                  </button>
-                  
-                  {/* Performance Toggle */}
-                  {hasCompiled && (
-                    <button
-                      className={`${styles.vizButton} ${
-                        useCompiledMode ? styles.active : ""
-                      }`}
-                      onClick={() => setUseCompiledMode(!useCompiledMode)}
-                      title={useCompiledMode ? "Compiled Mode (Fast)" : "Interpreter Mode (Slow)"}
-                    >
-                      {useCompiledMode ? "⚡" : "🐌"}
-                    </button>
-                  )}
-                </>
-              );
-            }
-            return null;
-          })()}
         </div>
 
         {/* AI Create Button */}
@@ -1104,14 +1061,65 @@ export default function PlayerPage() {
           const isDSL = customViz && isDSLFormat(customViz.code);
           const hasCompiled = customViz?.compiledCode;
           
-          if (isDSL && hasCompiled) {
+          if (isDSL) {
             return (
-              <div className={styles.statItem}>
-                <span className={styles.statLabel}>Mode</span>
-                <span className={styles.statValue}>
-                  {useCompiledMode ? "⚡ Compiled" : "🐌 Interpreted"}
-                </span>
-              </div>
+              <>
+                {hasCompiled && (
+                  <div className={styles.statItem}>
+                    <span className={styles.statLabel}>Mode</span>
+                    <span className={styles.statValue}>
+                      {useCompiledMode ? "⚡ Compiled" : "🐌 Interpreted"}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Recompile Button */}
+                <button
+                  className={styles.vizButton}
+                  style={{ marginTop: '8px' }}
+                  onClick={async () => {
+                    if (!customViz) return;
+                    try {
+                      console.log('🔄 Recompiling visualization...');
+                      const cleanCode = stripCodeFences(customViz.code);
+                      const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
+                      const dslConfig = JSON.parse(cleanCode);
+                      const compiledCode = compileDSL(dslConfig);
+                      
+                      // Save updated visualization
+                      const updatedViz = { ...customViz, compiledCode };
+                      await saveCustomVisualization(updatedViz);
+                      
+                      // Update state
+                      setCustomVisualizations(prev => 
+                        prev.map(v => v.id === customViz.id ? updatedViz : v)
+                      );
+                      
+                      console.log('✅ Recompiled successfully!');
+                      alert('✅ Visualization recompiled! The page will refresh.');
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('❌ Recompile failed:', error);
+                      alert('❌ Failed to recompile');
+                    }
+                  }}
+                  title="Recompile with latest compiler"
+                >
+                  🔄 Recompile
+                </button>
+                
+                {/* Performance Toggle */}
+                {hasCompiled && (
+                  <button
+                    className={`${styles.vizButton} ${useCompiledMode ? styles.active : ""}`}
+                    style={{ marginTop: '8px' }}
+                    onClick={() => setUseCompiledMode(!useCompiledMode)}
+                    title={useCompiledMode ? "Compiled Mode (Fast)" : "Interpreter Mode (Slow)"}
+                  >
+                    {useCompiledMode ? "⚡ Use Compiled" : "🐌 Use Interpreted"}
+                  </button>
+                )}
+              </>
             );
           }
           return null;
