@@ -166,8 +166,17 @@ function generateGroupInit(obj: VisualizationObject, varName: string, count: num
   // Set initial color if it's an expression
   if (obj.material.color && typeof obj.material.color === 'object') {
     code += generateColorInitCode('mesh.material.color', obj.material.color, 'index', 'count');
-    // Debug: log first few colors
-    code += `    if (index < 3) console.log('Cube', index, 'color H:', ${compileExpression(typeof obj.material.color.h === 'string' ? obj.material.color.h : '0', 'index', 'count', false, true)});\n`;
+  }
+  
+  // Set initial emissive if it's an expression
+  if (obj.material.emissive && typeof obj.material.emissive === 'object') {
+    code += generateColorInitCode('mesh.material.emissive', obj.material.emissive, 'index', 'count');
+  }
+  
+  // Set needsUpdate if we set colors
+  if (obj.material.color && typeof obj.material.color === 'object' || 
+      obj.material.emissive && typeof obj.material.emissive === 'object') {
+    code += `    mesh.material.needsUpdate = true;\n`;
   }
   
   code += `
@@ -251,14 +260,13 @@ function generateGroupUpdate(obj: VisualizationObject, startIndex: number, count
       code += `{
       const hsl = { h: 0, s: 1, l: 0.5 }; // Default values
       obj.material.color.getHSL(hsl);
-      const oldH = hsl.h, oldS = hsl.s, oldL = hsl.l;
       hsl.${colorProp} = ${compiledExpr};
       obj.material.color.setHSL(hsl.h || 0, hsl.s || 1, hsl.l || 0.5);
-      if (index === 0 && time > 0 && time < 0.1) console.log('Update color: before H/S/L:', oldH, oldS, oldL, 'after:', hsl.h, hsl.s, hsl.l, 'hex:', obj.material.color.getHex());
+      obj.material.needsUpdate = true;
     }\n    `;
     } else if (anim.property === 'material.emissiveIntensity') {
-      // Skip - Basic material doesn't support emissive
-      code += `// Skipping emissiveIntensity (not supported by MeshBasicMaterial)\n    `;
+      // Lambert doesn't have emissiveIntensity, but we can skip it gracefully
+      code += `// Note: emissiveIntensity not supported by MeshLambertMaterial\n    `;
     } else if (anim.property === 'material.opacity') {
       code += `obj.material.opacity = ${compiledExpr};\n    `;
     } else {
@@ -346,24 +354,34 @@ function generateGeometryCode(geometry: any): string {
  * Generate material creation code
  */
 function generateMaterialCode(material: any): string {
-  // Use Basic material - it just works!
-  const materialType = 'MeshBasicMaterial';
+  // Use MeshLambertMaterial - works perfectly with the lighting setup
+  let materialType = 'MeshLambertMaterial';
+  
+  if (material.type === 'basic') {
+    materialType = 'MeshBasicMaterial';
+  }
   
   const props: string[] = [];
   
-  // Handle color
+  // Handle color - white default
   if (material.color) {
     if (typeof material.color === 'number') {
       props.push(`color: ${material.color}`);
-    } else if (typeof material.color === 'object') {
-      const h = typeof material.color.h === 'number' ? material.color.h : 0.5;
-      const s = typeof material.color.s === 'number' ? material.color.s : 1;
-      const l = typeof material.color.l === 'number' ? material.color.l : 0.5;
-      props.push(`color: new THREE.Color().setHSL(${h}, ${s}, ${l})`);
+    } else {
+      props.push(`color: 0xffffff`);
     }
+  } else {
+    props.push(`color: 0xffffff`);
   }
   
-  // Basic material doesn't support emissive, metalness, roughness - skip those
+  // Lambert supports emissive
+  if (material.emissive) {
+    if (typeof material.emissive === 'number') {
+      props.push(`emissive: ${material.emissive}`);
+    } else if (typeof material.emissive === 'object') {
+      props.push(`emissive: 0x000000`);
+    }
+  }
   
   if (material.wireframe) {
     props.push(`wireframe: true`);
