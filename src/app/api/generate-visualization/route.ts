@@ -7,6 +7,8 @@ const SYSTEM_PROMPT = `You are a visualization configuration generator for a mus
 
 Generate a JSON configuration (NOT JavaScript code) based on the user's prompt.
 
+If the user provides a PREVIOUS configuration, modify it according to their new instructions while preserving what works well. For improvement requests like "make it faster", "add more colors", "bigger", etc., adjust the relevant properties intelligently.
+
 OUTPUT: Valid JSON only. No markdown, no code blocks, no explanations.
 
 SCHEMA:
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { prompt } = await request.json();
+    const { prompt, previousCode } = await request.json();
 
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -117,10 +119,17 @@ export async function POST(request: Request) {
 
     // Generate visualization code using Google Gemini (FREE!)
     // Using gemini-2.5-flash: Stable, fast, and supports up to 1M tokens
+    
+    // Build the full prompt with context if this is an improvement
+    let fullPrompt = prompt;
+    if (previousCode) {
+      fullPrompt = `PREVIOUS CONFIGURATION:\n${previousCode}\n\nUSER REQUEST:\n${prompt}\n\nModify the previous configuration according to the user's request. Keep what works well, only change what they asked for.`;
+    }
+    
     const { text } = await generateText({
       model: google('gemini-2.5-flash'),
       system: SYSTEM_PROMPT,
-      prompt: prompt,
+      prompt: fullPrompt,
       temperature: 0.7,
       maxTokens: 2000,
     });
