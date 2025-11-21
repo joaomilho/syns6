@@ -15,7 +15,8 @@ export interface CustomVisualization {
   id: string;
   name: string;
   prompt: string;
-  code: string;
+  code: string; // DSL JSON code
+  compiledCode?: string; // Compiled JS code for performance
   createdAt: number;
   icon?: string;
   thumbnail?: string;
@@ -28,6 +29,7 @@ export async function saveCustomVisualization(viz: CustomVisualization): Promise
     name: viz.name,
     prompt: viz.prompt,
     code: viz.code,
+    compiledCode: viz.compiledCode,
     createdAt: viz.createdAt,
     icon: viz.icon,
     thumbnail: viz.thumbnail,

@@ -21,6 +21,7 @@ import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import CustomVisualization from "@/components/CustomVisualization";
 import DSLVisualization from "@/components/DSLVisualization";
+import CompiledVisualization from "@/components/CompiledVisualization";
 import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
@@ -92,6 +93,7 @@ export default function PlayerPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
+  const [useCompiledMode, setUseCompiledMode] = useState(true); // Performance mode toggle
   
   // Load saved visualization type and mode on mount
   useEffect(() => {
@@ -505,12 +507,27 @@ export default function PlayerPage() {
     // Strip markdown code fences before saving
     const cleanCode = stripCodeFences(generatedCode);
 
+    // Try to compile DSL to JS for performance
+    let compiledCode: string | undefined;
+    if (isDSLFormat(cleanCode)) {
+      try {
+        const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
+        const dslConfig = JSON.parse(cleanCode);
+        compiledCode = compileDSL(dslConfig);
+        console.log('✅ Compiled DSL to JS code');
+      } catch (error) {
+        console.error('⚠️ Failed to compile DSL, will use interpreter:', error);
+        compiledCode = undefined;
+      }
+    }
+
     // Create a clean object with only serializable data
     const newViz: CustomVizType = {
       id: `custom_${Date.now()}`,
       name: String(name),
       prompt: String(currentPrompt),
       code: String(cleanCode),
+      compiledCode: compiledCode,
       createdAt: Date.now(),
       icon: "✦",
       thumbnail: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -632,9 +649,22 @@ export default function PlayerPage() {
       const isDSL = isDSLFormat(customViz.code);
       
       if (isDSL && customVizConfig) {
+        // Use compiled mode if available and enabled
+        if (useCompiledMode && customViz.compiledCode) {
+          return (
+            <CompiledVisualization
+              key={`compiled-${visualizationType}`}
+              compiledCode={customViz.compiledCode}
+              micData={micData}
+              isPlaying={playbackState?.is_playing || false}
+            />
+          );
+        }
+        
+        // Fallback to DSL interpreter
         return (
           <DSLVisualization
-            key={customViz.id}
+            key={`dsl-${visualizationType}`}
             config={customVizConfig}
             micData={micData}
             isPlaying={playbackState?.is_playing || false}
@@ -648,7 +678,7 @@ export default function PlayerPage() {
         // Fallback to JavaScript execution (legacy)
         return (
           <CustomVisualization
-            key={customViz.id}
+            key={`custom-${visualizationType}`}
             code={customViz.code}
             micData={micData}
             isPlaying={playbackState?.is_playing || false}
@@ -838,6 +868,66 @@ export default function PlayerPage() {
           >
             ◐
           </button>
+          {/* Performance Mode Toggle (for AI visualizations) */}
+          {(() => {
+            const customViz = customVisualizations.find((v) => v.id === visualizationType);
+            const isDSL = customViz && isDSLFormat(customViz.code);
+            const hasCompiled = customViz?.compiledCode;
+            
+            if (isDSL) {
+              return (
+                <>
+                  {/* Recompile Button */}
+                  <button
+                    className={styles.vizButton}
+                    onClick={async () => {
+                      if (!customViz) return;
+                      try {
+                        console.log('🔄 Recompiling visualization...');
+                        const cleanCode = stripCodeFences(customViz.code);
+                        const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
+                        const dslConfig = JSON.parse(cleanCode);
+                        const compiledCode = compileDSL(dslConfig);
+                        
+                        // Save updated visualization
+                        const updatedViz = { ...customViz, compiledCode };
+                        await saveCustomVisualization(updatedViz);
+                        
+                        // Update state
+                        setCustomVisualizations(prev => 
+                          prev.map(v => v.id === customViz.id ? updatedViz : v)
+                        );
+                        
+                        console.log('✅ Recompiled successfully!');
+                        alert('✅ Visualization recompiled! The page will refresh.');
+                        window.location.reload();
+                      } catch (error) {
+                        console.error('❌ Recompile failed:', error);
+                        alert('❌ Failed to recompile');
+                      }
+                    }}
+                    title="Recompile with latest compiler"
+                  >
+                    🔄
+                  </button>
+                  
+                  {/* Performance Toggle */}
+                  {hasCompiled && (
+                    <button
+                      className={`${styles.vizButton} ${
+                        useCompiledMode ? styles.active : ""
+                      }`}
+                      onClick={() => setUseCompiledMode(!useCompiledMode)}
+                      title={useCompiledMode ? "Compiled Mode (Fast)" : "Interpreter Mode (Slow)"}
+                    >
+                      {useCompiledMode ? "⚡" : "🐌"}
+                    </button>
+                  )}
+                </>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* AI Create Button */}
@@ -1009,6 +1099,23 @@ export default function PlayerPage() {
             <span className={styles.statValue}>{fftRows}</span>
           </div>
         )}
+        {(() => {
+          const customViz = customVisualizations.find((v) => v.id === visualizationType);
+          const isDSL = customViz && isDSLFormat(customViz.code);
+          const hasCompiled = customViz?.compiledCode;
+          
+          if (isDSL && hasCompiled) {
+            return (
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>Mode</span>
+                <span className={styles.statValue}>
+                  {useCompiledMode ? "⚡ Compiled" : "🐌 Interpreted"}
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* Visualization Creator */}
