@@ -99,14 +99,12 @@ interface VisualizationDropdownProps {
   value: VisualizationType;
   onChange: (value: VisualizationType) => void;
   customVisualizations?: CustomVisualization[];
-  onCreateNew: () => void;
 }
 
 export default function VisualizationDropdown({
   value,
   onChange,
   customVisualizations = [],
-  onCreateNew,
 }: VisualizationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -144,10 +142,6 @@ export default function VisualizationDropdown({
     setIsOpen(false);
   };
 
-  const handleCreateOwn = () => {
-    setIsOpen(false);
-    onCreateNew();
-  };
 
   return (
     <div className={styles.dropdown} ref={dropdownRef}>
@@ -214,7 +208,7 @@ export default function VisualizationDropdown({
                       }}
                     >
                       <span className={styles.thumbnailIcon}>
-                        {viz.icon || "✨"}
+                        {viz.icon || "✦"}
                       </span>
                     </div>
                     <span className={styles.vizName}>{viz.name}</span>
@@ -224,10 +218,6 @@ export default function VisualizationDropdown({
             </>
           )}
 
-          <button className={styles.createButton} onClick={handleCreateOwn}>
-            <span className={styles.createIcon}>+</span>
-            <span>CREATE YOUR OWN VISUALIZATION</span>
-          </button>
         </div>
       )}
     </div>
