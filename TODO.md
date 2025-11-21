@@ -18,3 +18,4 @@
 [ ] Check Spotify device
     If phone we can amplify, else amplify can be done by calculating the basic input
 [ ] Download lyrics
+[ ] Automate creating visualization screenshots for the menu.

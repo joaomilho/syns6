@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./VisualizationDropdown.module.css";
-import { useRouter } from "next/navigation";
+import { CustomVisualization } from "@/lib/customVisualizations";
 
 export type VisualizationType =
   | "particles"
@@ -16,7 +16,8 @@ export type VisualizationType =
   | "wavespectrum"
   | "fftspectrum"
   | "camera"
-  | "debug";
+  | "debug"
+  | string; // Allow custom IDs
 
 interface VisualizationOption {
   id: VisualizationType;
@@ -97,17 +98,26 @@ const visualizations: VisualizationOption[] = [
 interface VisualizationDropdownProps {
   value: VisualizationType;
   onChange: (value: VisualizationType) => void;
+  customVisualizations?: CustomVisualization[];
+  onCreateNew: () => void;
 }
 
 export default function VisualizationDropdown({
   value,
   onChange,
+  customVisualizations = [],
+  onCreateNew,
 }: VisualizationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const currentViz = visualizations.find((v) => v.id === value);
+  const currentCustom = customVisualizations.find((v) => v.id === value);
+
+  // Debug: Log when custom visualizations change
+  useEffect(() => {
+    console.log('🎨 Dropdown received custom visualizations:', customVisualizations.length);
+  }, [customVisualizations]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -135,7 +145,8 @@ export default function VisualizationDropdown({
   };
 
   const handleCreateOwn = () => {
-    router.push("/create-visualization");
+    setIsOpen(false);
+    onCreateNew();
   };
 
   return (
@@ -145,14 +156,20 @@ export default function VisualizationDropdown({
         onClick={() => setIsOpen(!isOpen)}
         title="Select Visualization"
       >
-        <span className={styles.icon}>{currentViz?.icon}</span>
-        <span className={styles.label}>{currentViz?.name}</span>
+        <span className={styles.icon}>
+          {currentCustom?.icon || currentViz?.icon || "◯"}
+        </span>
+        <span className={styles.label}>
+          {currentCustom?.name || currentViz?.name || "Custom"}
+        </span>
         <span className={styles.arrow}>{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {isOpen && (
         <div className={styles.dropdownMenu}>
           <div className={styles.menuHeader}>Select Visualization</div>
+          
+          {/* Built-in Visualizations */}
           <div className={styles.visualizationGrid}>
             {visualizations.map((viz) => (
               <button
@@ -172,6 +189,41 @@ export default function VisualizationDropdown({
               </button>
             ))}
           </div>
+
+          {/* Custom Visualizations */}
+          {customVisualizations.length > 0 && (
+            <>
+              <div className={styles.menuHeader} style={{ marginTop: "16px" }}>
+                Your Creations
+              </div>
+              <div className={styles.visualizationGrid}>
+                {customVisualizations.map((viz) => (
+                  <button
+                    key={viz.id}
+                    className={`${styles.vizOption} ${
+                      viz.id === value ? styles.active : ""
+                    } ${styles.customViz}`}
+                    onClick={() => handleSelect(viz.id as VisualizationType)}
+                  >
+                    <div
+                      className={styles.thumbnail}
+                      style={{
+                        background:
+                          viz.thumbnail ||
+                          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      }}
+                    >
+                      <span className={styles.thumbnailIcon}>
+                        {viz.icon || "✨"}
+                      </span>
+                    </div>
+                    <span className={styles.vizName}>{viz.name}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           <button className={styles.createButton} onClick={handleCreateOwn}>
             <span className={styles.createIcon}>+</span>
             <span>CREATE YOUR OWN VISUALIZATION</span>
