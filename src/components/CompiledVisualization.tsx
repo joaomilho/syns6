@@ -69,10 +69,9 @@ export default function CompiledVisualization({
       0.1,
       1000
     );
-    camera.position.set(0, 5, 30); // Move camera back to see the full 10x10x10 grid
+    camera.position.set(0, 5, 15); // Match DSL visualization camera position
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
-    console.log('📷 Camera position:', camera.position, 'looking at origin');
 
     // Renderer setup
     console.log('🎮 COMPILED_VIZ_CREATING_WEBGL');
