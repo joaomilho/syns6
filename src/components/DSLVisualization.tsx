@@ -1,0 +1,270 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { VisualizationInterpreter } from "@/lib/visualizationDSL/interpreter";
+import { VisualizationDSL, validateDSL } from "@/lib/visualizationDSL/schema";
+import Lyrics3D from "./Lyrics3D";
+import { LyricLine } from "@/lib/lyrics";
+
+interface DSLVisualizationProps {
+  config: VisualizationDSL;
+  micData?: any;
+  isPlaying?: boolean;
+  lyrics?: LyricLine[];
+  currentTimeMs?: number;
+}
+
+export default function DSLVisualization({
+  config,
+  micData,
+  isPlaying,
+  lyrics,
+  currentTimeMs,
+}: DSLVisualizationProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const interpreterRef = useRef<VisualizationInterpreter | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+  const micDataRef = useRef(micData);
+
+  // Update micData ref on every render so animation loop gets fresh data
+  useEffect(() => {
+    micDataRef.current = micData;
+  }, [micData]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Clear any existing canvases first
+    while (containerRef.current.firstChild) {
+      containerRef.current.removeChild(containerRef.current.firstChild);
+    }
+    
+    console.log(`🎨 DSL Init: ${config.name}, Lyrics: ${lyrics?.length || 0} lines`);
+
+    // Validate config
+    if (!validateDSL(config)) {
+      console.error('❌ Invalid DSL configuration');
+      return;
+    }
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
+    sceneRef.current = scene;
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    // Camera position to see all cubes clearly
+    camera.position.set(0, 5, 15);
+    camera.lookAt(0, 0, 0);
+    cameraRef.current = camera;
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false, // Changed to false to ensure opaque background
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 1); // Explicitly set clear color to black
+    
+    // Make canvas visible and on top for debugging
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // Orbit controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 50;
+    controls.minDistance = 2;
+    controlsRef.current = controls;
+
+    // Grid helper
+    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    scene.add(gridHelper);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    directionalLight.position.set(5, 10, 5);
+    scene.add(directionalLight);
+
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    backLight.position.set(-5, 5, -5);
+    scene.add(backLight);
+
+    // Create interpreter and initialize
+    const interpreter = new VisualizationInterpreter(scene, camera, config);
+    try {
+      interpreter.initialize();
+      interpreterRef.current = interpreter;
+    } catch (error) {
+      console.error('❌ Failed to initialize DSL interpreter:', error);
+    }
+
+    // Handle window resize
+    const handleResize = () => {
+      if (!cameraRef.current || !rendererRef.current) return;
+
+      cameraRef.current.aspect = window.innerWidth / window.innerHeight;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Animation loop
+    let animationFrameId: number;
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+
+      const time = (Date.now() - startTimeRef.current) / 1000;
+
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+
+      // Update interpreter with amplified audio data
+      if (interpreterRef.current) {
+        try {
+          // Use ref to get CURRENT micData value (not captured)
+          const currentMicData = micDataRef.current;
+          
+          // Amplify micData for more dramatic effects (2x multiplier - balanced for visibility)
+          const amplifiedMicData = currentMicData ? {
+            bass: (currentMicData.bass || 0) * 2,
+            mid: (currentMicData.mid || 0) * 2,
+            treble: (currentMicData.treble || 0) * 2,
+            subBass: (currentMicData.subBass || 0) * 2,
+            presence: (currentMicData.presence || 0) * 2,
+            voiceStrength: (currentMicData.voiceStrength || 0) * 2,
+            drums: (currentMicData.drums || 0) * 2,
+            energy: (currentMicData.energy || 0) * 2,
+          } : {
+            bass: 0,
+            mid: 0,
+            treble: 0,
+            subBass: 0,
+            presence: 0,
+            voiceStrength: 0,
+            drums: 0,
+            energy: 0,
+          };
+          
+          interpreterRef.current.update(time, amplifiedMicData);
+        } catch (error) {
+          console.error('⚠️ DSL animation error:', error);
+        }
+      }
+
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+    };
+    animate();
+
+    // Cleanup
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", handleResize);
+
+      // Dispose interpreter
+      if (interpreterRef.current) {
+        interpreterRef.current.dispose();
+        interpreterRef.current = null;
+      }
+
+      // Dispose controls
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+        controlsRef.current = null;
+      }
+
+      // Dispose renderer
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        rendererRef.current.forceContextLoss();
+        rendererRef.current = null;
+      }
+
+      // Remove canvas
+      if (containerRef.current) {
+        while (containerRef.current.firstChild) {
+          containerRef.current.removeChild(containerRef.current.firstChild);
+        }
+      }
+
+      sceneRef.current = null;
+      cameraRef.current = null;
+    };
+  }, [config]); // Only depend on config, not micData!
+
+  return (
+    <>
+      {/* Three.js visualization background */}
+      <div
+        ref={containerRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 0,
+          backgroundColor: "#000000",
+        }}
+      />
+      
+      {/* Lyrics layer on top */}
+      {lyrics && lyrics.length > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        >
+          <Canvas
+            camera={{ position: [0, 0, 30], fov: 75 }}
+            style={{
+              background: "transparent",
+            }}
+          >
+            <group position={[0, -2, -10]} scale={2}>
+              <Lyrics3D
+                lyrics={lyrics}
+                currentTimeMs={currentTimeMs || 0}
+                isPlaying={isPlaying || false}
+                syncedData={null}
+                micData={micData}
+              />
+            </group>
+          </Canvas>
+        </div>
+      )}
+    </>
+  );
+}
+

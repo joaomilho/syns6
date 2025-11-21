@@ -1,13 +1,14 @@
  .fullscreenPage {
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100vw;
-   height: 100vh;
-   overflow: hidden;
-   background: #000;
-   font-family: var(--font-geist-sans);
- }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000 !important;
+  font-family: var(--font-geist-sans);
+  z-index: 0;
+}
 
  .centerMessage {
    position: absolute;
