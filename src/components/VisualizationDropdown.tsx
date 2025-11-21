@@ -263,11 +263,17 @@ export default function VisualizationDropdown({
                     <div className={styles.thumbnailContainer}>
                       <div
                         className={styles.thumbnail}
-                        style={{
-                          background:
-                            viz.thumbnail ||
-                            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        }}
+                        style={
+                          viz.thumbnail?.startsWith('data:image/')
+                            ? {
+                                backgroundImage: `url(${viz.thumbnail})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              }
+                            : {
+                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              }
+                        }
                       >
                       </div>
                     </div>

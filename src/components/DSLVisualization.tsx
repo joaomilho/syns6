@@ -75,6 +75,7 @@ export default function DSLVisualization({
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false, // Changed to false to ensure opaque background
+      preserveDrawingBuffer: true, // Required for screenshots
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
