@@ -54,6 +54,14 @@ export async function deleteCustomVisualization(id: string): Promise<void> {
   await customVizStore.removeItem(id);
 }
 
+export async function updateVisualizationThumbnail(id: string, thumbnail: string): Promise<void> {
+  const viz = await getCustomVisualization(id);
+  if (viz) {
+    viz.thumbnail = thumbnail;
+    await saveCustomVisualization(viz);
+  }
+}
+
 export async function clearAllCustomVisualizations(): Promise<void> {
   await customVizStore.clear();
 }
