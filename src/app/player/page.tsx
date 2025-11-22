@@ -120,6 +120,7 @@ export default function PlayerPage() {
       return;
     }
 
+    let broadcastCount = 0;
     const broadcastInterval = setInterval(() => {
       const displayTrack = playbackState?.item || lastKnownTrack?.item;
       
@@ -156,7 +157,12 @@ export default function PlayerPage() {
       };
 
       shareManager.broadcastState(state);
-    }, 1000); // 1fps - only need to sync playback position
+      broadcastCount++;
+      
+      if (broadcastCount % 5 === 0) {
+        console.log(`📡 [HOST] Broadcasted ${broadcastCount} updates to ${shareManager.connectedViewers} viewers`);
+      }
+    }, 2000); // 0.5fps - reduce network traffic
 
     return () => clearInterval(broadcastInterval);
   }, [

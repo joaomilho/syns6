@@ -24,14 +24,17 @@ function SharePageContent() {
   const searchParams = useSearchParams();
   const hostPeerIdParam = searchParams.get("host");
   
-  // For development: use fixed peer ID if not specified
-  const isDev = process.env.NODE_ENV === 'development';
-  const hostPeerId = hostPeerIdParam || (isDev ? 'syns-dev-1234' : null);
-  
   const shareManager = useShareManager();
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [isConnecting, setIsConnecting] = useState(true);
   const [micError, setMicError] = useState<string | null>(null);
+  const [latency, setLatency] = useState<number>(0);
+  const [updateCount, setUpdateCount] = useState<number>(0);
+  
+  // Code input state
+  const [codeInput, setCodeInput] = useState<string[]>(['', '', '', '', '', '']);
+  const [showCodeInput, setShowCodeInput] = useState(!hostPeerIdParam);
+  const [hostPeerId, setHostPeerId] = useState<string | null>(hostPeerIdParam);
   
   // Use local microphone (each viewer hears music through speakers)
   const { micData, isEnabled: isMicEnabled, enable: enableMic, error: micHookError } = useMicrophoneAnalysis();
@@ -120,6 +123,16 @@ function SharePageContent() {
   // Convert received state to component props
   const state = shareManager.viewerState;
   
+  // Calculate and update latency
+  useEffect(() => {
+    if (state?.timestamp) {
+      const now = Date.now();
+      const calculatedLatency = now - state.timestamp;
+      setLatency(calculatedLatency);
+      setUpdateCount(prev => prev + 1);
+    }
+  }, [state]);
+  
   // Debug: Log received state on first receive
   const hasLoggedRef = useRef(false);
   useEffect(() => {
@@ -136,11 +149,15 @@ function SharePageContent() {
   
   // Extract state values
   const lyrics = state?.lyrics || undefined;
-  const currentTimeMs = state?.currentTimeMs || 0;
   const playbackState = state?.playbackState;
   const queue = state?.queue || [];
   const isPlaying = playbackState?.is_playing || false;
   const visualizationType = state?.visualizationType || "fftspectrum";
+  
+  // Adjust current time to compensate for network latency
+  // This ensures lyrics appear in sync with what viewer hears through their mic
+  const rawCurrentTimeMs = state?.currentTimeMs || 0;
+  const currentTimeMs = rawCurrentTimeMs + latency;
 
   // Render visualization based on type
   const renderVisualization = () => {
@@ -306,12 +323,74 @@ function SharePageContent() {
     }
   };
 
-  if (!hostPeerId) {
+  // Show code input if no host ID
+  if (showCodeInput && !hostPeerId) {
     return (
       <div className={styles.container}>
-        <div className={styles.message}>
-          <h1>❌ Invalid Link</h1>
-          <p>No host peer ID provided</p>
+        <div className={styles.codeInputContainer}>
+          <h1>Enter Share Code</h1>
+          <p className={styles.codeInputInstructions}>
+            Enter the 6-digit code from the host screen
+          </p>
+          
+          <div className={styles.codeInputs}>
+            {codeInput.map((digit, index) => (
+              <input
+                key={index}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]"
+                maxLength={1}
+                value={digit}
+                className={styles.codeDigit}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value.length <= 1) {
+                    const newCode = [...codeInput];
+                    newCode[index] = value;
+                    setCodeInput(newCode);
+                    
+                    // Auto-focus next input
+                    if (value && index < 5) {
+                      const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                      nextInput?.focus();
+                    }
+                    
+                    // Auto-connect when all 6 digits entered
+                    if (index === 5 && value && newCode.every(d => d)) {
+                      const code = newCode.join('');
+                      const peerId = `syns-${code}`;
+                      console.log('🔗 Connecting with code:', code);
+                      setHostPeerId(peerId);
+                      setShowCodeInput(false);
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Backspace: move to previous input
+                  if (e.key === 'Backspace' && !codeInput[index] && index > 0) {
+                    const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
+                    prevInput?.focus();
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+            ))}
+          </div>
+          
+          <button
+            className={styles.connectButton}
+            disabled={!codeInput.every(d => d)}
+            onClick={() => {
+              const code = codeInput.join('');
+              const peerId = `syns-${code}`;
+              console.log('🔗 Connecting with code:', code);
+              setHostPeerId(peerId);
+              setShowCodeInput(false);
+            }}
+          >
+            Connect
+          </button>
         </div>
       </div>
     );
@@ -453,22 +532,39 @@ function SharePageContent() {
       )}
 
       {/* Viewer Badge */}
-      <div 
-        className={styles.viewerBadge}
-        onClick={() => {
-          if (!isMicEnabled) {
-            enableMic().catch(err => {
-              console.error('Failed to enable mic:', err);
-              setMicError('Failed to access microphone. Check browser permissions.');
-            });
-          }
-        }}
-        title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
-      >
-        👀 Viewer Mode
-        {!isMicEnabled && (
-          <span className={styles.micWarning}> · 🎤 Click to enable mic</span>
-        )}
+      <div className={styles.viewerBadgeContainer}>
+        <div 
+          className={styles.viewerBadge}
+          onClick={() => {
+            if (!isMicEnabled) {
+              enableMic().catch(err => {
+                console.error('Failed to enable mic:', err);
+                setMicError('Failed to access microphone. Check browser permissions.');
+              });
+            }
+          }}
+          title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
+        >
+          <span>👀 Viewer Mode</span>
+          {!isMicEnabled && (
+            <span className={styles.micWarning}>🎤 Click to enable mic</span>
+          )}
+        </div>
+        
+        {/* Latency indicator */}
+        <div className={styles.latencyIndicator}>
+          <span className={styles.latencyLabel}>Latency:</span>
+          <span className={`${styles.latencyValue} ${
+            latency < 100 ? styles.latencyGood :
+            latency < 300 ? styles.latencyOk :
+            styles.latencyBad
+          }`}>
+            {latency}ms
+          </span>
+          <span className={styles.updateCounter}>
+            ({updateCount} updates)
+          </span>
+        </div>
       </div>
     </div>
   );
