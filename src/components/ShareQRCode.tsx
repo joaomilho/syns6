@@ -11,10 +11,15 @@ interface ShareQRCodeProps {
 
 export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodeProps) {
   const [shareUrl, setShareUrl] = useState<string>("");
+  const [shareCode, setShareCode] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    // Simple: just use current origin (works for deployed app)
+    // Extract 6-digit code from peer ID (format: syns-123456)
+    const code = peerId.replace('syns-', '');
+    setShareCode(code);
+    
+    // Full URL for QR code
     const url = `${window.location.origin}/share?host=${peerId}`;
     setShareUrl(url);
   }, [peerId]);
@@ -58,8 +63,25 @@ export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodePro
 
           <div className={styles.info}>
             <p className={styles.instruction}>
-              Scan to view this screen on another device
+              Scan QR code or visit <strong>syns6.com/share</strong>
             </p>
+            
+            <div className={styles.codeDisplay}>
+              <div className={styles.codeLabel}>Enter this code:</div>
+              <div className={styles.code}>{shareCode}</div>
+              <button 
+                className={styles.copyCodeButton}
+                onClick={() => {
+                  navigator.clipboard.writeText(shareCode);
+                  alert("Code copied! 📋");
+                }}
+              >
+                📋 Copy Code
+              </button>
+            </div>
+            
+            <div className={styles.orDivider}>or</div>
+            
             <div className={styles.urlContainer}>
               <input 
                 type="text" 
@@ -78,6 +100,7 @@ export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodePro
                 📋
               </button>
             </div>
+            
             <div className={styles.viewers}>
               <span className={styles.viewersIcon}>👀</span>
               <span className={styles.viewersText}>
