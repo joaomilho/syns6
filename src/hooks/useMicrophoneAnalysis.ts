@@ -112,6 +112,16 @@ export function useMicrophoneAnalysis() {
 
     const setupMicrophone = async () => {
       try {
+        // Check if mediaDevices is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error(
+            'MediaDevices API not available. This usually means:\n' +
+            '1. Using HTTP on non-localhost domain (requires HTTPS)\n' +
+            '2. Browser doesn\'t support microphone access\n' +
+            '3. Insecure context (mixed HTTP/HTTPS content)'
+          );
+        }
+
         console.log('🎤 Requesting microphone permission...');
         // Request microphone access
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });

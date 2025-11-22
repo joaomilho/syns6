@@ -1,0 +1,141 @@
+{
+  "spotifyId": "4yQCgQVUIRBUnLdmXtZ0bo",
+  "title": "Winter Time",
+  "artist": "Steve Miller Band",
+  "album": "Book Of Dreams",
+  "duration": 192226,
+  "lyrics": [
+    {
+      "time": 52670,
+      "text": "In the winter time"
+    },
+    {
+      "time": 55230,
+      "text": "When all the leaves are brown"
+    },
+    {
+      "time": 58680,
+      "text": "And the wind blows (So chill)"
+    },
+    {
+      "time": 62210,
+      "text": "And the birds"
+    },
+    {
+      "time": 64640,
+      "text": "Have all flown"
+    },
+    {
+      "time": 66720,
+      "text": "For the summer"
+    },
+    {
+      "time": 71410,
+      "text": "I'm callin'"
+    },
+    {
+      "time": 73960,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 75960,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 80450,
+      "text": "Ah, ah"
+    },
+    {
+      "time": 89510,
+      "text": "In the winter time"
+    },
+    {
+      "time": 92470,
+      "text": "When all the leaves are brown"
+    },
+    {
+      "time": 94420,
+      "text": "And the wind blows (So chill)"
+    },
+    {
+      "time": 99490,
+      "text": "And the birds"
+    },
+    {
+      "time": 102030,
+      "text": "Have all flown"
+    },
+    {
+      "time": 103920,
+      "text": "For the summer"
+    },
+    {
+      "time": 108170,
+      "text": "I'm callin'"
+    },
+    {
+      "time": 111090,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 113200,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 117910,
+      "text": "I'm callin'"
+    },
+    {
+      "time": 119920,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 122020,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 126500,
+      "text": "In the winter time"
+    },
+    {
+      "time": 153300,
+      "text": "In the winter time"
+    },
+    {
+      "time": 156060,
+      "text": "When all the leaves are brown"
+    },
+    {
+      "time": 158260,
+      "text": "And the wind blows (So chill)"
+    },
+    {
+      "time": 163040,
+      "text": "And the birds"
+    },
+    {
+      "time": 165510,
+      "text": "Have all flown"
+    },
+    {
+      "time": 167770,
+      "text": "For the summer"
+    },
+    {
+      "time": 172410,
+      "text": "I'm callin'"
+    },
+    {
+      "time": 174320,
+      "text": "Hear me callin'"
+    },
+    {
+      "time": 176040,
+      "text": "Hear me callin'"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:17:15.291Z",
+  "instrumentalConfidence": 0
+}

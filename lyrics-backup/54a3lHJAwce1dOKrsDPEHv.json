@@ -1,0 +1,12 @@
+{
+  "spotifyId": "54a3lHJAwce1dOKrsDPEHv",
+  "title": "In a Silent Way",
+  "artist": "Miles Davis",
+  "album": "In A Silent Way",
+  "duration": 1192333,
+  "lyrics": null,
+  "source": "Instrumental-Artist: miles davis",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T00:38:23.041Z",
+  "instrumentalConfidence": 0.9
+}

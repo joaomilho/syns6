@@ -1,0 +1,57 @@
+{
+  "spotifyId": "5erVYMI5WAhZ14nlSaTK0M",
+  "title": "Fast Worms",
+  "artist": "Intronaut",
+  "album": "The Direction of Last Things",
+  "duration": 418640,
+  "lyrics": [
+    {
+      "time": 40660,
+      "text": "The man with the eyes that are dead"
+    },
+    {
+      "time": 46570,
+      "text": "And the woman who knew what was next"
+    },
+    {
+      "time": 58490,
+      "text": "He speaks to the world, as he pays for his sins with a golden doubloon"
+    },
+    {
+      "time": 73580,
+      "text": "Blink once for \"I'm guilty\""
+    },
+    {
+      "time": 83120,
+      "text": "Blink twice for \"We know\""
+    },
+    {
+      "time": 131620,
+      "text": "The pieces fit together"
+    },
+    {
+      "time": 137280,
+      "text": "Like so many arms and legs"
+    },
+    {
+      "time": 144190,
+      "text": "The lifeless, limbless body returns"
+    },
+    {
+      "time": 153700,
+      "text": "And all we can do is search for a head to scratch"
+    },
+    {
+      "time": 360400,
+      "text": "Blink once for \"I'm guilty\""
+    },
+    {
+      "time": 370260,
+      "text": "Blink twice for \"We know\""
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:50:39.711Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,57 @@
+{
+  "spotifyId": "7LblT8I1YJHhdFyaY8gUyI",
+  "title": "Eternity's Breath, Pt. 1",
+  "artist": "Mahavishnu Orchestra",
+  "album": "Visions of the Emerald Beyond",
+  "duration": 190640,
+  "lyrics": [
+    {
+      "time": 95740,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 99100,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 115870,
+      "text": "Oh Lord Supreme, Supreme"
+    },
+    {
+      "time": 121260,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 124970,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 128570,
+      "text": "Oh Lord Supreme, Supreme"
+    },
+    {
+      "time": 134930,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 137910,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 167030,
+      "text": "Oh Lord Supreme, Supreme"
+    },
+    {
+      "time": 172400,
+      "text": "Let me fulfill thy will"
+    },
+    {
+      "time": 176120,
+      "text": "Let me fulfill thy will"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:20:04.654Z",
+  "instrumentalConfidence": 0
+}

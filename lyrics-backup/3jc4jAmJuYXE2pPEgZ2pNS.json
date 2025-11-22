@@ -1,0 +1,89 @@
+{
+  "spotifyId": "3jc4jAmJuYXE2pPEgZ2pNS",
+  "title": "Snake Song",
+  "artist": "Isobel Campbell, Mark Lanegan",
+  "album": "Hawk",
+  "duration": 168066,
+  "lyrics": [
+    {
+      "time": 21720,
+      "text": "Well, you can't hold me, I'm too slippery"
+    },
+    {
+      "time": 26840,
+      "text": "I do no sleep in, I get lonely"
+    },
+    {
+      "time": 31670,
+      "text": "You can touch me if you want to"
+    },
+    {
+      "time": 36750,
+      "text": "I got poison"
+    },
+    {
+      "time": 39160,
+      "text": "I just might bite you"
+    },
+    {
+      "time": 43410,
+      "text": "Lie in circles on the sunlight"
+    },
+    {
+      "time": 48370,
+      "text": "Shine like diamonds"
+    },
+    {
+      "time": 50710,
+      "text": "On a dark night"
+    },
+    {
+      "time": 53200,
+      "text": "Ain't no mercy in my smilin'"
+    },
+    {
+      "time": 58160,
+      "text": "Only fangs and sweet beguiling"
+    },
+    {
+      "time": 86990,
+      "text": "Well future, he don't try to find me"
+    },
+    {
+      "time": 92080,
+      "text": "Skin I been through"
+    },
+    {
+      "time": 94430,
+      "text": "Dies behind me"
+    },
+    {
+      "time": 96820,
+      "text": "Solid hollow wrapped in hatred"
+    },
+    {
+      "time": 101980,
+      "text": "Not a drop of venom wasted"
+    },
+    {
+      "time": 128260,
+      "text": "Well, you can slip in, try to find me"
+    },
+    {
+      "time": 133350,
+      "text": "Hold your breath and flat deny me"
+    },
+    {
+      "time": 138170,
+      "text": "It makes no difference to my thinkin'"
+    },
+    {
+      "time": 143210,
+      "text": "I'll be here when you start sinkin'"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:57:15.540Z",
+  "instrumentalConfidence": 0
+}

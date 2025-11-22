@@ -1,0 +1,12 @@
+{
+  "spotifyId": "0PEWGZOeM27ncBli98Vn1l",
+  "title": "Phanuel",
+  "artist": "John Zorn, Pat Metheny",
+  "album": "Tap: Book of Angels, Vol. 20",
+  "duration": 655560,
+  "lyrics": null,
+  "source": "Instrumental-Artist: pat metheny",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T02:08:19.274Z",
+  "instrumentalConfidence": 0.9
+}

@@ -1,0 +1,61 @@
+{
+  "spotifyId": "7C0YN1nI6GofTpJTzyOdy5",
+  "title": "Mashiach",
+  "artist": "Zusha",
+  "album": "Kavana",
+  "duration": 212845,
+  "lyrics": [
+    {
+      "time": 1140,
+      "text": "Ani ma'amin b'emunah"
+    },
+    {
+      "time": 9230,
+      "text": "B'emunah, emunah shleimah"
+    },
+    {
+      "time": 16380,
+      "text": "Ani ma'amin b'emunah"
+    },
+    {
+      "time": 24490,
+      "text": "B'emunah, emunah shleimah"
+    },
+    {
+      "time": 30800,
+      "text": "B'vias hamashiach"
+    },
+    {
+      "time": 34620,
+      "text": "B'vias hamashiach"
+    },
+    {
+      "time": 38530,
+      "text": "Ani ma'amin"
+    },
+    {
+      "time": 42130,
+      "text": "Ani ma'amin"
+    },
+    {
+      "time": 46000,
+      "text": "B'vias hamashiach"
+    },
+    {
+      "time": 49700,
+      "text": "B'vias hamashiach"
+    },
+    {
+      "time": 53670,
+      "text": "Ani ma'amin"
+    },
+    {
+      "time": 57270,
+      "text": "Ani ma'amin"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:11:30.764Z",
+  "instrumentalConfidence": 0
+}

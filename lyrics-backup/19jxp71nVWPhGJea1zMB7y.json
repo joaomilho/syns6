@@ -1,0 +1,12 @@
+{
+  "spotifyId": "19jxp71nVWPhGJea1zMB7y",
+  "title": "Main Titles",
+  "artist": "Christophe Beck",
+  "album": "The Pink Panther (Original Motion Picture Soundtrack)",
+  "duration": 207013,
+  "lyrics": null,
+  "source": "Instrumental-Title contains \"main title\"",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T00:37:24.308Z",
+  "instrumentalConfidence": 0.8
+}

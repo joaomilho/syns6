@@ -1,0 +1,73 @@
+{
+  "spotifyId": "09CnYHiZ5jGT1wr1TXJ9Zt",
+  "title": "Thank You (Not So Bad)",
+  "artist": "Dimitri Vegas & Like Mike, Tiësto, Dido, W&W, Dimitri Vegas, Like Mike",
+  "album": "Thank You (Not So Bad)",
+  "duration": 140000,
+  "lyrics": [
+    {
+      "time": 61260,
+      "text": "My tea's gone cold, I'm wondering why"
+    },
+    {
+      "time": 65060,
+      "text": "I got out of bed at all"
+    },
+    {
+      "time": 67120,
+      "text": "The morning rain clouds up my window"
+    },
+    {
+      "time": 71560,
+      "text": "And I can't see at all"
+    },
+    {
+      "time": 73930,
+      "text": "And even if I could, it'd all be gray"
+    },
+    {
+      "time": 77920,
+      "text": "But your picture on my wall"
+    },
+    {
+      "time": 80840,
+      "text": "It reminds me that it's not so bad"
+    },
+    {
+      "time": 84610,
+      "text": "It's not so bad"
+    },
+    {
+      "time": 99900,
+      "text": "And even if I could, it'd all be gray"
+    },
+    {
+      "time": 103710,
+      "text": "But your picture on my wall"
+    },
+    {
+      "time": 110320,
+      "text": "It's not so bad"
+    },
+    {
+      "time": 124930,
+      "text": "And even if I could, it'd all be gray"
+    },
+    {
+      "time": 128990,
+      "text": "But your picture on my wall"
+    },
+    {
+      "time": 131580,
+      "text": "It reminds me that it's not so bad"
+    },
+    {
+      "time": 135680,
+      "text": "It's not so bad"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:27:57.537Z",
+  "instrumentalConfidence": 0
+}

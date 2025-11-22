@@ -1,0 +1,45 @@
+{
+  "spotifyId": "1A62Jj7HP7VjW37QoZN6DP",
+  "title": "Stay Frosty",
+  "artist": "Apollo 440",
+  "album": "The Future's What It Used To Be",
+  "duration": 165443,
+  "lyrics": [
+    {
+      "time": 36760,
+      "text": "Three words: Tempo, Tempo, Tempo"
+    },
+    {
+      "time": 49000,
+      "text": "Stay frosty"
+    },
+    {
+      "time": 98970,
+      "text": "Three words: Tempo, Tempo, Tempo"
+    },
+    {
+      "time": 111130,
+      "text": "Stay frosty"
+    },
+    {
+      "time": 115900,
+      "text": "Not still very much in the game"
+    },
+    {
+      "time": 145170,
+      "text": "Stay frosty"
+    },
+    {
+      "time": 151450,
+      "text": "Tempo, Tempo, Tempo"
+    },
+    {
+      "time": 156320,
+      "text": "Stay frosty"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:47:58.973Z",
+  "instrumentalConfidence": 0
+}

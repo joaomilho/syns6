@@ -1,0 +1,73 @@
+{
+  "spotifyId": "2WMyu5IYgxEuCd6xgFgJrl",
+  "title": "Nature Boy",
+  "artist": "Nat King Cole",
+  "album": "The Nat King Cole Story",
+  "duration": 173533,
+  "lyrics": [
+    {
+      "time": 20170,
+      "text": "There was a boy"
+    },
+    {
+      "time": 23670,
+      "text": "A very strange enchanted boy"
+    },
+    {
+      "time": 28980,
+      "text": "They say he wandered very far, very far"
+    },
+    {
+      "time": 34630,
+      "text": "Over land and sea"
+    },
+    {
+      "time": 41030,
+      "text": "A little shy and sad of eye"
+    },
+    {
+      "time": 50980,
+      "text": "But very wise was he"
+    },
+    {
+      "time": 61260,
+      "text": "And then one day"
+    },
+    {
+      "time": 65420,
+      "text": "A magic day he passed my way"
+    },
+    {
+      "time": 70570,
+      "text": "And while we spoke of many things"
+    },
+    {
+      "time": 74520,
+      "text": "Fools and kings"
+    },
+    {
+      "time": 77160,
+      "text": "This he said to me"
+    },
+    {
+      "time": 84400,
+      "text": "The greatest thing you'll ever learn"
+    },
+    {
+      "time": 93670,
+      "text": "Is just to love and be loved in return"
+    },
+    {
+      "time": 136930,
+      "text": "The greatest thing you'll ever learn"
+    },
+    {
+      "time": 147470,
+      "text": "Is just to love and be loved in return"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:06:05.965Z",
+  "instrumentalConfidence": 0
+}

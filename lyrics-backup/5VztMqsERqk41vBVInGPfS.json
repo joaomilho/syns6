@@ -1,0 +1,101 @@
+{
+  "spotifyId": "5VztMqsERqk41vBVInGPfS",
+  "title": "Rule the World",
+  "artist": "Vision Vision",
+  "album": "Rule the World",
+  "duration": 182973,
+  "lyrics": [
+    {
+      "time": 12920,
+      "text": "Walk with me through a falling Kingdom"
+    },
+    {
+      "time": 19340,
+      "text": "Walk with me where the ashes rain"
+    },
+    {
+      "time": 24440,
+      "text": "We'll make our peace, set it free"
+    },
+    {
+      "time": 28030,
+      "text": "Heaven drowns beneath the sea"
+    },
+    {
+      "time": 31990,
+      "text": "Walk with me, walk with me"
+    },
+    {
+      "time": 36790,
+      "text": "You and I, you and I are gonna rule the world"
+    },
+    {
+      "time": 42990,
+      "text": "You and I, you and I are gonna rule this twisted broken world"
+    },
+    {
+      "time": 49360,
+      "text": "You and I, you and I are gonna rule the world"
+    },
+    {
+      "time": 55560,
+      "text": "You and I, you and I are gonna rule this twisted broken world"
+    },
+    {
+      "time": 63530,
+      "text": "Let it fall, thy will be done"
+    },
+    {
+      "time": 69840,
+      "text": "Let it fall like the midnight sun"
+    },
+    {
+      "time": 74840,
+      "text": "Truth be told we stand alone"
+    },
+    {
+      "time": 78320,
+      "text": "To wear a crown of dust and bone"
+    },
+    {
+      "time": 82470,
+      "text": "Let it fall, let it fall"
+    },
+    {
+      "time": 87480,
+      "text": "You and I, you and I are gonna rule the world"
+    },
+    {
+      "time": 93500,
+      "text": "You and I, you and I are gonna rule this twisted broken world"
+    },
+    {
+      "time": 100240,
+      "text": "You and I! This twisted broken world!"
+    },
+    {
+      "time": 122700,
+      "text": "This twisted broken world!"
+    },
+    {
+      "time": 137880,
+      "text": "You and I, you and I are gonna rule the world"
+    },
+    {
+      "time": 144270,
+      "text": "You and I, you and I are gonna rule this twisted broken world"
+    },
+    {
+      "time": 150680,
+      "text": "You and I! This twisted broken world!"
+    },
+    {
+      "time": 173170,
+      "text": "This twisted broken world!"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:42:01.433Z",
+  "instrumentalConfidence": 0
+}

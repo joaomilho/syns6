@@ -1,0 +1,27 @@
+{
+  "spotifyId": "6acm01ZOycvipl49EJAiNz",
+  "title": "Song of the Crippled Bull",
+  "artist": "Black Crown Initiate",
+  "album": "Song of the Crippled Bull",
+  "duration": 276250,
+  "lyrics": [
+    {
+      "time": 133670,
+      "text": "The crippled bull of dischord, wrath, and avarice will find its way into another age."
+    },
+    {
+      "time": 149060,
+      "text": "The crippled bull of dischord, wrath, and avarice will find its way into another age."
+    },
+    {
+      "time": 165470,
+      "text": "The crippled bull of dischord, wrath, and avarice will find its way into another age."
+    },
+    {
+      "time": 181770,
+      "text": "The crippled bull of dischord, wrath, and avarice will find its way into another age."
+    }
+  ],
+  "source": "LRCLIB",
+  "fetchedAt": "2025-11-19T23:11:58.262Z"
+}

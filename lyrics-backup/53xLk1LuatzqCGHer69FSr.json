@@ -1,0 +1,77 @@
+{
+  "spotifyId": "53xLk1LuatzqCGHer69FSr",
+  "title": "Worried Mind",
+  "artist": "Ray Charles",
+  "album": "Modern Sounds in Country and Western Music, Vols 1 & 2",
+  "duration": 175386,
+  "lyrics": [
+    {
+      "time": 22500,
+      "text": "You promised me love"
+    },
+    {
+      "time": 28890,
+      "text": "That would never die"
+    },
+    {
+      "time": 34760,
+      "text": "That promise you made"
+    },
+    {
+      "time": 40780,
+      "text": "Was only a lie"
+    },
+    {
+      "time": 46590,
+      "text": "Now after you've gone"
+    },
+    {
+      "time": 52050,
+      "text": "All alone I've pined"
+    },
+    {
+      "time": 58240,
+      "text": "For all that I've got"
+    },
+    {
+      "time": 64040,
+      "text": "Is a worried mind"
+    },
+    {
+      "time": 116840,
+      "text": "And when I was down"
+    },
+    {
+      "time": 122440,
+      "text": "You just left me there"
+    },
+    {
+      "time": 128180,
+      "text": "I needed you so"
+    },
+    {
+      "time": 134140,
+      "text": "But you didn't care"
+    },
+    {
+      "time": 140010,
+      "text": "You found a new love"
+    },
+    {
+      "time": 145670,
+      "text": "And a home so fine"
+    },
+    {
+      "time": 151720,
+      "text": "But all that I've got"
+    },
+    {
+      "time": 158220,
+      "text": "Is a worried mind (a worried mind)"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:47:35.040Z",
+  "instrumentalConfidence": 0
+}
