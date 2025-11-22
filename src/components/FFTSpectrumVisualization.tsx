@@ -7,6 +7,8 @@ import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { LyricLine } from "@/lib/lyrics";
 import Lyrics3D from "./Lyrics3D";
 import { OrbitControls } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
   micData?: MicrophoneData;
@@ -15,7 +17,9 @@ interface FFTSpectrumVisualizationProps {
   isPlaying?: boolean;
   fps?: number;
   onRowsChange?: (rows: number) => void;
+  isLandingPage?: boolean;
 }
+
 
 /**
  * Calculate target row count based on FPS
@@ -47,11 +51,16 @@ function calculateTargetRows(fps: number, currentRows: number): number {
 function FFTSpectrumPlanes({ 
   micData, 
   fps = 60,
-  onRowsChange 
+  onRowsChange,
+  bassIntensity,
+  isLandingPage
+
 }: { 
   micData?: MicrophoneData; 
   fps?: number;
   onRowsChange?: (rows: number) => void;
+  bassIntensity?: number;
+  isLandingPage?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   
@@ -92,7 +101,7 @@ function FFTSpectrumPlanes({
     
     // Calculate target rows based on FPS
     // If FPS < 60: reduce rows, if FPS >= 60: can increase rows
-    const targetRows = calculateTargetRows(avgFPS, rows);
+    const targetRows = isLandingPage ? 100 : calculateTargetRows(avgFPS, rows);
     const rowDiff = Math.abs(targetRows - rows);
     
     // Only change if difference is substantial (at least 100 rows) and sustained
@@ -222,13 +231,8 @@ function FFTSpectrumPlanes({
     const frequencyData = micData?.frequencyData || new Uint8Array(512).fill(0);
     const binsPerBar = Math.floor(frequencyData.length / cols);
 
-    // Calculate bass intensity (first 12 bins for sub-bass/bass)
-    let bassSum = 0;
-    const bassBins = Math.min(12, frequencyData.length);
-    for (let i = 0; i < bassBins; i++) {
-      bassSum += frequencyData[i];
-    }
-    const bassIntensity = bassSum / (bassBins * 255);
+    // Calculate bass intensity using shared helper
+    
 
     // Apply shake effect when bass hits hard (lower threshold: 0.4)
     if (bassIntensity > 0.6) {
@@ -341,6 +345,7 @@ function FFTSpectrumPlanes({
 
   return (
     <group ref={groupRef}>
+      
       {instancedMeshes.map(({ mesh }, idx) => (
         <primitive key={idx} object={mesh} />
       ))}
@@ -354,9 +359,12 @@ export default function FFTSpectrumVisualization({
   currentTimeMs,
   isPlaying,
   fps = 60,
+  isLandingPage=false
 }: FFTSpectrumVisualizationProps) {
   const [rows, setRows] = useState(200);
   
+  const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
+
   return (
     <div
       style={{
@@ -373,7 +381,11 @@ export default function FFTSpectrumVisualization({
         style={{
           background: "linear-gradient(to bottom, #000000 0%, #0a0020 100%)",
         }}
+        gl={{ antialias: true }}
       >
+        {/* Bloom Effect */}
+        
+        
         {/* Orbit Controls */}
         <OrbitControls
           enableDamping
@@ -388,7 +400,20 @@ export default function FFTSpectrumVisualization({
           rotation={[0.3, Math.PI, 0]}
           scale={[-1.5, 1.5, 1.5]}
         >
-          <FFTSpectrumPlanes micData={micData} fps={fps} onRowsChange={setRows} />
+          {isLandingPage && (
+            <EffectComposer>
+              <Bloom 
+                intensity={Math.pow(bassIntensity*10,3)}
+                luminanceThreshold={0}
+                luminanceSmoothing={1.8}
+                radius={0.3}
+              />
+            </EffectComposer>
+          )}
+          
+          <FFTSpectrumPlanes micData={micData} fps={fps} onRowsChange={setRows} bassIntensity={bassIntensity} isLandingPage={isLandingPage} />
+        
+        
           {/* Grid floor */}
           <gridHelper
             args={[80, 80, "#333344", "#111122"]}
@@ -398,6 +423,7 @@ export default function FFTSpectrumVisualization({
 
         {/* 3D Lyrics - stays in normal position */}
         {lyrics && lyrics.length > 0 && (
+         
           <Lyrics3D
             lyrics={lyrics}
             currentTimeMs={currentTimeMs || 0}
@@ -405,6 +431,8 @@ export default function FFTSpectrumVisualization({
             syncedData={null}
             micData={micData}
           />
+          
+          
         )}
       </Canvas>
     </div>

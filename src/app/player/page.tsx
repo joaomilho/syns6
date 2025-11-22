@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
@@ -626,10 +626,14 @@ export default function PlayerPage() {
       <div className={styles.fullscreenPage}>
         <div className={styles.centerMessage}>
           <h1>Not Authenticated</h1>
-          <p>Please sign in to use the player</p>
-          <Link href="/" className={styles.link}>
-            Go to Home
-          </Link>
+          <p>Please sign in with Spotify to use the player</p>
+          <button 
+            onClick={() => signIn("spotify")} 
+            className={styles.link}
+            style={{ cursor: "pointer" }}
+          >
+            Sign in with Spotify
+          </button>
         </div>
       </div>
     );
