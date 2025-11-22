@@ -95,33 +95,49 @@ Only lightweight synchronization data (each viewer uses their own microphone):
 
 ## User Flow
 
-1. **Host starts player** → Auto-generates unique peer ID
-2. **Host clicks QR badge** → Shows QR code + share link
-3. **Viewer scans QR** → Opens `/share?host=syns-123456789`
-4. **WebRTC connects** → Peer-to-peer connection established
-5. **State streams** → Viewer sees exact same screen (30fps updates)
-6. **Viewer count updates** → Host sees 👀 count increase
+1. **Host starts player** → Auto-generates 6-digit code (e.g., `123456`)
+2. **Host clicks QR badge** → Shows QR code + big 6-digit code
+3. **Viewer opens** → Goes to `syns6.com/share` 
+4. **Viewer enters code** → Types 6 digits in input boxes
+5. **WebRTC connects** → Peer-to-peer connection established (may take 5-10 seconds)
+6. **State syncs** → Viewer sees song info + synced lyrics
+7. **Viewer enables mic** → Hears music through speakers, visualizes locally
+8. **Viewer count updates** → Host sees 👀 count increase
 
 ## Features
 
-✅ **Ultra-lightweight** (1fps broadcast, ~1KB/s bandwidth!)  
+✅ **6-digit code system** (easy to share, no long URLs!)  
+✅ **Ultra-lightweight** (0.5fps broadcast, <500 bytes/s bandwidth!)  
 ✅ **Local audio processing** (each viewer uses own microphone)  
 ✅ **Queue display** (shows next 2 songs on viewers)  
 ✅ **Synced lyrics** across all devices  
 ✅ **Auto-reconnect** on network changes  
 ✅ **Zero backend** required (uses PeerJS cloud)  
-✅ **Works everywhere** (same WiFi or internet)  
+✅ **Works everywhere** (internet only)  
 ✅ **Live viewer count** on host  
-✅ **QR code sharing** for easy mobile access  
+✅ **QR code + manual code entry** for flexibility
+✅ **Latency monitoring** (shows ms delay in console)  
 
 ## Technical Details
 
 ### Host (useShareManager - Host Mode)
 ```typescript
 const shareManager = useShareManager();
-shareManager.startHosting();          // Creates peer with unique ID
-shareManager.broadcastState(state);   // Sends state to all viewers (1fps)
+shareManager.startHosting();          // Creates peer with 6-digit code
+shareManager.broadcastState(state);   // Sends state (0.5fps, ~500 bytes/s)
 shareManager.connectedViewers;        // Count of connected viewers
+shareManager.peerId;                  // e.g., "syns-123456"
+```
+
+### Debugging
+Check browser console for detailed logs:
+- **Host**: `📡 [HOST] Broadcasted X updates to Y viewers`
+- **Viewer**: `📊 [VIEWER] Updates: X, Latency: Yms`
+
+### Connection Speed
+- Initial WebRTC connection: **5-10 seconds** (normal for STUN/TURN negotiation)
+- After connected: **Real-time sync** (lyrics update every 2 seconds)
+- Audio visualization: **Instant** (local microphone, no network delay)
 ```
 
 ### Viewer (useShareManager - Viewer Mode)

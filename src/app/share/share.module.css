@@ -126,10 +126,20 @@
   margin-left: 0.5rem;
 }
 
-.viewerBadge {
+.viewerBadgeContainer {
   position: fixed;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.viewerBadge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding: 0.5rem 1rem;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 8px;
@@ -137,7 +147,6 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.875rem;
   opacity: 0.7;
-  z-index: 10;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -149,6 +158,46 @@
 .micWarning {
   color: #ff6b6b;
   font-size: 0.75rem;
+}
+
+.latencyIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.latencyLabel {
+  opacity: 0.6;
+}
+
+.latencyValue {
+  font-weight: 700;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.latencyGood {
+  color: #00ff88;
+}
+
+.latencyOk {
+  color: #ffa500;
+}
+
+.latencyBad {
+  color: #ff6b6b;
+}
+
+.updateCounter {
+  opacity: 0.5;
+  font-size: 0.7rem;
 }
 
 .queueOverlay {
@@ -219,5 +268,77 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.codeInputContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.codeInputContainer h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.codeInputInstructions {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+.codeInputs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.codeDigit {
+  width: 4rem;
+  height: 5rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Monaco', 'Courier New', monospace;
+  transition: all 0.2s;
+}
+
+.codeDigit:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.connectButton {
+  padding: 1rem 3rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  background: rgba(0, 255, 136, 0.1);
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  color: #00ff88;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.connectButton:hover:not(:disabled) {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.connectButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
