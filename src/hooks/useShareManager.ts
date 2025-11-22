@@ -33,6 +33,9 @@ export interface SharedState {
   
   // Current playback position (for lyrics sync)
   currentTimeMs: number;
+  
+  // Timestamp for measuring latency
+  timestamp?: number;
 }
 
 interface UseShareManagerReturn {
@@ -73,16 +76,14 @@ export function useShareManager(): UseShareManagerReturn {
 
     console.log("🎭 Starting host mode...");
     
-    // For development: use fixed peer ID for easier testing
-    // For production: use timestamp-based ID for uniqueness
-    const isDev = process.env.NODE_ENV === 'development';
-    const customPeerId = isDev ? 'syns-dev-1234' : `syns-${Date.now()}`;
+    // Generate a 6-digit code for easy sharing
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const customPeerId = `syns-${code}`;
     
-    // Production implementation (commented for reference):
-    // const customPeerId = `syns-${Date.now()}`;
+    console.log(`📱 Share Code: ${code}`);
     
     const peer = new Peer(customPeerId, {
-      debug: 1, // Reduce debug verbosity
+      debug: 1,
     });
 
     peer.on("open", (id) => {
@@ -150,7 +151,7 @@ export function useShareManager(): UseShareManagerReturn {
 
     const message = {
       type: "state_update",
-      data: state,
+      data: { ...state, timestamp: Date.now() },
       timestamp: Date.now(),
     };
 
@@ -160,7 +161,7 @@ export function useShareManager(): UseShareManagerReturn {
           conn.send(message);
         }
       } catch (err) {
-        console.error("❌ Failed to send to viewer:", err);
+        console.error("❌ [HOST] Failed to send to viewer:", err);
       }
     });
   }, [isHosting]);
@@ -196,17 +197,27 @@ export function useShareManager(): UseShareManagerReturn {
       });
 
       let receivedCount = 0;
+      let lastLogTime = Date.now();
+      
       conn.on("data", (data: any) => {
         try {
           if (data.type === "state_update") {
             receivedCount++;
-            if (receivedCount % 30 === 0) { // Log every 30 frames (1 second at 30fps)
-              console.log(`📊 Receiving data (${receivedCount} updates received)`);
+            const now = Date.now();
+            
+            // Calculate latency
+            const latency = data.data.timestamp ? now - data.data.timestamp : 0;
+            
+            // Log every second
+            if (now - lastLogTime >= 1000) {
+              console.log(`📊 [VIEWER] Updates: ${receivedCount}, Latency: ${latency}ms`);
+              lastLogTime = now;
             }
+            
             setViewerState(data.data);
           }
         } catch (err) {
-          console.error("❌ Error processing data:", err);
+          console.error("❌ [VIEWER] Error processing data:", err);
           // Don't throw - keep connection alive
         }
       });
