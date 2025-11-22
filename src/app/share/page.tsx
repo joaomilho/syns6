@@ -50,10 +50,12 @@ function SharePageContent() {
 
   // Update connecting state
   useEffect(() => {
+    console.log(`🔄 [VIEWER] Connection state: isViewer=${shareManager.isViewer}, hasState=${!!shareManager.viewerState}`);
     if (shareManager.isViewer) {
       setIsConnecting(false);
+      console.log('✅ [VIEWER] Connected! Waiting for data...');
     }
-  }, [shareManager.isViewer]);
+  }, [shareManager.isViewer, shareManager.viewerState]);
 
   // Load custom visualizations
   useEffect(() => {
@@ -475,11 +477,15 @@ function SharePageContent() {
   }
 
   if (!state) {
+    console.log('⏳ [VIEWER] Connected but no state yet. isViewer:', shareManager.isViewer);
     return (
       <div className={styles.container}>
         <div className={styles.message}>
           <h1>⏳ Waiting for data...</h1>
           <p>Connected! Waiting for host to start broadcasting</p>
+          <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1rem' }}>
+            Check console for connection details
+          </p>
         </div>
       </div>
     );

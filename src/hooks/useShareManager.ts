@@ -93,24 +93,28 @@ export function useShareManager(): UseShareManagerReturn {
     });
 
     peer.on("connection", (conn) => {
-      console.log("👀 New viewer connecting:", conn.peer);
+      console.log("👀 [HOST] New viewer connecting:", conn.peer);
       
-      // Add to connections list
-      connectionsRef.current.push(conn);
-      setConnectedViewers(connectionsRef.current.length);
-
       conn.on("open", () => {
-        console.log("✅ Viewer connected:", conn.peer);
+        // Add to connections list AFTER connection opens
+        connectionsRef.current.push(conn);
+        const viewerCount = connectionsRef.current.length;
+        setConnectedViewers(viewerCount);
+        
+        console.log("✅ [HOST] Viewer connected:", conn.peer);
+        console.log(`👥 [HOST] Total viewers: ${viewerCount}`);
+        console.log(`🔄 [HOST] Connection state: open=${conn.open}, peer=${conn.peer}`);
       });
 
       conn.on("close", () => {
-        console.log("👋 Viewer disconnected:", conn.peer);
+        console.log("👋 [HOST] Viewer disconnected:", conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
         setConnectedViewers(connectionsRef.current.length);
+        console.log(`👥 [HOST] Total viewers: ${connectionsRef.current.length}`);
       });
 
       conn.on("error", (err) => {
-        console.error("❌ Connection error:", err);
+        console.error("❌ [HOST] Connection error with", conn.peer, ":", err);
         connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
         setConnectedViewers(connectionsRef.current.length);
       });
@@ -197,42 +201,57 @@ export function useShareManager(): UseShareManagerReturn {
       });
 
       let receivedCount = 0;
-      let lastLogTime = Date.now();
+      let lastReceiveTime = Date.now();
       
       conn.on("data", (data: any) => {
         try {
           if (data.type === "state_update") {
             receivedCount++;
             const now = Date.now();
+            const timeSinceLastUpdate = now - lastReceiveTime;
+            lastReceiveTime = now;
             
             // Calculate latency
             const latency = data.data.timestamp ? now - data.data.timestamp : 0;
             
-            // Log every second
-            if (now - lastLogTime >= 1000) {
-              console.log(`📊 [VIEWER] Updates: ${receivedCount}, Latency: ${latency}ms`);
-              lastLogTime = now;
-            }
+            // Log every update (since they're only every 2 seconds anyway)
+            console.log(`📊 [VIEWER] Update #${receivedCount}, Latency: ${latency}ms, Gap: ${timeSinceLastUpdate}ms`);
             
             setViewerState(data.data);
+          } else {
+            console.log(`📦 [VIEWER] Received unknown message type:`, data.type);
           }
         } catch (err) {
           console.error("❌ [VIEWER] Error processing data:", err);
           // Don't throw - keep connection alive
         }
       });
+      
+      // Add timeout detection - warn if no updates for 10 seconds
+      const timeoutCheck = setInterval(() => {
+        const now = Date.now();
+        const timeSinceLastUpdate = now - lastReceiveTime;
+        if (timeSinceLastUpdate > 10000 && receivedCount > 0) {
+          console.warn(`⚠️ [VIEWER] No updates for ${Math.round(timeSinceLastUpdate / 1000)}s - connection may be dead`);
+        }
+      }, 5000);
+      
+      conn.on("close", () => {
+        clearInterval(timeoutCheck);
+      });
 
       conn.on("close", () => {
-        console.log("👋 Disconnected from host");
+        console.log("👋 [VIEWER] Disconnected from host");
+        clearInterval(timeoutCheck);
         setIsViewer(false);
         setViewerState(null);
         hostConnectionRef.current = null;
       });
 
       conn.on("error", (err) => {
-        console.error("❌ Connection error:", err);
+        console.error("❌ [VIEWER] Connection error:", err);
         // Log error but try to continue connection
-        console.warn("⚠️ Connection error occurred, attempting to continue...");
+        console.warn("⚠️ [VIEWER] Connection error occurred, connection state:", conn.open ? "open" : "closed");
       });
     });
 
