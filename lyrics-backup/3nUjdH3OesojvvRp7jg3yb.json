@@ -1,0 +1,117 @@
+{
+  "spotifyId": "3nUjdH3OesojvvRp7jg3yb",
+  "title": "Little Room",
+  "artist": "Norah Jones",
+  "album": "Not Too Late",
+  "duration": 163973,
+  "lyrics": [
+    {
+      "time": 0,
+      "text": "One, two, ah, one, two, three, four"
+    },
+    {
+      "time": 11730,
+      "text": "You and me and me and you"
+    },
+    {
+      "time": 15760,
+      "text": "In my little room"
+    },
+    {
+      "time": 19260,
+      "text": "There's room enough for us to do"
+    },
+    {
+      "time": 23090,
+      "text": "The things we like to do"
+    },
+    {
+      "time": 27330,
+      "text": "Oops, I hit my elbow on the doorknob"
+    },
+    {
+      "time": 32180,
+      "text": "It's right there"
+    },
+    {
+      "time": 34990,
+      "text": "It's by the bed next to my head"
+    },
+    {
+      "time": 38470,
+      "text": "But I don't even care"
+    },
+    {
+      "time": 44330,
+      "text": "There's stars up on the wall"
+    },
+    {
+      "time": 47630,
+      "text": "And they all glow in the dark"
+    },
+    {
+      "time": 52340,
+      "text": "And we can hear the children playing"
+    },
+    {
+      "time": 56270,
+      "text": "Outside in the park"
+    },
+    {
+      "time": 59750,
+      "text": "There's bars on the window"
+    },
+    {
+      "time": 61100,
+      "text": "And if there were a fire"
+    },
+    {
+      "time": 64090,
+      "text": "We'd burn up for sure"
+    },
+    {
+      "time": 67940,
+      "text": "But that's just fine by me 'cause"
+    },
+    {
+      "time": 70570,
+      "text": "We would be together ever more"
+    },
+    {
+      "time": 111800,
+      "text": "In this little room"
+    },
+    {
+      "time": 114770,
+      "text": "In the big city we're so far"
+    },
+    {
+      "time": 119880,
+      "text": "From the people that we knew in"
+    },
+    {
+      "time": 123420,
+      "text": "My big old blue car"
+    },
+    {
+      "time": 128180,
+      "text": "If we stick together"
+    },
+    {
+      "time": 130500,
+      "text": "Then I know we'll be okay"
+    },
+    {
+      "time": 135360,
+      "text": "'Cause when it gets too cold outside"
+    },
+    {
+      "time": 139050,
+      "text": "This room is where we'll stay"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:37:28.815Z",
+  "instrumentalConfidence": 0
+}

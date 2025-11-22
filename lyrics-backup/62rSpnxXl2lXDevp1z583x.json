@@ -1,0 +1,85 @@
+{
+  "spotifyId": "62rSpnxXl2lXDevp1z583x",
+  "title": "Pass The Peas",
+  "artist": "The J.B.'s",
+  "album": "James Brown's Funky People",
+  "duration": 191666,
+  "lyrics": [
+    {
+      "time": 30,
+      "text": "Hey Bobby, why do you like soul food?"
+    },
+    {
+      "time": 4250,
+      "text": "Because it makes me happy"
+    },
+    {
+      "time": 7550,
+      "text": "Pass the peas, like Jesus said"
+    },
+    {
+      "time": 9880,
+      "text": "Pass the peas like we used to say"
+    },
+    {
+      "time": 12570,
+      "text": "Pass the peas like we used to say"
+    },
+    {
+      "time": 14460,
+      "text": "Pass the peas like we used to say (passing 'em then)"
+    },
+    {
+      "time": 184070,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 185260,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 186320,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 187420,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 188860,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 189940,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 190980,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 192060,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 193400,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 194730,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 195880,
+      "text": "Pass the peas"
+    },
+    {
+      "time": 197140,
+      "text": "Pass the peas..."
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:05:01.373Z",
+  "instrumentalConfidence": 0
+}

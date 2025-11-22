@@ -1,0 +1,61 @@
+{
+  "spotifyId": "2gLJXznQp4kGsVz8BptfHS",
+  "title": "Starless",
+  "artist": "King Crimson",
+  "album": "Red (Expanded & Remastered Original Album Mix)",
+  "duration": 744568,
+  "lyrics": [
+    {
+      "time": 89540,
+      "text": "Sundown dazzling day"
+    },
+    {
+      "time": 97700,
+      "text": "Gold through my eyes"
+    },
+    {
+      "time": 103620,
+      "text": "But my eyes turned within only see"
+    },
+    {
+      "time": 117700,
+      "text": "Starless and bible black"
+    },
+    {
+      "time": 140380,
+      "text": "Old friend charity"
+    },
+    {
+      "time": 148290,
+      "text": "Cruel twisted smile"
+    },
+    {
+      "time": 154340,
+      "text": "And the smile signals emptiness for me"
+    },
+    {
+      "time": 168550,
+      "text": "Starless and bible black"
+    },
+    {
+      "time": 221990,
+      "text": "Ice blue silver sky"
+    },
+    {
+      "time": 230350,
+      "text": "Fades into grey"
+    },
+    {
+      "time": 236350,
+      "text": "To a grey hope that all yearns to be"
+    },
+    {
+      "time": 250510,
+      "text": "Starless and bible black"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:21:38.819Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,121 @@
+{
+  "spotifyId": "1LGqJ3nvxpVXDWpEzq4DJD",
+  "title": "All of Me",
+  "artist": "Billie Holiday",
+  "album": "Lady Day: The Complete Billie Holiday On Columbia (1933-1944)",
+  "duration": 181440,
+  "lyrics": [
+    {
+      "time": 6090,
+      "text": "All of me"
+    },
+    {
+      "time": 21060,
+      "text": "Why not take all of me"
+    },
+    {
+      "time": 27680,
+      "text": "Can't you see"
+    },
+    {
+      "time": 30270,
+      "text": "I'm no good without you"
+    },
+    {
+      "time": 35920,
+      "text": "Take my lips"
+    },
+    {
+      "time": 39020,
+      "text": "I want to lose them"
+    },
+    {
+      "time": 44570,
+      "text": "Take my arms"
+    },
+    {
+      "time": 47760,
+      "text": "I'll never use them"
+    },
+    {
+      "time": 53040,
+      "text": "Your Goodbye"
+    },
+    {
+      "time": 55960,
+      "text": "Left me with eyes that cry"
+    },
+    {
+      "time": 61710,
+      "text": "How can I go on dear without you"
+    },
+    {
+      "time": 70660,
+      "text": "You took the part"
+    },
+    {
+      "time": 74780,
+      "text": "That once was my heart"
+    },
+    {
+      "time": 78570,
+      "text": "So why not take all of me"
+    },
+    {
+      "time": 105450,
+      "text": "All of me"
+    },
+    {
+      "time": 109330,
+      "text": "Why not take all of me"
+    },
+    {
+      "time": 114740,
+      "text": "Can't you see"
+    },
+    {
+      "time": 117800,
+      "text": "I'm no good without you"
+    },
+    {
+      "time": 123480,
+      "text": "Take my lips"
+    },
+    {
+      "time": 126740,
+      "text": "I want to lose them"
+    },
+    {
+      "time": 131890,
+      "text": "Take my arms I'll never use them"
+    },
+    {
+      "time": 140730,
+      "text": "Your goodbye"
+    },
+    {
+      "time": 144280,
+      "text": "Left me with eyes that cry"
+    },
+    {
+      "time": 150010,
+      "text": "How can I go on dear without you"
+    },
+    {
+      "time": 158460,
+      "text": "You took the best"
+    },
+    {
+      "time": 162760,
+      "text": "So why not take the rest"
+    },
+    {
+      "time": 167460,
+      "text": "Baby take all of me"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:06:03.378Z",
+  "instrumentalConfidence": 0
+}

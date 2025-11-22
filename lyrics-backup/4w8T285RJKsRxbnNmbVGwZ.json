@@ -1,0 +1,85 @@
+{
+  "spotifyId": "4w8T285RJKsRxbnNmbVGwZ",
+  "title": "Sweet Jezebel",
+  "artist": "Turboweekend",
+  "album": "Ghost Of A Chance",
+  "duration": 266400,
+  "lyrics": [
+    {
+      "time": 35990,
+      "text": "You were waiting on the stairs for me"
+    },
+    {
+      "time": 38780,
+      "text": "You'd put something in your hair for me"
+    },
+    {
+      "time": 41400,
+      "text": "A scent of secret only I could smell"
+    },
+    {
+      "time": 47990,
+      "text": "But your face was turned away from me"
+    },
+    {
+      "time": 50760,
+      "text": "You were talking to everybody else than me"
+    },
+    {
+      "time": 53440,
+      "text": "And your voice rang dark from the bottom of a well"
+    },
+    {
+      "time": 58990,
+      "text": "As I fell"
+    },
+    {
+      "time": 61790,
+      "text": "Into your spell"
+    },
+    {
+      "time": 64430,
+      "text": "Sweet Jezebel"
+    },
+    {
+      "time": 108500,
+      "text": "I saw the rush hour stop for you"
+    },
+    {
+      "time": 112260,
+      "text": "It didn't seem like it was new to you"
+    },
+    {
+      "time": 115090,
+      "text": "My eyes touched your skin like dust and grime"
+    },
+    {
+      "time": 121470,
+      "text": "In my dream I heard the word from you"
+    },
+    {
+      "time": 124190,
+      "text": "Telling me exactly what to do"
+    },
+    {
+      "time": 126940,
+      "text": "For you to turn back the clockworks of your mind"
+    },
+    {
+      "time": 132410,
+      "text": "And I fell"
+    },
+    {
+      "time": 136120,
+      "text": "Into your spell"
+    },
+    {
+      "time": 137990,
+      "text": "Sweet Jezebel"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:37:17.240Z",
+  "instrumentalConfidence": 0
+}

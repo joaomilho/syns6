@@ -1,0 +1,41 @@
+{
+  "spotifyId": "2haoJgD4gq8AXvArFZASBG",
+  "title": "The Answer",
+  "artist": "Apollo Brown",
+  "album": "Thirty Eight",
+  "duration": 207414,
+  "lyrics": [
+    {
+      "time": 860,
+      "text": "Through, through"
+    },
+    {
+      "time": 6300,
+      "text": "Somewhere in a fairy tale look for his wise one"
+    },
+    {
+      "time": 24360,
+      "text": "Answer that is waiting to become"
+    },
+    {
+      "time": 50860,
+      "text": "Waiting to be"
+    },
+    {
+      "time": 102420,
+      "text": "Somewhere in a fairy tale, look for his wise one"
+    },
+    {
+      "time": 120490,
+      "text": "Answer that is waiting to become."
+    },
+    {
+      "time": 146700,
+      "text": "Waiting to be brought."
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:44:48.350Z",
+  "instrumentalConfidence": 0
+}

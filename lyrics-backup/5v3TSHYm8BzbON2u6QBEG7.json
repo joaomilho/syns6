@@ -1,0 +1,109 @@
+{
+  "spotifyId": "5v3TSHYm8BzbON2u6QBEG7",
+  "title": "Dunkelheit",
+  "artist": "Burzum",
+  "album": "Filosofem",
+  "duration": 425066,
+  "lyrics": [
+    {
+      "time": 96540,
+      "text": "When night falls"
+    },
+    {
+      "time": 100530,
+      "text": "She cloaks the world"
+    },
+    {
+      "time": 105590,
+      "text": "In impenetrable darkness"
+    },
+    {
+      "time": 131800,
+      "text": "A chill rises"
+    },
+    {
+      "time": 153890,
+      "text": "From the soil"
+    },
+    {
+      "time": 157860,
+      "text": "And contaminates the air"
+    },
+    {
+      "time": 184960,
+      "text": "Suddenly"
+    },
+    {
+      "time": 189030,
+      "text": "Life has new meaning"
+    },
+    {
+      "time": 280440,
+      "text": "When night falls"
+    },
+    {
+      "time": 284540,
+      "text": "She cloaks the world"
+    },
+    {
+      "time": 286520,
+      "text": "In impenetrable darkness"
+    },
+    {
+      "time": 290570,
+      "text": "A chill rises"
+    },
+    {
+      "time": 292590,
+      "text": "From the soil"
+    },
+    {
+      "time": 294500,
+      "text": "And contaminates the air"
+    },
+    {
+      "time": 316740,
+      "text": "When night falls"
+    },
+    {
+      "time": 317700,
+      "text": "She cloaks the world"
+    },
+    {
+      "time": 319770,
+      "text": "In impenetrable darkness"
+    },
+    {
+      "time": 322860,
+      "text": "A chill rises"
+    },
+    {
+      "time": 324870,
+      "text": "From the soil"
+    },
+    {
+      "time": 326870,
+      "text": "And contaminates the air"
+    },
+    {
+      "time": 328830,
+      "text": "Suddenly"
+    },
+    {
+      "time": 329800,
+      "text": "Life has new meaning"
+    },
+    {
+      "time": 350930,
+      "text": "Life has new meaning"
+    },
+    {
+      "time": 365100,
+      "text": "Meaning"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T09:24:41.308Z",
+  "instrumentalConfidence": 0
+}

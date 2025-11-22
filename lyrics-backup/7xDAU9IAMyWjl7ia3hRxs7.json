@@ -1,0 +1,77 @@
+{
+  "spotifyId": "7xDAU9IAMyWjl7ia3hRxs7",
+  "title": "Blvd. Nights",
+  "artist": "Team Sleep",
+  "album": "Team Sleep (U.S. Release)",
+  "duration": 188133,
+  "lyrics": [
+    {
+      "time": 38340,
+      "text": "With her army complete"
+    },
+    {
+      "time": 44270,
+      "text": "She can take me apart off"
+    },
+    {
+      "time": 50360,
+      "text": "Throught the earth"
+    },
+    {
+      "time": 52930,
+      "text": "Then back in the car"
+    },
+    {
+      "time": 55330,
+      "text": "Cause once you begin"
+    },
+    {
+      "time": 58780,
+      "text": "Your not going to stop"
+    },
+    {
+      "time": 61400,
+      "text": "I know how you are"
+    },
+    {
+      "time": 67610,
+      "text": "Gonna stop"
+    },
+    {
+      "time": 73040,
+      "text": "But your not going to stop"
+    },
+    {
+      "time": 79370,
+      "text": "Gonna stop"
+    },
+    {
+      "time": 85470,
+      "text": "I know how you are"
+    },
+    {
+      "time": 89290,
+      "text": "Oh please"
+    },
+    {
+      "time": 92030,
+      "text": "Throught the earth"
+    },
+    {
+      "time": 97880,
+      "text": "Then back in the car"
+    },
+    {
+      "time": 101290,
+      "text": "Your not going to stop"
+    },
+    {
+      "time": 106560,
+      "text": "I know how you are"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:48:38.772Z",
+  "instrumentalConfidence": 0
+}

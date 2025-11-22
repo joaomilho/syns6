@@ -1,0 +1,109 @@
+{
+  "spotifyId": "3qiyyUfYe7CRYLucrPmulD",
+  "title": "Baba O'Riley",
+  "artist": "The Who",
+  "album": "Who's Next (Deluxe Edition)",
+  "duration": 300400,
+  "lyrics": [
+    {
+      "time": 66320,
+      "text": "Out here in the fields"
+    },
+    {
+      "time": 70170,
+      "text": "I farm for my meals"
+    },
+    {
+      "time": 73920,
+      "text": "I get my back into my living"
+    },
+    {
+      "time": 82750,
+      "text": "I don't need to fight"
+    },
+    {
+      "time": 86580,
+      "text": "To prove I'm right"
+    },
+    {
+      "time": 91130,
+      "text": "I don't need to be forgiven"
+    },
+    {
+      "time": 96890,
+      "text": "Yeah, yeah, yeah, yeah, yeah"
+    },
+    {
+      "time": 113650,
+      "text": "Don't cry"
+    },
+    {
+      "time": 131660,
+      "text": "Don't raise your eye"
+    },
+    {
+      "time": 136110,
+      "text": "It's only teenage wasteland"
+    },
+    {
+      "time": 144880,
+      "text": "Sally, take my hand"
+    },
+    {
+      "time": 148370,
+      "text": "We'll travel south cross land"
+    },
+    {
+      "time": 151890,
+      "text": "Put out the fire"
+    },
+    {
+      "time": 154310,
+      "text": "And don't look past my shoulder"
+    },
+    {
+      "time": 160700,
+      "text": "The exodus is here"
+    },
+    {
+      "time": 164620,
+      "text": "The happy worlds are near"
+    },
+    {
+      "time": 168890,
+      "text": "Let's get together"
+    },
+    {
+      "time": 170160,
+      "text": "Before we get much older"
+    },
+    {
+      "time": 184120,
+      "text": "Teenage wasteland"
+    },
+    {
+      "time": 187330,
+      "text": "It's only teenage wasteland"
+    },
+    {
+      "time": 191850,
+      "text": "Teenage wasteland"
+    },
+    {
+      "time": 194900,
+      "text": "Oh, yeah"
+    },
+    {
+      "time": 196010,
+      "text": "Teenage wasteland"
+    },
+    {
+      "time": 199840,
+      "text": "They're all wasted!"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:44:27.002Z",
+  "instrumentalConfidence": 0
+}

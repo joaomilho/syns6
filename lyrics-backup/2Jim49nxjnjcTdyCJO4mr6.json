@@ -1,0 +1,12 @@
+{
+  "spotifyId": "2Jim49nxjnjcTdyCJO4mr6",
+  "title": "Outlier",
+  "artist": "Snarky Puppy",
+  "album": "We Like It Here",
+  "duration": 405306,
+  "lyrics": null,
+  "source": "Instrumental-Artist: snarky puppy",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T09:23:23.322Z",
+  "instrumentalConfidence": 0.9
+}

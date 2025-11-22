@@ -1,0 +1,31 @@
+{
+  "spotifyId": "5TuLezJx66HqDC3ED9mDL8",
+  "title": "Enjoy the Silence - Ecstatic Dub",
+  "artist": "Depeche Mode, Francois Kevorkian",
+  "album": "Depeche Mode - Singles Box 4",
+  "duration": 343293,
+  "lyrics": [
+    {
+      "time": 183840,
+      "text": "In my arms"
+    },
+    {
+      "time": 254880,
+      "text": "Enjoy the silence"
+    },
+    {
+      "time": 280250,
+      "text": "Enjoy the silence"
+    },
+    {
+      "time": 288890,
+      "text": "Enjoy the silence"
+    },
+    {
+      "time": 322920,
+      "text": "Enjoy the silence..."
+    }
+  ],
+  "source": "LRCLIB Search",
+  "fetchedAt": "2025-11-19T23:07:20.296Z"
+}

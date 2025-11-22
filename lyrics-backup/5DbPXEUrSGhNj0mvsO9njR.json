@@ -1,0 +1,49 @@
+{
+  "spotifyId": "5DbPXEUrSGhNj0mvsO9njR",
+  "title": "Epilogue: ...and the Clever Depart",
+  "artist": "Thank You Scientist",
+  "album": "Stranger Heads Prevail",
+  "duration": 66626,
+  "lyrics": [
+    {
+      "time": 0,
+      "text": "(Hooh) And you said I could take it or leave it"
+    },
+    {
+      "time": 8900,
+      "text": "We have so many songs still left to sing"
+    },
+    {
+      "time": 12090,
+      "text": "Too many notes for normal folks to understand"
+    },
+    {
+      "time": 15820,
+      "text": "Confirmin' my fears that I threw it all away"
+    },
+    {
+      "time": 21590,
+      "text": "(I threw it, I threw it all away)"
+    },
+    {
+      "time": 23470,
+      "text": "Movin' along, singin' a song"
+    },
+    {
+      "time": 26940,
+      "text": "Is all that I can do"
+    },
+    {
+      "time": 30640,
+      "text": "You take it or leave it (take it or leave it)"
+    },
+    {
+      "time": 34480,
+      "text": "I'll leave it all with you"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:14:08.973Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,77 @@
+{
+  "spotifyId": "6b6uLZsoGhObYexIxnRbIb",
+  "title": "Hangar 18 - 2004 Remix",
+  "artist": "Megadeth",
+  "album": "Rust In Peace (2004 Remix / Expanded Edition)",
+  "duration": 311200,
+  "lyrics": [
+    {
+      "time": 60260,
+      "text": "Welcome to our fortress tall"
+    },
+    {
+      "time": 63490,
+      "text": "Take some time to show you around"
+    },
+    {
+      "time": 66480,
+      "text": "Impossible to break these walls"
+    },
+    {
+      "time": 69300,
+      "text": "For you see, the steel is much too strong"
+    },
+    {
+      "time": 72300,
+      "text": "Computer banks to rule the world"
+    },
+    {
+      "time": 75260,
+      "text": "Instruments to sight the stars"
+    },
+    {
+      "time": 78240,
+      "text": "Possibly, I've seen too much"
+    },
+    {
+      "time": 81390,
+      "text": "Hangar 18, I know too much"
+    },
+    {
+      "time": 120390,
+      "text": "Foreign life forms inventory"
+    },
+    {
+      "time": 123330,
+      "text": "Suspended state of cryogenics"
+    },
+    {
+      "time": 126400,
+      "text": "Selective amnesia's the story"
+    },
+    {
+      "time": 129370,
+      "text": "Believed foretold but who'd suspect"
+    },
+    {
+      "time": 132290,
+      "text": "The military intelligence"
+    },
+    {
+      "time": 134970,
+      "text": "Two words combined that can't make sense"
+    },
+    {
+      "time": 138290,
+      "text": "Possibly, I've seen too much"
+    },
+    {
+      "time": 141340,
+      "text": "Hangar 18, I know too much"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:21:11.783Z",
+  "instrumentalConfidence": 0
+}
