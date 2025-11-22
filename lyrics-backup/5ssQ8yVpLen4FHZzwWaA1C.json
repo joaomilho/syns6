@@ -1,0 +1,77 @@
+{
+  "spotifyId": "5ssQ8yVpLen4FHZzwWaA1C",
+  "title": "This Masquerade - Edit",
+  "artist": "George Benson",
+  "album": "Breezin'",
+  "duration": 196826,
+  "lyrics": [
+    {
+      "time": 26260,
+      "text": "Are we really happy here"
+    },
+    {
+      "time": 31300,
+      "text": "With this lonely game we play?"
+    },
+    {
+      "time": 37270,
+      "text": "Looking for words to say"
+    },
+    {
+      "time": 47330,
+      "text": "Searching but not finding"
+    },
+    {
+      "time": 51300,
+      "text": "Understanding any way"
+    },
+    {
+      "time": 57570,
+      "text": "We're lost in a mask, masquerade"
+    },
+    {
+      "time": 68050,
+      "text": "Both afraid to say we're just too far away"
+    },
+    {
+      "time": 79330,
+      "text": "From being close together from the start"
+    },
+    {
+      "time": 89400,
+      "text": "We tried to talk it over but the words got in the way"
+    },
+    {
+      "time": 99150,
+      "text": "We're lost inside this lonely game we play"
+    },
+    {
+      "time": 111610,
+      "text": "Thoughts of weeping disappear"
+    },
+    {
+      "time": 116570,
+      "text": "Every time I see your eyes"
+    },
+    {
+      "time": 122310,
+      "text": "No matter how hard I try, ooh"
+    },
+    {
+      "time": 133560,
+      "text": "To understand the reasons"
+    },
+    {
+      "time": 137080,
+      "text": "That we carry on this way"
+    },
+    {
+      "time": 143090,
+      "text": "We're lost in a mask, masquerade, oh..."
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:14:15.901Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,117 @@
+{
+  "spotifyId": "4dVbhS6OiYvFikshyaQaCN",
+  "title": "My Hero",
+  "artist": "Foo Fighters",
+  "album": "The Colour And The Shape",
+  "duration": 260026,
+  "lyrics": [
+    {
+      "time": 34690,
+      "text": "Too alarming now to talk about"
+    },
+    {
+      "time": 40890,
+      "text": "Take your pictures down and shake it out"
+    },
+    {
+      "time": 46930,
+      "text": "Truth or consequence, say it aloud"
+    },
+    {
+      "time": 53300,
+      "text": "Use that evidence, race it around"
+    },
+    {
+      "time": 59960,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 63990,
+      "text": "Watch him as he goes"
+    },
+    {
+      "time": 72470,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 76290,
+      "text": "He's ordinary"
+    },
+    {
+      "time": 90640,
+      "text": "Don't the best of them bleed it out?"
+    },
+    {
+      "time": 96900,
+      "text": "While the rest of them peter out"
+    },
+    {
+      "time": 103310,
+      "text": "Truth or consequence, say it aloud"
+    },
+    {
+      "time": 109590,
+      "text": "Use that evidence, race it around"
+    },
+    {
+      "time": 115810,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 119920,
+      "text": "Watch him as he goes"
+    },
+    {
+      "time": 128410,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 132230,
+      "text": "He's ordinary"
+    },
+    {
+      "time": 168750,
+      "text": "Kudos, my hero leaving all the best"
+    },
+    {
+      "time": 174900,
+      "text": "You know my hero, the one that's on"
+    },
+    {
+      "time": 181420,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 185220,
+      "text": "Watch him as he goes"
+    },
+    {
+      "time": 193850,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 197720,
+      "text": "He's ordinary"
+    },
+    {
+      "time": 206560,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 210400,
+      "text": "Watch him as he goes"
+    },
+    {
+      "time": 219090,
+      "text": "There goes my hero"
+    },
+    {
+      "time": 222750,
+      "text": "He's ordinary"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:39:39.708Z",
+  "instrumentalConfidence": 0
+}

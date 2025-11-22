@@ -1,0 +1,45 @@
+{
+  "spotifyId": "5LbyS1B9dY1NSy6mobmesw",
+  "title": "Pour",
+  "artist": "Contour",
+  "album": "Love Suite",
+  "duration": 64114,
+  "lyrics": [
+    {
+      "time": 20870,
+      "text": "Adore when it comes"
+    },
+    {
+      "time": 26130,
+      "text": "Hold on. That's not all yet..."
+    },
+    {
+      "time": 31500,
+      "text": "Your words, where they from?"
+    },
+    {
+      "time": 36370,
+      "text": "From the mouth we are born"
+    },
+    {
+      "time": 41550,
+      "text": "Pour into mind, growing inside"
+    },
+    {
+      "time": 46620,
+      "text": "The outsider lives, healing in spite"
+    },
+    {
+      "time": 51100,
+      "text": "Ritual knows, circles are drawn"
+    },
+    {
+      "time": 56350,
+      "text": "Line through my palm, I'll make it home"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:54:47.275Z",
+  "instrumentalConfidence": 0
+}

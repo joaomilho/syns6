@@ -1,0 +1,101 @@
+{
+  "spotifyId": "0S5ZoKKZD3bllkvhEoPimZ",
+  "title": "Can We Pretend",
+  "artist": "Bill Withers",
+  "album": "'Justments",
+  "duration": 229573,
+  "lyrics": [
+    {
+      "time": 18340,
+      "text": "Can we pretend"
+    },
+    {
+      "time": 21120,
+      "text": "That from now on"
+    },
+    {
+      "time": 24500,
+      "text": "There is no yesterday"
+    },
+    {
+      "time": 33050,
+      "text": "Paint a portrait of tomorrow"
+    },
+    {
+      "time": 38630,
+      "text": "With no colors from today"
+    },
+    {
+      "time": 47530,
+      "text": "There's a light that shines in your face sometimes"
+    },
+    {
+      "time": 59050,
+      "text": "That takes my feelings, wraps them around your knee"
+    },
+    {
+      "time": 70280,
+      "text": "But there's shadow hiding in your heart sometimes"
+    },
+    {
+      "time": 82340,
+      "text": "That makes my feelings turn back in on me"
+    },
+    {
+      "time": 93980,
+      "text": "Can we pretend"
+    },
+    {
+      "time": 96540,
+      "text": "The pain is gone"
+    },
+    {
+      "time": 99840,
+      "text": "And go our merry way"
+    },
+    {
+      "time": 108400,
+      "text": "Paint a portrait of tomorrow"
+    },
+    {
+      "time": 113700,
+      "text": "With the colors bright and gay"
+    },
+    {
+      "time": 122450,
+      "text": "There's a light that shines in your face sometimes"
+    },
+    {
+      "time": 134340,
+      "text": "That takes my feelings, wraps them around your knee"
+    },
+    {
+      "time": 145110,
+      "text": "But there's a shadow hiding in your heart sometimes"
+    },
+    {
+      "time": 156930,
+      "text": "That makes my feelings turn back in on me"
+    },
+    {
+      "time": 168560,
+      "text": "Can we pretend"
+    },
+    {
+      "time": 171250,
+      "text": "Can we pretend"
+    },
+    {
+      "time": 174160,
+      "text": "Can we pretend"
+    },
+    {
+      "time": 176900,
+      "text": "Can we pretend"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:45:42.623Z",
+  "instrumentalConfidence": 0
+}

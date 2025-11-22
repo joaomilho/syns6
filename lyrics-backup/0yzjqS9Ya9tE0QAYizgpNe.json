@@ -1,0 +1,81 @@
+{
+  "spotifyId": "0yzjqS9Ya9tE0QAYizgpNe",
+  "title": "Ataraxia",
+  "artist": "Team Sleep",
+  "album": "Team Sleep (U.S. Release)",
+  "duration": 197360,
+  "lyrics": [
+    {
+      "time": 15290,
+      "text": "Froze asleep"
+    },
+    {
+      "time": 23520,
+      "text": "Coma deep"
+    },
+    {
+      "time": 31930,
+      "text": "I dream I'm not out with you"
+    },
+    {
+      "time": 38780,
+      "text": "Alone at sea"
+    },
+    {
+      "time": 64050,
+      "text": "And you watched the waves"
+    },
+    {
+      "time": 71940,
+      "text": "And you sang to me"
+    },
+    {
+      "time": 78800,
+      "text": "As we sink"
+    },
+    {
+      "time": 85890,
+      "text": "I dream I'm not out with you"
+    },
+    {
+      "time": 98620,
+      "text": "Dropping deep"
+    },
+    {
+      "time": 106180,
+      "text": "Below the sea"
+    },
+    {
+      "time": 113150,
+      "text": "This dream I had with you"
+    },
+    {
+      "time": 121520,
+      "text": "Alone at sea"
+    },
+    {
+      "time": 130910,
+      "text": "And we watch the waves"
+    },
+    {
+      "time": 139620,
+      "text": "You sing to me"
+    },
+    {
+      "time": 146590,
+      "text": "As we sink"
+    },
+    {
+      "time": 152770,
+      "text": "This dream I had with you"
+    },
+    {
+      "time": 172150,
+      "text": "Alone at sea..."
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:56:49.120Z",
+  "instrumentalConfidence": 0
+}

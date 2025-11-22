@@ -1,0 +1,12 @@
+{
+  "spotifyId": "2u4rRrAaLGZtyg87CYsOV7",
+  "title": "Hurmiz",
+  "artist": "John Zorn, Pat Metheny",
+  "album": "Tap: Book of Angels, Vol. 20",
+  "duration": 372880,
+  "lyrics": null,
+  "source": "Instrumental-Artist: pat metheny",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T02:08:19.274Z",
+  "instrumentalConfidence": 0.9
+}

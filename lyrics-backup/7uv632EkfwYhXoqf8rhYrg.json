@@ -1,0 +1,73 @@
+{
+  "spotifyId": "7uv632EkfwYhXoqf8rhYrg",
+  "title": "Angel",
+  "artist": "Massive Attack, Horace Andy",
+  "album": "Mezzanine",
+  "duration": 379533,
+  "lyrics": [
+    {
+      "time": 67860,
+      "text": "You are my angel"
+    },
+    {
+      "time": 85910,
+      "text": "Come from way above"
+    },
+    {
+      "time": 91170,
+      "text": "To bring me love (To bring me love)"
+    },
+    {
+      "time": 117240,
+      "text": "Her eyes"
+    },
+    {
+      "time": 120780,
+      "text": "She's on the dark side"
+    },
+    {
+      "time": 126210,
+      "text": "Neutralize"
+    },
+    {
+      "time": 131140,
+      "text": "Every man in sight"
+    },
+    {
+      "time": 139620,
+      "text": "Love you, love you, love you"
+    },
+    {
+      "time": 145610,
+      "text": "Love you, love you, love you"
+    },
+    {
+      "time": 148860,
+      "text": "Love you, love you, love you..."
+    },
+    {
+      "time": 193070,
+      "text": "You are my angel"
+    },
+    {
+      "time": 211350,
+      "text": "Come from way above"
+    },
+    {
+      "time": 291610,
+      "text": "Love you, love you, love you"
+    },
+    {
+      "time": 293970,
+      "text": "Love you, love you, love you"
+    },
+    {
+      "time": 298120,
+      "text": "Love you, love you, love you..."
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:56:32.739Z",
+  "instrumentalConfidence": 0
+}

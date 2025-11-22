@@ -1,0 +1,49 @@
+{
+  "spotifyId": "4rCuwgRRKaIiHlHDc8Bga6",
+  "title": "We Might Even Be Falling In Love (Interlude)",
+  "artist": "Victoria Monét",
+  "album": "JAGUAR",
+  "duration": 51913,
+  "lyrics": [
+    {
+      "time": 12670,
+      "text": "Go 'head, act a fool in it"
+    },
+    {
+      "time": 15260,
+      "text": "Freestyle with me 'til you find your groove in it"
+    },
+    {
+      "time": 18460,
+      "text": "U-Haul 'cause I might let you move in it"
+    },
+    {
+      "time": 21310,
+      "text": "'Cause I ain't had nobody hit it like you hit it"
+    },
+    {
+      "time": 24470,
+      "text": "And it feels like"
+    },
+    {
+      "time": 27520,
+      "text": "I'm gonna know you for the rest of my life"
+    },
+    {
+      "time": 30390,
+      "text": "It's safe to say that we might even be falling in love"
+    },
+    {
+      "time": 37640,
+      "text": "Ooh, love, love, love"
+    },
+    {
+      "time": 43630,
+      "text": "Ooh, love, love, love"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:54:03.134Z",
+  "instrumentalConfidence": 0
+}

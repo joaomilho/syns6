@@ -1,0 +1,129 @@
+{
+  "spotifyId": "2wHTIk8QDpOQo4V0EdWTDW",
+  "title": "Elektro Kardiogramm",
+  "artist": "Kraftwerk",
+  "album": "3-D Der Katalog",
+  "duration": 277170,
+  "lyrics": [
+    {
+      "time": 45620,
+      "text": "Elektro"
+    },
+    {
+      "time": 46420,
+      "text": "Elektro kardiogramm"
+    },
+    {
+      "time": 53240,
+      "text": "Elektro"
+    },
+    {
+      "time": 54160,
+      "text": "Elektro kardiogramm"
+    },
+    {
+      "time": 76080,
+      "text": "Elektro"
+    },
+    {
+      "time": 77190,
+      "text": "Elektro kardiogramm"
+    },
+    {
+      "time": 83790,
+      "text": "Elektro"
+    },
+    {
+      "time": 84630,
+      "text": "Elektro kardiogramm"
+    },
+    {
+      "time": 141030,
+      "text": "Minimum"
+    },
+    {
+      "time": 142980,
+      "text": "Maximum"
+    },
+    {
+      "time": 144790,
+      "text": "Beats per minute"
+    },
+    {
+      "time": 148600,
+      "text": "Minimum"
+    },
+    {
+      "time": 150500,
+      "text": "Maximum"
+    },
+    {
+      "time": 152470,
+      "text": "Beats per minute"
+    },
+    {
+      "time": 171630,
+      "text": "Minium"
+    },
+    {
+      "time": 173470,
+      "text": "Maximum"
+    },
+    {
+      "time": 175320,
+      "text": "Beats per minute"
+    },
+    {
+      "time": 179250,
+      "text": "Minimum"
+    },
+    {
+      "time": 181050,
+      "text": "Maximum"
+    },
+    {
+      "time": 182980,
+      "text": "Beats per minute"
+    },
+    {
+      "time": 245570,
+      "text": "Elektro"
+    },
+    {
+      "time": 253170,
+      "text": "Elektro"
+    },
+    {
+      "time": 255480,
+      "text": "Elektro"
+    },
+    {
+      "time": 278160,
+      "text": "Elektro"
+    },
+    {
+      "time": 279020,
+      "text": "Elektro Kardiogramm"
+    },
+    {
+      "time": 285610,
+      "text": "Electro"
+    },
+    {
+      "time": 286750,
+      "text": "Elektro Kardiogramm"
+    },
+    {
+      "time": 298840,
+      "text": "Elektro"
+    },
+    {
+      "time": 312390,
+      "text": "Elektro Kardiogramm"
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:35:51.737Z",
+  "instrumentalConfidence": 0
+}

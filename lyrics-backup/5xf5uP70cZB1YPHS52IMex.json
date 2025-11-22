@@ -1,0 +1,61 @@
+{
+  "spotifyId": "5xf5uP70cZB1YPHS52IMex",
+  "title": "Das Model - 2009 Remaster",
+  "artist": "Kraftwerk",
+  "album": "Die Mensch-Maschine (2009 Remaster, German Version)",
+  "duration": 219680,
+  "lyrics": [
+    {
+      "time": 15600,
+      "text": "She's a model and she's looking good"
+    },
+    {
+      "time": 23220,
+      "text": "I'd like to take her home, that's understood"
+    },
+    {
+      "time": 30950,
+      "text": "She plays hard to get, she smiles from time to time"
+    },
+    {
+      "time": 38770,
+      "text": "It only takes a camera to change her mind"
+    },
+    {
+      "time": 61980,
+      "text": "She's going out to nightclubs, drinking just champagne"
+    },
+    {
+      "time": 69760,
+      "text": "And she has been checking nearly all the men"
+    },
+    {
+      "time": 77480,
+      "text": "She's playing her game and you can hear them say"
+    },
+    {
+      "time": 85400,
+      "text": "She is looking good, for beauty we will pay"
+    },
+    {
+      "time": 155290,
+      "text": "She's posing for consumer products now and then"
+    },
+    {
+      "time": 163020,
+      "text": "For every camera, she gives the best she can"
+    },
+    {
+      "time": 170890,
+      "text": "I saw her on the cover of a magazine"
+    },
+    {
+      "time": 178670,
+      "text": "Now she's a big success, I want to meet her again"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:37:13.529Z",
+  "instrumentalConfidence": 0
+}

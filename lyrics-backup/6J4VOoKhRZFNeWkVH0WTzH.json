@@ -1,0 +1,17 @@
+{
+  "spotifyId": "6J4VOoKhRZFNeWkVH0WTzH",
+  "title": "For the Glory of...",
+  "artist": "Testament",
+  "album": "The Formation of Damnation",
+  "duration": 72493,
+  "lyrics": [
+    {
+      "time": 61630,
+      "text": "Oh, oh-oh-oh"
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:59:56.294Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,69 @@
+{
+  "spotifyId": "1YzbEChYqIWSWp1fnZy9Ez",
+  "title": "The Space In Between",
+  "artist": "How To Destroy Angels",
+  "album": "How To Destroy Angels",
+  "duration": 214509,
+  "lyrics": [
+    {
+      "time": 32390,
+      "text": "All the blood lying on the floor"
+    },
+    {
+      "time": 45310,
+      "text": "Sense the crowd expecting something more"
+    },
+    {
+      "time": 58360,
+      "text": "Opened up, proudly on display"
+    },
+    {
+      "time": 71350,
+      "text": "What we tried so hard to hide away"
+    },
+    {
+      "time": 84160,
+      "text": "Blinding light illuminates the scene"
+    },
+    {
+      "time": 97250,
+      "text": "Trying to fill the spaces in between"
+    },
+    {
+      "time": 110490,
+      "text": "Arms entwined in a final pose"
+    },
+    {
+      "time": 123220,
+      "text": "Narrative drawing to a close"
+    },
+    {
+      "time": 136220,
+      "text": "Still remain the things we couldn't kill"
+    },
+    {
+      "time": 149030,
+      "text": "In your eyes I can see it still"
+    },
+    {
+      "time": 162280,
+      "text": "How we choose the framing of the scene"
+    },
+    {
+      "time": 175030,
+      "text": "Hate begins to spill across the screen"
+    },
+    {
+      "time": 188200,
+      "text": "Blinding light illuminates the scene"
+    },
+    {
+      "time": 201320,
+      "text": "Trying to fill the spaces in between"
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:47:45.314Z",
+  "instrumentalConfidence": 0
+}

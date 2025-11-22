@@ -1,0 +1,29 @@
+{
+  "spotifyId": "3q8hqVTtZWEDM620woMY7H",
+  "title": "E",
+  "artist": "R3SPAWN, Josh Le Tissier",
+  "album": "E",
+  "duration": 129860,
+  "lyrics": [
+    {
+      "time": 24010,
+      "text": "This should be played at high volume"
+    },
+    {
+      "time": 26620,
+      "text": "Drop it"
+    },
+    {
+      "time": 94630,
+      "text": "This should be played at high volume"
+    },
+    {
+      "time": 97190,
+      "text": "Drop it"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:32:37.090Z",
+  "instrumentalConfidence": 0
+}

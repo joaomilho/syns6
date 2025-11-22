@@ -1,0 +1,81 @@
+{
+  "spotifyId": "5yXdLXpSiyhWT3Z0aSppkW",
+  "title": "Pack Jam",
+  "artist": "Jonzun Crew",
+  "album": "Lost in Space",
+  "duration": 317706,
+  "lyrics": [
+    {
+      "time": 44640,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 48320,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 52010,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 55770,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 81160,
+      "text": "Look out, pack jam"
+    },
+    {
+      "time": 95860,
+      "text": "P-A-C-K, J-A-M, pack jam, look out"
+    },
+    {
+      "time": 113510,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 127180,
+      "text": "Look out, pack jam"
+    },
+    {
+      "time": 137430,
+      "text": "P-A-C-K, J-A-M, pack"
+    },
+    {
+      "time": 147690,
+      "text": "Pack it, pack it in and jam it"
+    },
+    {
+      "time": 151030,
+      "text": "Pack it, pack it in and jam it"
+    },
+    {
+      "time": 155220,
+      "text": "Pack it, pack it in and jam it"
+    },
+    {
+      "time": 159270,
+      "text": "Pack it, pack it in and jam it"
+    },
+    {
+      "time": 278490,
+      "text": "P-A-C-K, J-A-M, pack jam, look out"
+    },
+    {
+      "time": 291000,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 295020,
+      "text": "Pack jam, look out"
+    },
+    {
+      "time": 298730,
+      "text": "Pack jam, look out"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:45:03.354Z",
+  "instrumentalConfidence": 0
+}

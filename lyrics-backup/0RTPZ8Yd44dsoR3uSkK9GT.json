@@ -1,0 +1,77 @@
+{
+  "spotifyId": "0RTPZ8Yd44dsoR3uSkK9GT",
+  "title": "Ruby Lee",
+  "artist": "Bill Withers",
+  "album": "'Justments",
+  "duration": 197533,
+  "lyrics": [
+    {
+      "time": 4500,
+      "text": "Staring at shadows on the wall"
+    },
+    {
+      "time": 22630,
+      "text": "Wish I knew of someone I could call"
+    },
+    {
+      "time": 30710,
+      "text": "Someone who might understand it all"
+    },
+    {
+      "time": 39710,
+      "text": "Ruby Lee, I show wish you was here with me"
+    },
+    {
+      "time": 46980,
+      "text": "Someone's lying with me in my bed"
+    },
+    {
+      "time": 59600,
+      "text": "Some stranger who don't understand my head"
+    },
+    {
+      "time": 69550,
+      "text": "Wish it was you lying here instead"
+    },
+    {
+      "time": 78650,
+      "text": "Ruby Lee, I show wish you was here with me"
+    },
+    {
+      "time": 84950,
+      "text": "Drowning in a sea of pretty faces"
+    },
+    {
+      "time": 94850,
+      "text": "Being quite the man about the town"
+    },
+    {
+      "time": 109380,
+      "text": "Packing up and going different places"
+    },
+    {
+      "time": 116520,
+      "text": "But I show miss having you around"
+    },
+    {
+      "time": 129220,
+      "text": "I listen to the noises down the hall"
+    },
+    {
+      "time": 133730,
+      "text": "Think I'll move out of here in the fall"
+    },
+    {
+      "time": 140980,
+      "text": "I ain't exactly having me a ball"
+    },
+    {
+      "time": 149030,
+      "text": "Ruby Lee, I show wish you was here with me"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:45:39.867Z",
+  "instrumentalConfidence": 0
+}

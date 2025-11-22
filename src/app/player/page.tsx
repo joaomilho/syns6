@@ -8,6 +8,7 @@ import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
 import { useCamera } from "@/hooks/useCamera";
 import { useFPS } from "@/hooks/useFPS";
+import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -38,6 +39,7 @@ import {
 import styles from "./player.module.css";
 import Link from "next/link";
 import Image from "next/image";
+import ShareQRCode from "@/components/ShareQRCode";
 
 interface Track {
   id: string;
@@ -94,6 +96,81 @@ export default function PlayerPage() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [useCompiledMode, setUseCompiledMode] = useState(true); // Performance mode toggle
+  const fps = useFPS();
+  const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
+  const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
+  
+  // Share Manager for broadcasting to viewers
+  const shareManager = useShareManager();
+  
+  // Start hosting when component mounts
+  useEffect(() => {
+    shareManager.startHosting();
+    console.log("🎭 Started hosting mode for screen sharing");
+    
+    return () => {
+      shareManager.stopHosting();
+      console.log("🛑 Stopped hosting mode");
+    };
+  }, []);
+  
+  // Broadcast state to viewers (lightweight - only song/lyrics/queue info)
+  useEffect(() => {
+    if (!shareManager.isHosting || shareManager.connectedViewers === 0) {
+      return;
+    }
+
+    const broadcastInterval = setInterval(() => {
+      const displayTrack = playbackState?.item || lastKnownTrack?.item;
+      
+      const state: SharedState = {
+        // Current track
+        playbackState: displayTrack ? {
+          trackId: displayTrack.id,
+          trackName: displayTrack.name,
+          artistName: displayTrack.artists[0]?.name || "",
+          albumArt: displayTrack.album.images[0]?.url || "",
+          duration_ms: displayTrack.duration_ms,
+          progress_ms: currentProgress,
+          is_playing: playbackState?.is_playing || false,
+        } : undefined,
+        
+        // Next 2 songs in queue
+        queue: queue.slice(0, 2).map(track => ({
+          id: track.id,
+          name: track.name,
+          artistName: track.artists[0]?.name || "",
+          albumArt: track.album.images[0]?.url || "",
+          duration_ms: track.duration_ms,
+        })),
+        
+        // Synced lyrics
+        lyrics: lyrics || null,
+        
+        // Visualization settings (optional)
+        visualizationType,
+        visualizationMode,
+        
+        // Current position for lyrics sync
+        currentTimeMs: currentProgress,
+      };
+
+      shareManager.broadcastState(state);
+    }, 1000); // 1fps - only need to sync playback position
+
+    return () => clearInterval(broadcastInterval);
+  }, [
+    shareManager.isHosting,
+    shareManager.connectedViewers,
+    shareManager.broadcastState,
+    playbackState,
+    lastKnownTrack,
+    currentProgress,
+    queue,
+    lyrics,
+    visualizationType,
+    visualizationMode,
+  ]);
   
   // Load saved visualization type and mode on mount
   useEffect(() => {
@@ -184,9 +261,6 @@ export default function PlayerPage() {
     bass: number;
     brightness: number;
   } | null>(null);
-  const fps = useFPS();
-  const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
-  const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
 
   // Helper function to strip markdown code fences
   const stripCodeFences = (code: string): string => {
@@ -872,6 +946,14 @@ export default function PlayerPage() {
         <div className={styles.logo}>Syns6</div>
 
         <div className={styles.controlGroups}>
+        {/* Share QR Code (leftmost) */}
+        {shareManager.peerId && (
+          <ShareQRCode 
+            peerId={shareManager.peerId}
+            connectedViewers={shareManager.connectedViewers}
+          />
+        )}
+        
         {/* Actions Group */}
         <div className={styles.vizSelector}>
           {/* Play/Pause Status Indicator */}
