@@ -235,7 +235,7 @@ function FFTSpectrumPlanes({
     
 
     // Apply shake effect when bass hits hard (lower threshold: 0.4)
-    if (bassIntensity > 0.6) {
+    if (bassIntensity && bassIntensity > 0.6) {
       const shakeAmount = bassIntensity - 0.4; // Much stronger shake
       groupRef.current.position.x = (Math.random() - 0.5) * shakeAmount;
       groupRef.current.position.y = (Math.random() - 0.5) * shakeAmount;
