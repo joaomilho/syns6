@@ -1,0 +1,71 @@
+{
+  "spotifyId": "4LXNDI5wExkAdV5Kso0pdS",
+  "title": "Mindsnap",
+  "artist": "World News",
+  "album": "Mindsnap",
+  "duration": 284014,
+  "lyrics": [
+    {
+      "time": 75860,
+      "text": "My mind"
+    },
+    {
+      "time": 83000,
+      "text": "It′s just not there"
+    },
+    {
+      "time": 91180,
+      "text": "My brain"
+    },
+    {
+      "time": 98110,
+      "text": "Can't find it anywhere"
+    },
+    {
+      "time": 136670,
+      "text": "My friends"
+    },
+    {
+      "time": 143800,
+      "text": "Can′t find them anywhere"
+    },
+    {
+      "time": 151950,
+      "text": "They gathered up and left me"
+    },
+    {
+      "time": 158890,
+      "text": "It's just not fair"
+    },
+    {
+      "time": 217650,
+      "text": "Headed some direction, anywhere but here"
+    },
+    {
+      "time": 221970,
+      "text": "I'm not there"
+    },
+    {
+      "time": 227740,
+      "text": "Anywhere but here, anywhere but here"
+    },
+    {
+      "time": 232010,
+      "text": "I′m not there"
+    },
+    {
+      "time": 237280,
+      "text": "I′m not there"
+    },
+    {
+      "time": 243270,
+      "text": "Ooh"
+    },
+    {
+      "time": 248460,
+      "text": "Ooh"
+    }
+  ],
+  "source": "LRCLIB",
+  "fetchedAt": "2025-11-19T23:13:11.739Z"
+}

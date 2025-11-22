@@ -1,0 +1,49 @@
+{
+  "spotifyId": "0dtOmaY6VBWqe2uXmUgE8H",
+  "title": "High Noon",
+  "artist": "Feed Me",
+  "album": "A Giant Warrior Descends on Tokyo",
+  "duration": 256276,
+  "lyrics": [
+    {
+      "time": 30160,
+      "text": "This is disorder"
+    },
+    {
+      "time": 83630,
+      "text": "Passengers"
+    },
+    {
+      "time": 85740,
+      "text": "This is disorder"
+    },
+    {
+      "time": 90040,
+      "text": "This, this is death"
+    },
+    {
+      "time": 94120,
+      "text": "This, this, this is size ten chaos"
+    },
+    {
+      "time": 184770,
+      "text": "Passengers"
+    },
+    {
+      "time": 186880,
+      "text": "This is disorder"
+    },
+    {
+      "time": 191100,
+      "text": "This, this is death"
+    },
+    {
+      "time": 195240,
+      "text": "This, this, this is size ten chaos"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:48:18.561Z",
+  "instrumentalConfidence": 0
+}

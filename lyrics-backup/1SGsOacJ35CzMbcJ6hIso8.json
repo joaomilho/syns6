@@ -1,0 +1,93 @@
+{
+  "spotifyId": "1SGsOacJ35CzMbcJ6hIso8",
+  "title": "Nuit de mes rêves",
+  "artist": "Scratch Massive",
+  "album": "Nuit de Rêve",
+  "duration": 242253,
+  "lyrics": [
+    {
+      "time": 35330,
+      "text": "Seul dans ce bar"
+    },
+    {
+      "time": 40080,
+      "text": "Tous les regards vides se croisent"
+    },
+    {
+      "time": 43970,
+      "text": "Tes yeux se ferment"
+    },
+    {
+      "time": 48450,
+      "text": "Et mon verre a comme un goût amer"
+    },
+    {
+      "time": 71190,
+      "text": "Nuit de mes rêves"
+    },
+    {
+      "time": 75330,
+      "text": "Où tu m'entraînes"
+    },
+    {
+      "time": 79870,
+      "text": "Loin de mes rêves"
+    },
+    {
+      "time": 84460,
+      "text": "Endormie"
+    },
+    {
+      "time": 142160,
+      "text": "Vision d'ensemble"
+    },
+    {
+      "time": 146330,
+      "text": "Et tous ces visages"
+    },
+    {
+      "time": 150750,
+      "text": "Toi tu me ressembles"
+    },
+    {
+      "time": 155140,
+      "text": "Et je ne ressemble à rien"
+    },
+    {
+      "time": 159800,
+      "text": "Nuit de mes rêves"
+    },
+    {
+      "time": 164160,
+      "text": "Où tu m'entraînes"
+    },
+    {
+      "time": 168570,
+      "text": "Loin de mes rêves"
+    },
+    {
+      "time": 173310,
+      "text": "Endormie"
+    },
+    {
+      "time": 195480,
+      "text": "Nuit de mes rêves"
+    },
+    {
+      "time": 199850,
+      "text": "Regarde-moi"
+    },
+    {
+      "time": 204210,
+      "text": "J'ai des absences"
+    },
+    {
+      "time": 208830,
+      "text": "Mais qu'est-ce qu'on attend ensemble"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:41:47.345Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,12 @@
+{
+  "spotifyId": "7fPuSaXg3DsuNfnZCI3lBn",
+  "title": "Black Satin",
+  "artist": "Miles Davis",
+  "album": "On The Corner",
+  "duration": 314666,
+  "lyrics": null,
+  "source": "Instrumental-Artist: miles davis",
+  "isInstrumental": true,
+  "fetchedAt": "2025-11-20T00:04:54.923Z",
+  "instrumentalConfidence": 0.9
+}

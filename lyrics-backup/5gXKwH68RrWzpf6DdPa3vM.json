@@ -1,0 +1,85 @@
+{
+  "spotifyId": "5gXKwH68RrWzpf6DdPa3vM",
+  "title": "Cheval",
+  "artist": "Igorrr",
+  "album": "Savage Sinusoid",
+  "duration": 186285,
+  "lyrics": [
+    {
+      "time": 46400,
+      "text": "Ïntö vöïcïs tö"
+    },
+    {
+      "time": 49930,
+      "text": "Ïntö vöïcïs tö"
+    },
+    {
+      "time": 60300,
+      "text": "Ön mëä lëï"
+    },
+    {
+      "time": 63320,
+      "text": "Kä lä mëä lëä kä"
+    },
+    {
+      "time": 66840,
+      "text": "Mör të lï ö dä"
+    },
+    {
+      "time": 70240,
+      "text": "Cö nä s gärm lä"
+    },
+    {
+      "time": 128940,
+      "text": "Ëï tö ö sï"
+    },
+    {
+      "time": 132110,
+      "text": "Tshë ö tshë ö kä"
+    },
+    {
+      "time": 135560,
+      "text": "Lï tö kä vä"
+    },
+    {
+      "time": 139180,
+      "text": "Rün tö ä"
+    },
+    {
+      "time": 156170,
+      "text": "Ö sï lï pä lä"
+    },
+    {
+      "time": 159590,
+      "text": "Ö sï lï pä lä"
+    },
+    {
+      "time": 163370,
+      "text": "Ï ïn ï äë"
+    },
+    {
+      "time": 166750,
+      "text": "Sö lä"
+    },
+    {
+      "time": 170180,
+      "text": "Ï ïn ï flämä"
+    },
+    {
+      "time": 173540,
+      "text": "Cöï ä tä"
+    },
+    {
+      "time": 176520,
+      "text": "Ï lö vën lö"
+    },
+    {
+      "time": 179920,
+      "text": "Ï tï ï lö nö ö tö ö lö"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:12:38.075Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,47 @@
+{
+  "spotifyId": "42yFErprYYtoYtzVdkNNAg",
+  "title": "Those Days",
+  "artist": "Dal, Leah Yeger",
+  "album": "Those Days",
+  "duration": 229750,
+  "lyrics": [
+    {
+      "time": 137290,
+      "text": "I know we've drifted"
+    },
+    {
+      "time": 140940,
+      "text": "It's something that needs to be said"
+    },
+    {
+      "time": 144690,
+      "text": "But it's on my mind"
+    },
+    {
+      "time": 147170,
+      "text": "Maybe we'll take a break"
+    },
+    {
+      "time": 150280,
+      "text": "And yeah, something's shifted"
+    },
+    {
+      "time": 154080,
+      "text": "But did it all go too fast?"
+    },
+    {
+      "time": 157200,
+      "text": "Maybe let's take it back"
+    },
+    {
+      "time": 159930,
+      "text": "Back to those days"
+    },
+    {
+      "time": 183470,
+      "text": "Or maybe we'll work it out"
+    }
+  ],
+  "source": "LRCLIB",
+  "fetchedAt": "2025-11-19T23:13:44.592Z"
+}

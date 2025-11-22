@@ -1,0 +1,41 @@
+{
+  "spotifyId": "6rumW2nKue2Bc2xTdZ7dcd",
+  "title": "Life Is Just a Game",
+  "artist": "Stanley Clarke",
+  "album": "School Days",
+  "duration": 537745,
+  "lyrics": [
+    {
+      "time": 66120,
+      "text": "So life is just a game"
+    },
+    {
+      "time": 68710,
+      "text": "And there is many ways to play"
+    },
+    {
+      "time": 72290,
+      "text": "And all you do is choose"
+    },
+    {
+      "time": 78720,
+      "text": "La la la la la"
+    },
+    {
+      "time": 85040,
+      "text": "La la la la la, yeah"
+    },
+    {
+      "time": 116580,
+      "text": "La la la la la"
+    },
+    {
+      "time": 122460,
+      "text": "La la la la la la"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:51:06.630Z",
+  "instrumentalConfidence": 0
+}

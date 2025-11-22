@@ -1,0 +1,77 @@
+{
+  "spotifyId": "7vGiMj5OHWXDaeKxFfmAvQ",
+  "title": "Catamaran",
+  "artist": "Kyuss",
+  "album": "...And the Circus Leaves Town",
+  "duration": 179826,
+  "lyrics": [
+    {
+      "time": 33090,
+      "text": "Smooth stones beneath me"
+    },
+    {
+      "time": 38160,
+      "text": "Cool air surrounds"
+    },
+    {
+      "time": 43230,
+      "text": "Soft and savory"
+    },
+    {
+      "time": 48980,
+      "text": "Take me to God, you can take me to God"
+    },
+    {
+      "time": 64070,
+      "text": "No it doesn't take your"
+    },
+    {
+      "time": 67060,
+      "text": "Will to set your brace on me"
+    },
+    {
+      "time": 72470,
+      "text": "I never doubt your possibilities"
+    },
+    {
+      "time": 77460,
+      "text": "Please let go of my sleeve"
+    },
+    {
+      "time": 106550,
+      "text": "Smooth stones behind me"
+    },
+    {
+      "time": 111170,
+      "text": "Cold air surrounds"
+    },
+    {
+      "time": 116520,
+      "text": "Soft and savory"
+    },
+    {
+      "time": 121890,
+      "text": "You can take me to God, you take me to God"
+    },
+    {
+      "time": 136740,
+      "text": "No it doesn't take your"
+    },
+    {
+      "time": 139860,
+      "text": "Will to set your brace on me"
+    },
+    {
+      "time": 145150,
+      "text": "I never doubt your possibilities"
+    },
+    {
+      "time": 150380,
+      "text": "Please let go of my sleeve"
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:55:55.870Z",
+  "instrumentalConfidence": 0
+}

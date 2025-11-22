@@ -1,0 +1,45 @@
+{
+  "spotifyId": "2gpkmR9oX3Jk6rDI6KUwHj",
+  "title": "Blank",
+  "artist": "Glare",
+  "album": "Into You",
+  "duration": 216089,
+  "lyrics": [
+    {
+      "time": 25530,
+      "text": "Eternal sadness fills you"
+    },
+    {
+      "time": 37760,
+      "text": "Keep it inside, you do"
+    },
+    {
+      "time": 50350,
+      "text": "Exercise your mind till you"
+    },
+    {
+      "time": 62590,
+      "text": "Run out of things to do"
+    },
+    {
+      "time": 123720,
+      "text": "Repress your thoughts"
+    },
+    {
+      "time": 136060,
+      "text": "Until your body rots"
+    },
+    {
+      "time": 148370,
+      "text": "Repress your thoughts"
+    },
+    {
+      "time": 160050,
+      "text": "Until your body rots"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:48:03.136Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,85 @@
+{
+  "spotifyId": "66ujRcQB3xjilVohGyvTKM",
+  "title": "San Francisco (Be Sure to Wear Flowers in Your Hair)",
+  "artist": "Scott McKenzie",
+  "album": "The Graduate - Music From The Broadway Comedy",
+  "duration": 177333,
+  "lyrics": [
+    {
+      "time": 6940,
+      "text": "If you're going to San Francisco"
+    },
+    {
+      "time": 14700,
+      "text": "Be sure to wear some flowers in your hair"
+    },
+    {
+      "time": 23580,
+      "text": "If you're going to San Francisco"
+    },
+    {
+      "time": 31660,
+      "text": "You're gonna meet some gentle people there"
+    },
+    {
+      "time": 42580,
+      "text": "For those who come to San Francisco"
+    },
+    {
+      "time": 51370,
+      "text": "Summertime will be a love-in there"
+    },
+    {
+      "time": 59930,
+      "text": "In the streets of San Francisco"
+    },
+    {
+      "time": 67910,
+      "text": "Gentle people with flowers in their hair"
+    },
+    {
+      "time": 78830,
+      "text": "All across the nation, such a strange vibration"
+    },
+    {
+      "time": 87800,
+      "text": "People in motion"
+    },
+    {
+      "time": 92920,
+      "text": "There's a whole generation with a new explanation"
+    },
+    {
+      "time": 102530,
+      "text": "People in motion, people in motion"
+    },
+    {
+      "time": 110550,
+      "text": "For those who come to San Francisco"
+    },
+    {
+      "time": 118350,
+      "text": "Be sure to wear some flowers in their hair"
+    },
+    {
+      "time": 127110,
+      "text": "If you come to San Francisco"
+    },
+    {
+      "time": 135160,
+      "text": "Summertime will be a love-in there"
+    },
+    {
+      "time": 148690,
+      "text": "If you come to San Francisco"
+    },
+    {
+      "time": 156460,
+      "text": "Summertime will be a loving day"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:00:07.474Z",
+  "instrumentalConfidence": 0
+}

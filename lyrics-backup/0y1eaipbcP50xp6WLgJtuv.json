@@ -1,0 +1,73 @@
+{
+  "spotifyId": "0y1eaipbcP50xp6WLgJtuv",
+  "title": "Solitude",
+  "artist": "Black Sabbath",
+  "album": "Master of Reality (2009 Remastered Version)",
+  "duration": 301640,
+  "lyrics": [
+    {
+      "time": 29910,
+      "text": "My name, it means nothing, my fortune is less"
+    },
+    {
+      "time": 40970,
+      "text": "My future is shrouded in dark wilderness"
+    },
+    {
+      "time": 52320,
+      "text": "Sunshine is far away, clouds linger on"
+    },
+    {
+      "time": 63930,
+      "text": "Everything I posessed, now they are gone"
+    },
+    {
+      "time": 70940,
+      "text": "They are gone, they are gone"
+    },
+    {
+      "time": 100380,
+      "text": "Oh, where can I go to and what can I do?"
+    },
+    {
+      "time": 112450,
+      "text": "Nothing can please me, only thoughts are of you"
+    },
+    {
+      "time": 123790,
+      "text": "You just left when I begged you to stay"
+    },
+    {
+      "time": 135240,
+      "text": "I've not stopped crying since you went away"
+    },
+    {
+      "time": 142490,
+      "text": "You went away, you went away"
+    },
+    {
+      "time": 183170,
+      "text": "The world is a lonely place, you're on your own"
+    },
+    {
+      "time": 195480,
+      "text": "Guess I will go home, sit down and mourn"
+    },
+    {
+      "time": 206780,
+      "text": "Crying and thinking is all that I do"
+    },
+    {
+      "time": 218300,
+      "text": "Memories I have remind me of you"
+    },
+    {
+      "time": 226130,
+      "text": "Of you, of you"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:53:26.468Z",
+  "instrumentalConfidence": 0
+}

@@ -1,0 +1,85 @@
+{
+  "spotifyId": "1Vd8d6wNpm7KWfTuNPVOHJ",
+  "title": "Sometime World",
+  "artist": "Wishbone Ash",
+  "album": "Argus (Expanded Edition)",
+  "duration": 412173,
+  "lyrics": [
+    {
+      "time": 5520,
+      "text": "I met a man who felt the same way"
+    },
+    {
+      "time": 12930,
+      "text": "That the world had passed him by"
+    },
+    {
+      "time": 21240,
+      "text": "Told to me all his troubles"
+    },
+    {
+      "time": 28230,
+      "text": "That the world had made him cry"
+    },
+    {
+      "time": 35290,
+      "text": "Life had kept him waiting"
+    },
+    {
+      "time": 41790,
+      "text": "Regretting his pain inside"
+    },
+    {
+      "time": 50590,
+      "text": "Had to feel underrated"
+    },
+    {
+      "time": 56660,
+      "text": "And hated, besides"
+    },
+    {
+      "time": 96660,
+      "text": "Life had kept him waiting"
+    },
+    {
+      "time": 103730,
+      "text": "Regretting his shame inside"
+    },
+    {
+      "time": 111740,
+      "text": "Had to feel underrated"
+    },
+    {
+      "time": 118340,
+      "text": "And hated, besides"
+    },
+    {
+      "time": 126920,
+      "text": "Sometime world, pass me by again"
+    },
+    {
+      "time": 134770,
+      "text": "Carry you, carry me"
+    },
+    {
+      "time": 141280,
+      "text": "Away"
+    },
+    {
+      "time": 274300,
+      "text": "Sometime world, pass me by again"
+    },
+    {
+      "time": 279840,
+      "text": "Carry you, carry me"
+    },
+    {
+      "time": 285110,
+      "text": "Away"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:21:30.790Z",
+  "instrumentalConfidence": 0
+}

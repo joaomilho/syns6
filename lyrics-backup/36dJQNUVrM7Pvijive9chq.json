@@ -1,0 +1,77 @@
+{
+  "spotifyId": "36dJQNUVrM7Pvijive9chq",
+  "title": "Kvitravn",
+  "artist": "Wardruna",
+  "album": "Kvitravn",
+  "duration": 377813,
+  "lyrics": [
+    {
+      "time": 48080,
+      "text": "Gjeng i veg, vil veide visor"
+    },
+    {
+      "time": 51480,
+      "text": "Songar som frå årle old"
+    },
+    {
+      "time": 53820,
+      "text": "Hev runne råkt frå kvar ein skugge"
+    },
+    {
+      "time": 57240,
+      "text": "Stein og stubbe, vind og vidde"
+    },
+    {
+      "time": 71930,
+      "text": "Or duldeheimen drog eg ordi"
+    },
+    {
+      "time": 75020,
+      "text": "Leitar songar upp or jordi"
+    },
+    {
+      "time": 78300,
+      "text": "Vakre visor rann av rignet"
+    },
+    {
+      "time": 81110,
+      "text": "Ramme runor let frå løynda"
+    },
+    {
+      "time": 108140,
+      "text": "Sume dreiv på kvite vågar"
+    },
+    {
+      "time": 111280,
+      "text": "Sume kvein or kvite lågar"
+    },
+    {
+      "time": 114360,
+      "text": "Molna upp i heiden himmel"
+    },
+    {
+      "time": 117220,
+      "text": "Kvissla av ei ormetunge"
+    },
+    {
+      "time": 192220,
+      "text": "Om eg trår på grodde stiar"
+    },
+    {
+      "time": 195180,
+      "text": "Om eg står og lengten biar"
+    },
+    {
+      "time": 198300,
+      "text": "Høyr kor togna kver og kallar!"
+    },
+    {
+      "time": 201100,
+      "text": "Høyr kor tulen gøyr og galdrar!"
+    }
+  ],
+  "source": "LRCLIB Search",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T01:02:20.492Z",
+  "instrumentalConfidence": 0
+}

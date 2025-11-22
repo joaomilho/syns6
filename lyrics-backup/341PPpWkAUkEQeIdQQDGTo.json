@@ -1,0 +1,57 @@
+{
+  "spotifyId": "341PPpWkAUkEQeIdQQDGTo",
+  "title": "Jacob's Ladder",
+  "artist": "Rush",
+  "album": "Permanent Waves",
+  "duration": 447066,
+  "lyrics": [
+    {
+      "time": 44480,
+      "text": "The clouds prepare for battle"
+    },
+    {
+      "time": 49010,
+      "text": "In the dark and brooding silence"
+    },
+    {
+      "time": 53080,
+      "text": "Bruised and sullen stormclouds"
+    },
+    {
+      "time": 57700,
+      "text": "Have the light of day obscured"
+    },
+    {
+      "time": 62260,
+      "text": "Looming low and ominous"
+    },
+    {
+      "time": 66250,
+      "text": "In twilight premature"
+    },
+    {
+      "time": 70350,
+      "text": "Thunderheads are rumbling in a distant overture"
+    },
+    {
+      "time": 259280,
+      "text": "All at once, the clouds are parted"
+    },
+    {
+      "time": 263570,
+      "text": "Light streams down in bright unbroken beams"
+    },
+    {
+      "time": 403740,
+      "text": "Follow men's eyes as they look to the skies"
+    },
+    {
+      "time": 416170,
+      "text": "The shifting shafts of shining weave the fabric of their dreams"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:45:26.051Z",
+  "instrumentalConfidence": 0
+}

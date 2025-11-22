@@ -1,0 +1,29 @@
+{
+  "spotifyId": "4Zl87UYUFG5OJNPhzMTk20",
+  "title": "Clockwork - Original Mix",
+  "artist": "Hyper",
+  "album": "Lies",
+  "duration": 276000,
+  "lyrics": [
+    {
+      "time": 41700,
+      "text": "Push it"
+    },
+    {
+      "time": 89880,
+      "text": "Push it"
+    },
+    {
+      "time": 166560,
+      "text": "Push it"
+    },
+    {
+      "time": 225780,
+      "text": "Push it"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:48:21.089Z",
+  "instrumentalConfidence": 0
+}

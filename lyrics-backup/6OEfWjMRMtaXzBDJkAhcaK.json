@@ -1,0 +1,45 @@
+{
+  "spotifyId": "6OEfWjMRMtaXzBDJkAhcaK",
+  "title": "Space Child - 2007 Remaster",
+  "artist": "UFO",
+  "album": "Phenomenon (2007 Remaster)",
+  "duration": 241533,
+  "lyrics": [
+    {
+      "time": 11570,
+      "text": "Goin' through pages"
+    },
+    {
+      "time": 14390,
+      "text": "And lookin' down lines and lines"
+    },
+    {
+      "time": 22600,
+      "text": "Space of your life is only passing you by"
+    },
+    {
+      "time": 45710,
+      "text": "Space child ages as he turns and faces the lie"
+    },
+    {
+      "time": 58320,
+      "text": "Then after laughter was caught in his throat as he died"
+    },
+    {
+      "time": 79820,
+      "text": "Fly on homeward"
+    },
+    {
+      "time": 190000,
+      "text": "Worlds spinnin' by brings clouds in your eye tonight"
+    },
+    {
+      "time": 200990,
+      "text": "The space of your life is only passing you by"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-20T00:47:12.253Z",
+  "instrumentalConfidence": 0
+}

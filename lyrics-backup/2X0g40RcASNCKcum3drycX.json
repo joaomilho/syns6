@@ -1,0 +1,61 @@
+{
+  "spotifyId": "2X0g40RcASNCKcum3drycX",
+  "title": "Wicked World - 2009 Remaster",
+  "artist": "Black Sabbath",
+  "album": "Black Sabbath",
+  "duration": 284373,
+  "lyrics": [
+    {
+      "time": 64070,
+      "text": "The world today is such a wicked thing"
+    },
+    {
+      "time": 70430,
+      "text": "Fighting going on between the human race"
+    },
+    {
+      "time": 75870,
+      "text": "People got to work just to earn their bread"
+    },
+    {
+      "time": 81260,
+      "text": "While people just across the sea are counting the dead"
+    },
+    {
+      "time": 97510,
+      "text": "A politician's job they say is very high"
+    },
+    {
+      "time": 103990,
+      "text": "For he has to choose who's got to go and die"
+    },
+    {
+      "time": 109330,
+      "text": "They can put a man on the moon quite easy"
+    },
+    {
+      "time": 114820,
+      "text": "While people here on earth are dying of all diseases"
+    },
+    {
+      "time": 208270,
+      "text": "A woman goes to work every day after day"
+    },
+    {
+      "time": 213620,
+      "text": "She just goes to work just to earn her pay"
+    },
+    {
+      "time": 219030,
+      "text": "Child sitting by but his life's much harder"
+    },
+    {
+      "time": 225340,
+      "text": "He doesn't even know who is his father"
+    }
+  ],
+  "source": "LRCLIB",
+  "isInstrumental": false,
+  "fetchedAt": "2025-11-19T23:46:20.811Z",
+  "instrumentalConfidence": 0
+}
