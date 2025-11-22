@@ -116,15 +116,24 @@ export default function PlayerPage() {
   
   // Broadcast state to viewers (lightweight - only song/lyrics/queue info)
   useEffect(() => {
-    if (!shareManager.isHosting || shareManager.connectedViewers === 0) {
+    if (!shareManager.isHosting) {
+      console.log('🚫 [HOST] Not hosting, skipping broadcast');
+      return;
+    }
+    
+    if (shareManager.connectedViewers === 0) {
+      console.log('🚫 [HOST] No viewers connected, skipping broadcast');
       return;
     }
 
+    console.log(`🎬 [HOST] Starting broadcast to ${shareManager.connectedViewers} viewer(s)`);
+
     let broadcastCount = 0;
-    const broadcastInterval = setInterval(() => {
+    
+    const buildState = (): SharedState => {
       const displayTrack = playbackState?.item || lastKnownTrack?.item;
       
-      const state: SharedState = {
+      return {
         // Current track
         playbackState: displayTrack ? {
           trackId: displayTrack.id,
@@ -155,7 +164,17 @@ export default function PlayerPage() {
         // Current position for lyrics sync
         currentTimeMs: currentProgress,
       };
-
+    };
+    
+    // Send initial state immediately
+    const initialState = buildState();
+    shareManager.broadcastState(initialState);
+    broadcastCount++;
+    console.log(`📡 [HOST] Sent initial state to ${shareManager.connectedViewers} viewer(s)`);
+    
+    // Then broadcast on interval
+    const broadcastInterval = setInterval(() => {
+      const state = buildState();
       shareManager.broadcastState(state);
       broadcastCount++;
       
@@ -164,7 +183,10 @@ export default function PlayerPage() {
       }
     }, 2000); // 0.5fps - reduce network traffic
 
-    return () => clearInterval(broadcastInterval);
+    return () => {
+      console.log(`🛑 [HOST] Stopping broadcast (sent ${broadcastCount} updates total)`);
+      clearInterval(broadcastInterval);
+    };
   }, [
     shareManager.isHosting,
     shareManager.connectedViewers,
