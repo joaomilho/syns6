@@ -79,6 +79,7 @@ export default function Home() {
           isPlaying={true}
           fps={fps}
           onRowsChange={() => {}}
+          isLandingPage={true}
         />
       </div>
 
