@@ -160,6 +160,24 @@
   font-size: 0.75rem;
 }
 
+.disconnectButton {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ff4444;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  font-family: inherit;
+}
+
+.disconnectButton:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
 .latencyIndicator {
   display: flex;
   align-items: center;
@@ -340,5 +358,90 @@
 .connectButton:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+.lyricsContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #000000 0%, #0a0020 100%);
+  z-index: 1;
+  padding: 2rem;
+}
+
+.lyricsWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  max-width: 90%;
+}
+
+.previousLyric,
+.nextLyric {
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+  color: #ffffff;
+  opacity: 0.4;
+  line-height: 1.4;
+  transition: opacity 0.3s ease-in-out, transform 0.1s ease-out;
+  transform-origin: center;
+}
+
+.currentLyric {
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+  animation: lyricFadeIn 0.3s ease-in-out;
+  transition: transform 0.1s ease-out;
+  transform-origin: center;
+}
+
+@keyframes lyricFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .lyricsWrapper {
+    gap: 1rem;
+  }
+
+  .previousLyric,
+  .nextLyric {
+    font-size: 1rem;
+  }
+
+  .currentLyric {
+    font-size: 2rem;
+  }
+  
+  .nowPlaying {
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    width: auto;
+  }
+  
+  .queueOverlay {
+    display: none;
+  }
 }
 
