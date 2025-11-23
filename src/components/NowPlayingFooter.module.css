@@ -254,68 +254,145 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .bottomControls {
-    padding: 16px 20px 24px;
+    padding: 12px 16px 20px;
   }
 
   .controlsContainer {
     flex-direction: column;
     align-items: stretch;
-    gap: 24px;
+    gap: 0px;
+    border: none;
   }
 
   .currentSection {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
     gap: 16px;
   }
 
   .albumArt {
-    width: 100%;
-    max-width: 200px;
-    height: auto;
-    aspect-ratio: 1;
-    align-self: center;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+
+  .trackInfoContainer {
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .trackName {
+    font-size: 22px !important; /* WHY? */
+  }
+
+  .artistName {
+    font-size: 13px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .progressContainer {
+    margin: 0;
+    gap: 0;
+    margin-top: -8px;
+    flex-direction: column;
+    align-items: flex-end;
+    
+  }
+
+  .progressBar {
+    width: 96%;
+    margin: auto;
+    order: 2;
+  }
+
+  .timeText:first-child {
+    order: 1;
+    align-self: flex-end;
+  }
+
+  .timeText:last-child {
+    display: none;
   }
 
   .queueSection {
     flex: 1;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
     padding-left: 0;
-    padding-top: 24px;
-    max-height: 300px;
+    padding-top: 16px;
+    max-height: 180px;
     overflow-y: auto;
   }
 
-  .trackName {
-    font-size: 20px;
+  .queueAlbumArt {
+    width: 48px;
+    height: 48px;
   }
 
-  .artistName {
-    font-size: 14px;
+  .queueAlbumArt.smaller {
+    width: 40px;
+    height: 40px;
   }
 
-  .trackInfoContainer {
-    width: 100%;
+  .queueTrackName {
+    font-size: 13px;
+  }
+
+  .queueArtistName {
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
+  .bottomControls {
+    padding: 10px 12px 16px;
+  }
+
   .albumArt {
-    max-width: 160px;
+    width: 60px;
+    height: 60px;
   }
 
   .trackName {
-    font-size: 18px;
+    font-size: 14px;
+  }
+
+  .artistName {
+    font-size: 12px;
   }
 
   .timeText {
-    font-size: 11px;
-    min-width: 35px;
+    font-size: 10px;
+    min-width: 30px;
   }
 
   .progressBar {
     height: 4px;
+  }
+
+  .queueSection {
+    max-height: 150px;
+    padding-top: 12px;
+  }
+
+  .queueAlbumArt {
+    width: 40px;
+    height: 40px;
+  }
+
+  .queueAlbumArt.smaller {
+    width: 32px;
+    height: 32px;
+  }
+
+  .queueTrackName {
+    font-size: 12px;
+  }
+
+  .queueArtistName {
+    font-size: 10px;
   }
 }
 
