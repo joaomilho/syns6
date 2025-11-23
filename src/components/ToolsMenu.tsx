@@ -34,11 +34,11 @@ export default function ToolsMenu({
       {/* Play/Pause Status Indicator */}
       <div className={styles.statusIcon}>
         {isPlaying === null ? (
-          <span title="No song playing">⏹</span>
+          <span title="No song playing">⏹︎</span>
         ) : isPlaying ? (
-          <span title="Playing">▶</span>
+          <span title="Playing">▶︎</span>
         ) : (
-          <span title="Paused">⏸</span>
+          <span title="Paused">⏸︎</span>
         )}
       </div>
 
