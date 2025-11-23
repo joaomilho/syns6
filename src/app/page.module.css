@@ -233,6 +233,16 @@ button.secondary {
   left: 0 !important;
 }
 
+.fallbackImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
 .bgImage {
   width: 100%;
   height: 100%;
@@ -354,10 +364,6 @@ button.secondary {
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
 }
 
-.emailInput::placeholder {
-  /* color: rgba(0, 255, 0, 0.4); */
-}
-
 .emailInput:disabled {
   cursor: not-allowed;
 }
@@ -451,5 +457,13 @@ button.secondary {
   
   .emailForm {
     padding: 20px;
+  }
+
+  .fallbackImage {
+    width: calc(100% - 32px);
+    height: 100%;
+    object-fit: contain;
+    left: 16px;
+    top: 0;
   }
 }
