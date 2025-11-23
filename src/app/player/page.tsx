@@ -102,6 +102,8 @@ export default function PlayerPage() {
   const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
   const hasStartedHosting = useRef(false); // Track if we've already called startHosting
+  const [webglAvailable, setWebglAvailable] = useState(true);
+  const [micAvailable, setMicAvailable] = useState(true);
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
@@ -120,6 +122,26 @@ export default function PlayerPage() {
       hasStartedHosting.current = false;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Check WebGL and Mic availability
+  useEffect(() => {
+    // Check WebGL
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl');
+      setWebglAvailable(!!gl);
+    } catch (e) {
+      setWebglAvailable(false);
+    }
+
+    // Check Microphone availability (not on HTTP non-localhost)
+    const isHttps = window.location.protocol === 'https:';
+    const isLocalhost = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '[::1]';
+    
+    setMicAvailable(isHttps || isLocalhost);
+  }, []);
   
   // Debug: Log when peerId changes
   useEffect(() => {
@@ -1015,6 +1037,8 @@ export default function PlayerPage() {
           isCameraEnabled={isCameraEnabled}
           onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
           onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+          showMic={micAvailable}
+          showCamera={webglAvailable}
           showHue={true}
           isHueConnected={hue.isConnected}
           onHueToggle={() => setShowHueControls(!showHueControls)}

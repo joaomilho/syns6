@@ -12,6 +12,8 @@ interface ToolsMenuProps {
   isHueConnected?: boolean;
   onHueToggle?: () => void;
   isHueHighlighted?: boolean;
+  showMic?: boolean;
+  showCamera?: boolean;
 }
 
 export default function ToolsMenu({
@@ -24,6 +26,8 @@ export default function ToolsMenu({
   isHueConnected = false,
   onHueToggle,
   isHueHighlighted = false,
+  showMic = true,
+  showCamera = true,
 }: ToolsMenuProps) {
   return (
     <div className={styles.toolsMenu}>
@@ -39,22 +43,26 @@ export default function ToolsMenu({
       </div>
 
       {/* Microphone Toggle */}
-      <button
-        className={`${styles.toolButton} ${isMicEnabled ? styles.active : ""}`}
-        onClick={onMicToggle}
-        title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
-      >
-        ⦿
-      </button>
+      {showMic && (
+        <button
+          className={`${styles.toolButton} ${isMicEnabled ? styles.active : ""}`}
+          onClick={onMicToggle}
+          title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
+        >
+          ⦿
+        </button>
+      )}
 
       {/* Camera Toggle */}
-      <button
-        className={`${styles.toolButton} ${isCameraEnabled ? styles.active : ""}`}
-        onClick={onCameraToggle}
-        title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
-      >
-        ⊡
-      </button>
+      {showCamera && (
+        <button
+          className={`${styles.toolButton} ${isCameraEnabled ? styles.active : ""}`}
+          onClick={onCameraToggle}
+          title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
+        >
+          ⊡
+        </button>
+      )}
 
       {/* Hue Lights Toggle (optional) */}
       {showHue && (
