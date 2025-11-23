@@ -67,58 +67,111 @@ export function useShareManager(): UseShareManagerReturn {
   const connectionsRef = useRef<DataConnection[]>([]);
   const hostConnectionRef = useRef<DataConnection | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hostConnectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Start hosting (create peer and accept connections)
   const startHosting = useCallback(() => {
     if (peerRef.current) {
-      console.log("✅ Already hosting");
       return;
     }
-
-    console.log("🎭 Starting host mode...");
     
-    // Generate 6-digit code for easy manual entry
-    const code = Math.floor(100000 + Math.random() * 900000);
-    const customPeerId = `syns-${code}`;
-    console.log(`📱 Share Code: ${code}`);
+    // Try to reuse existing peer ID from localStorage
+    let customPeerId: string;
+    let code: number;
+    
+    const savedPeerId = typeof window !== 'undefined' ? localStorage.getItem('syns-host-peer-id') : null;
+    
+    if (savedPeerId && savedPeerId.startsWith('syns-')) {
+      // Reuse existing peer ID
+      customPeerId = savedPeerId;
+      code = parseInt(savedPeerId.replace('syns-', ''));
+      console.log(`✅ [HOST] Reusing saved peer ID - Code: ${code}`);
+    } else {
+      // Generate new 6-digit code
+      code = Math.floor(100000 + Math.random() * 900000);
+      customPeerId = `syns-${code}`;
+      console.log(`✅ [HOST] Generated new peer ID - Code: ${code}`);
+      
+      // Save to localStorage for future reloads
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('syns-host-peer-id', customPeerId);
+      }
+    }
+    
+    // Set connection timeout (15 seconds)
+    hostConnectionTimeoutRef.current = setTimeout(() => {
+      console.error(`⏱️ [HOST] Connection timeout - failed to connect to PeerJS server`);
+      setConnectionError("Failed to connect to signaling server");
+      if (peerRef.current) {
+        peerRef.current.destroy();
+        peerRef.current = null;
+      }
+      // Clear saved ID so we try a new one next time
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('syns-host-peer-id');
+      }
+    }, 15000);
     
     const peer = new Peer(customPeerId, {
-      debug: 0, // Reduce debug verbosity
+      debug: 0,
     });
 
     peer.on("open", (id) => {
-      console.log("✅ Host peer ID:", id);
+      console.log(`✅ [HOST] Hosting active - Code: ${code}, Peer ID: ${id}`);
       setPeerId(id);
       setIsHosting(true);
+      
+      // Clear timeout on successful connection
+      if (hostConnectionTimeoutRef.current) {
+        clearTimeout(hostConnectionTimeoutRef.current);
+        hostConnectionTimeoutRef.current = null;
+      }
     });
 
     peer.on("connection", (conn) => {
-      console.log("👀 New viewer connecting:", conn.peer);
-      
       // Add to connections list
       connectionsRef.current.push(conn);
       setConnectedViewers(connectionsRef.current.length);
 
       conn.on("open", () => {
-        console.log("✅ Viewer connected:", conn.peer);
+        console.log(`✅ [HOST] Viewer connected: ${conn.peer} (Total: ${connectionsRef.current.length})`);
       });
 
       conn.on("close", () => {
-        console.log("👋 Viewer disconnected:", conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
         setConnectedViewers(connectionsRef.current.length);
+        console.log(`👋 [HOST] Viewer disconnected: ${conn.peer} (Remaining: ${connectionsRef.current.length})`);
       });
 
       conn.on("error", (err) => {
-        console.error("❌ Connection error:", err);
+        console.error(`❌ [HOST] Connection error with ${conn.peer}:`, err.message);
         connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
         setConnectedViewers(connectionsRef.current.length);
       });
     });
 
     peer.on("error", (err) => {
-      console.error("❌ Peer error:", err);
+      console.error("❌ [HOST] Peer error:", err.message, err);
       setConnectionError(err.message);
+      
+      // Clear timeout on error
+      if (hostConnectionTimeoutRef.current) {
+        clearTimeout(hostConnectionTimeoutRef.current);
+        hostConnectionTimeoutRef.current = null;
+      }
+      
+      // If peer ID is already taken, clear saved ID and reload
+      if (err.message?.includes('already taken') || err.message?.includes('unavailable') || err.message?.includes('ID is taken')) {
+        console.log("🔄 [HOST] Peer ID unavailable, clearing and will retry...");
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('syns-host-peer-id');
+        }
+        // Destroy the peer and trigger a retry by reloading
+        if (peerRef.current) {
+          peerRef.current.destroy();
+          peerRef.current = null;
+        }
+      }
     });
 
     peerRef.current = peer;
@@ -126,8 +179,6 @@ export function useShareManager(): UseShareManagerReturn {
 
   // Stop hosting
   const stopHosting = useCallback(() => {
-    console.log("🛑 Stopping host mode...");
-    
     // Close all viewer connections
     connectionsRef.current.forEach((conn) => {
       conn.close();
@@ -175,21 +226,35 @@ export function useShareManager(): UseShareManagerReturn {
   const connectToHost = useCallback((hostPeerId: string) => {
     // Clear any existing connection
     if (hostConnectionRef.current) {
-      console.log("🔄 Disconnecting existing connection before reconnecting");
       disconnectFromHost();
     }
 
-    console.log("👀 [VIEWER] Connecting to host:", hostPeerId);
     setConnectionError(null);
 
-    // Create peer for viewer
-    const peer = new Peer({
-      debug: 0, // Reduce debug verbosity to avoid console spam
+    // Try to reuse existing viewer peer ID from localStorage
+    let viewerPeerId: string | undefined;
+    const savedViewerPeerId = typeof window !== 'undefined' ? localStorage.getItem('syns-viewer-peer-id') : null;
+    
+    if (savedViewerPeerId) {
+      viewerPeerId = savedViewerPeerId;
+      console.log(`🔄 [VIEWER] Reusing saved peer ID: ${viewerPeerId}`);
+    } else {
+      // Generate new viewer ID and save it
+      viewerPeerId = `viewer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('syns-viewer-peer-id', viewerPeerId);
+      }
+      console.log(`✅ [VIEWER] Generated new peer ID: ${viewerPeerId}`);
+    }
+
+    // Create peer for viewer with consistent ID
+    const peer = new Peer(viewerPeerId, {
+      debug: 0,
     });
 
     // Set connection timeout (30 seconds)
     connectionTimeoutRef.current = setTimeout(() => {
-      console.error("⏱️ [VIEWER] Connection timeout");
+      console.error(`⏱️ [VIEWER] Connection timeout to ${hostPeerId}`);
       setConnectionError("Connection timeout - host may be offline");
       if (peerRef.current) {
         peerRef.current.destroy();
@@ -198,8 +263,6 @@ export function useShareManager(): UseShareManagerReturn {
     }, 30000);
 
     peer.on("open", (id) => {
-      console.log("✅ Viewer peer ID:", id);
-      
       // Connect to host
       const conn = peer.connect(hostPeerId, {
         reliable: true,
@@ -207,7 +270,7 @@ export function useShareManager(): UseShareManagerReturn {
       });
 
       conn.on("open", () => {
-        console.log("✅ Connected to host! Waiting for data...");
+        console.log(`✅ [VIEWER] Connected to host ${hostPeerId} (Viewer ID: ${id})`);
         setIsViewer(true);
         hostConnectionRef.current = conn;
         
@@ -218,24 +281,18 @@ export function useShareManager(): UseShareManagerReturn {
         }
       });
 
-      let receivedCount = 0;
       conn.on("data", (data: any) => {
         try {
           if (data.type === "state_update") {
-            receivedCount++;
-            if (receivedCount % 30 === 0) { // Log every 30 frames (1 second at 30fps)
-              console.log(`📊 Receiving data (${receivedCount} updates received)`);
-            }
             setViewerState(data.data);
           }
         } catch (err) {
-          console.error("❌ Error processing data:", err);
-          // Don't throw - keep connection alive
+          console.error("❌ [VIEWER] Error processing data:", err);
         }
       });
 
       conn.on("close", () => {
-        console.log("👋 Disconnected from host");
+        console.log(`👋 [VIEWER] Disconnected from host ${hostPeerId}`);
         setIsViewer(false);
         setViewerState(null);
         hostConnectionRef.current = null;
@@ -248,7 +305,7 @@ export function useShareManager(): UseShareManagerReturn {
       });
 
       conn.on("error", (err) => {
-        console.error("❌ Connection error:", err);
+        console.error(`❌ [VIEWER] Connection error to ${hostPeerId}:`, err.message, err);
         setConnectionError(err.message);
         
         // Clear timeout on error
@@ -260,14 +317,36 @@ export function useShareManager(): UseShareManagerReturn {
     });
 
     peer.on("error", (err) => {
-      console.error("❌ Peer error:", err);
-      setConnectionError(err.message);
+      console.error(`❌ [VIEWER] Peer error connecting to ${hostPeerId}:`, err.message, err);
       
       // Clear timeout on error
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
         connectionTimeoutRef.current = null;
       }
+      
+      // If peer ID is taken, clear it and automatically retry with new ID
+      if (err.message?.includes('already taken') || err.message?.includes('unavailable') || err.message?.includes('ID is taken')) {
+        console.log("🔄 [VIEWER] Peer ID unavailable, clearing and retrying with new ID...");
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('syns-viewer-peer-id');
+        }
+        
+        // Destroy the current peer
+        if (peerRef.current) {
+          peerRef.current.destroy();
+          peerRef.current = null;
+        }
+        
+        // Automatically retry with a new ID after a short delay
+        setTimeout(() => {
+          connectToHost(hostPeerId);
+        }, 500);
+        return;
+      }
+      
+      // For other errors, set the error message
+      setConnectionError(err.message);
     });
 
     peerRef.current = peer;
@@ -275,8 +354,6 @@ export function useShareManager(): UseShareManagerReturn {
 
   // Disconnect from host (viewer mode)
   const disconnectFromHost = useCallback(() => {
-    console.log("👋 Disconnecting from host...");
-    
     // Clear timeout if active
     if (connectionTimeoutRef.current) {
       clearTimeout(connectionTimeoutRef.current);
@@ -306,10 +383,14 @@ export function useShareManager(): UseShareManagerReturn {
         disconnectFromHost();
       }
       
-      // Clear timeout on unmount
+      // Clear timeouts on unmount
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
         connectionTimeoutRef.current = null;
+      }
+      if (hostConnectionTimeoutRef.current) {
+        clearTimeout(hostConnectionTimeoutRef.current);
+        hostConnectionTimeoutRef.current = null;
       }
     };
   }, [isHosting, isViewer, stopHosting, disconnectFromHost]);
