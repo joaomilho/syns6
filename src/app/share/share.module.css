@@ -403,17 +403,55 @@
     font-size: 0.875rem;
   }
 
+  .codeInputs {
+    gap: 0.5rem;
+  }
+
+  .codeDigit {
+    width: 2.5rem;
+    height: 3.5rem;
+    font-size: 1.75rem;
+    border-radius: 8px;
+  }
+
+  .codeInputContainer h1 {
+    font-size: 1.5rem;
+  }
+
+  .codeInputInstructions {
+    font-size: 0.875rem;
+  }
+
+  .connectButton {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+
+  .lyricsContainer {
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
   .lyricsWrapper {
-    gap: 1rem;
+    gap: 0rem;
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 90%;
   }
 
   .previousLyric,
   .nextLyric {
-    font-size: 1rem;
+    font-size: 1.8rem;
+    opacity: 0.6;
   }
 
   .currentLyric {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    font-weight: 600;
   }
 }
 
