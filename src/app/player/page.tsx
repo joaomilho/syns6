@@ -40,6 +40,7 @@ import styles from "./player.module.css";
 import Link from "next/link";
 import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
+import Syns6Logo from "@/components/Syns6Logo";
 
 interface Track {
   id: string;
@@ -978,7 +979,7 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <div className={styles.logo}>Syns6</div>
+        <Syns6Logo />
 
         <div className={styles.controlGroups}>
         {/* Share QR Code (leftmost) */}

@@ -67,110 +67,123 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.nowPlaying {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 10;
-}
-
-.albumArt {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.albumArt img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.trackInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  max-width: 300px;
-}
-
-.trackName {
-  font-size: 1rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.artistName {
-  font-size: 0.875rem;
-  opacity: 0.7;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.playState {
-  font-size: 1.5rem;
-  opacity: 0.5;
-  margin-left: 0.5rem;
-}
-
-.viewerBadgeContainer {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  z-index: 10;
-}
-
-.viewerBadge {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.875rem;
-  opacity: 0.7;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.viewerBadge:hover {
-  opacity: 1;
-}
-
-.micWarning {
-  color: #ff6b6b;
-  font-size: 0.75rem;
-}
-
-.disconnectButton {
-  padding: 0.5rem 1rem;
+.cancelButton {
+  padding: 0.75rem 1.5rem;
   background: rgba(255, 68, 68, 0.1);
   border: 1px solid rgba(255, 68, 68, 0.3);
   border-radius: 8px;
   color: #ff4444;
-  font-size: 0.75rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
   backdrop-filter: blur(10px);
   font-family: inherit;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
+.retryConnectionButton {
+  padding: 0.75rem 1.5rem;
+  background: rgba(29, 185, 84, 0.1);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  border-radius: 8px;
+  color: #1ed760;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  font-family: inherit;
+}
+
+.retryConnectionButton:hover {
+  background: rgba(29, 185, 84, 0.2);
+  border-color: rgba(29, 185, 84, 0.5);
+}
+
+/* Removed - now using NowPlayingFooter component */
+
+/* Top Bar - matching master view */
+.topBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 24px 32px;
+  z-index: 100;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 200;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #1ed760, #1db954);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
+
+.viewerControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.viewerBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.viewerBadge:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.viewerIcon {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.micWarning {
+  color: #ff6b6b;
+  font-size: 0.875rem;
+}
+
+.disconnectButton {
+  padding: 8px 16px;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 20px;
+  color: #ff4444;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(20px);
+  font-family: inherit;
+  white-space: nowrap;
 }
 
 .disconnectButton:hover {
@@ -182,13 +195,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.75rem;
-  opacity: 0.7;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .latencyLabel {
@@ -218,75 +231,7 @@
   font-size: 0.7rem;
 }
 
-.queueOverlay {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 10;
-  min-width: 250px;
-}
-
-.queueHeader {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  opacity: 0.5;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.25rem;
-}
-
-.queueItem {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.queueAlbumArt {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-}
-
-.queueAlbumArt img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.queueTrackInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.queueTrackName {
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.queueArtistName {
-  font-size: 0.75rem;
-  opacity: 0.6;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* Removed - queue now handled by NowPlayingFooter component */
 
 .codeInputContainer {
   display: flex;
@@ -418,7 +363,28 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .topBar {
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .viewerControls {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .viewerBadge,
+  .disconnectButton,
+  .latencyIndicator {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+
   .lyricsWrapper {
     gap: 1rem;
   }
@@ -430,18 +396,6 @@
 
   .currentLyric {
     font-size: 2rem;
-  }
-  
-  .nowPlaying {
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    transform: none;
-    width: auto;
-  }
-  
-  .queueOverlay {
-    display: none;
   }
 }
 
