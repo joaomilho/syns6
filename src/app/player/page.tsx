@@ -101,20 +101,25 @@ export default function PlayerPage() {
   const fps = useFPS();
   const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
+  const hasStartedHosting = useRef(false); // Track if we've already called startHosting
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
   
   // Start hosting when component mounts
   useEffect(() => {
-    console.log("🎭 [PLAYER] Initializing screen sharing...");
-    shareManager.startHosting();
+    if (!hasStartedHosting.current) {
+      console.log("🎭 [PLAYER] Initializing screen sharing...");
+      shareManager.startHosting();
+      hasStartedHosting.current = true;
+    }
     
     return () => {
       console.log("🛑 [PLAYER] Stopping screen sharing");
       shareManager.stopHosting();
+      hasStartedHosting.current = false;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Debug: Log when peerId changes
   useEffect(() => {
