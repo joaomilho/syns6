@@ -906,12 +906,21 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   );
 }
 
-export default function SharePage() {
-  // Read search params OUTSIDE Suspense boundary to prevent re-suspension
+function SharePageWrapper() {
+  // Read search params here - this component will be wrapped in Suspense
   const searchParams = useSearchParams();
   const hostPeerIdParam = searchParams.get("host");
   const textOnlyParam = searchParams.get("textOnly") === "true";
   
+  return (
+    <SharePageContent 
+      hostPeerIdParam={hostPeerIdParam}
+      textOnlyParam={textOnlyParam}
+    />
+  );
+}
+
+export default function SharePage() {
   return (
     <Suspense fallback={
       <div className={styles.container}>
@@ -920,10 +929,7 @@ export default function SharePage() {
         </div>
       </div>
     }>
-      <SharePageContent 
-        hostPeerIdParam={hostPeerIdParam}
-        textOnlyParam={textOnlyParam}
-      />
+      <SharePageWrapper />
     </Suspense>
   );
 }
