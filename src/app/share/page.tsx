@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useShareManager } from "@/hooks/useShareManager";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -18,11 +18,13 @@ import DSLVisualization from "@/components/DSLVisualization";
 import CompiledVisualization from "@/components/CompiledVisualization";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import { getAllCustomVisualizations, CustomVisualization as CustomVizType } from "@/lib/customVisualizations";
+import { loadHostPeerId, saveHostPeerId, clearHostPeerId } from "@/lib/viewerStorage";
 import styles from "./share.module.css";
 
 function SharePageContent() {
   const searchParams = useSearchParams();
   const hostPeerIdParam = searchParams.get("host");
+  const textOnlyParam = searchParams.get("textOnly") === "true";
   
   const shareManager = useShareManager();
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
@@ -30,32 +32,143 @@ function SharePageContent() {
   const [micError, setMicError] = useState<string | null>(null);
   const [latency, setLatency] = useState<number>(0);
   const [updateCount, setUpdateCount] = useState<number>(0);
+  const [webglUnavailable, setWebglUnavailable] = useState(textOnlyParam);
+  const [webglChecked, setWebglChecked] = useState(false);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
+  const MAX_CONNECTION_ATTEMPTS = 3;
   
   // Code input state
   const [codeInput, setCodeInput] = useState<string[]>(['', '', '', '', '', '']);
   const [showCodeInput, setShowCodeInput] = useState(!hostPeerIdParam);
   const [hostPeerId, setHostPeerId] = useState<string | null>(hostPeerIdParam);
+  const [isLoadingSavedConnection, setIsLoadingSavedConnection] = useState(!hostPeerIdParam);
   
   // Use local microphone (each viewer hears music through speakers)
   const { micData, isEnabled: isMicEnabled, enable: enableMic, error: micHookError } = useMicrophoneAnalysis();
 
-  // Connect to host on mount
+  // Refs
+  const hasAttemptedConnection = useRef(false);
+  const hasLoggedRef = useRef(false);
+
+  // Memoize the WebGL unavailable callback to prevent unnecessary re-renders
+  const handleWebGLUnavailable = useCallback(() => {
+    setWebglUnavailable(true);
+  }, []);
+
+  // Check WebGL support immediately on mount (before mic access)
   useEffect(() => {
-    if (hostPeerId && !shareManager.isViewer) {
-      console.log("🔗 Connecting to host:", hostPeerId);
+    // If textOnly mode is forced via query param, skip WebGL check
+    if (textOnlyParam) {
+      console.log('📝 Text-only mode forced via query parameter');
+      setWebglUnavailable(true);
+      setWebglChecked(true);
+      return;
+    }
+    
+    const checkWebGL = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+          console.log('❌ WebGL not available - will use lyrics-only mode');
+          setWebglUnavailable(true);
+          setWebglChecked(true);
+          return;
+        }
+        
+        // Test if we can actually use the context
+        try {
+          const testGl = gl as WebGLRenderingContext;
+          const precision = testGl.getShaderPrecisionFormat(testGl.VERTEX_SHADER, testGl.HIGH_FLOAT);
+          if (!precision) {
+            console.log('❌ WebGL precision check failed - will use lyrics-only mode');
+            setWebglUnavailable(true);
+          } else {
+            console.log('✅ WebGL is available');
+            setWebglUnavailable(false);
+          }
+        } catch (e) {
+          console.log('❌ WebGL test failed - will use lyrics-only mode');
+          setWebglUnavailable(true);
+        }
+      } catch (e) {
+        console.log('❌ WebGL check failed - will use lyrics-only mode');
+        setWebglUnavailable(true);
+      }
+      setWebglChecked(true);
+    };
+
+    checkWebGL();
+  }, [textOnlyParam]);
+
+  // Load saved host peer ID from IndexedDB on mount
+  useEffect(() => {
+    const loadSavedConnection = async () => {
+      // Skip if we already have a host ID from URL
+      if (hostPeerIdParam) {
+        setIsLoadingSavedConnection(false);
+        return;
+      }
+
+      try {
+        const savedHostPeerId = await loadHostPeerId();
+        if (savedHostPeerId) {
+          console.log('🔄 Auto-connecting to saved host:', savedHostPeerId);
+          setHostPeerId(savedHostPeerId);
+          setShowCodeInput(false);
+        }
+      } catch (error) {
+        console.error('Failed to load saved connection:', error);
+      } finally {
+        setIsLoadingSavedConnection(false);
+      }
+    };
+
+    loadSavedConnection();
+  }, [hostPeerIdParam]);
+
+  // Connect to host and save to IndexedDB
+  useEffect(() => {
+    if (hostPeerId && !shareManager.isViewer && !maxAttemptsReached && !hasAttemptedConnection.current) {
+      hasAttemptedConnection.current = true;
+      console.log("🔗 Connecting to host:", hostPeerId, `(Attempt ${connectionAttempts + 1}/${MAX_CONNECTION_ATTEMPTS})`);
       shareManager.connectToHost(hostPeerId);
       setIsConnecting(true);
+      setConnectionAttempts(prev => prev + 1);
+      
+      // Save to IndexedDB for auto-reconnect
+      saveHostPeerId(hostPeerId).catch(err => {
+        console.error('Failed to save host peer ID:', err);
+      });
     }
-  }, [hostPeerId]);
+  }, [hostPeerId, shareManager, maxAttemptsReached, connectionAttempts, MAX_CONNECTION_ATTEMPTS]);
 
   // Update connecting state
   useEffect(() => {
     console.log(`🔄 [VIEWER] Connection state: isViewer=${shareManager.isViewer}, hasState=${!!shareManager.viewerState}`);
     if (shareManager.isViewer) {
       setIsConnecting(false);
+      setConnectionAttempts(0); // Reset attempts on successful connection
+      hasAttemptedConnection.current = false; // Allow new connections
       console.log('✅ [VIEWER] Connected! Waiting for data...');
     }
   }, [shareManager.isViewer, shareManager.viewerState]);
+
+  // Monitor connection errors and stop after max attempts
+  useEffect(() => {
+    if (shareManager.connectionError) {
+      if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
+        console.error(`❌ [VIEWER] Max connection attempts (${MAX_CONNECTION_ATTEMPTS}) reached`);
+        setMaxAttemptsReached(true);
+        setIsConnecting(false);
+      } else {
+        // Allow retry on error
+        hasAttemptedConnection.current = false;
+      }
+    }
+  }, [shareManager.connectionError, connectionAttempts, MAX_CONNECTION_ATTEMPTS]);
 
   // Load custom visualizations
   useEffect(() => {
@@ -78,25 +191,29 @@ function SharePageContent() {
     };
   }, []);
 
-  // Auto-enable microphone on viewer
+  // Auto-enable microphone on viewer (for text-only mode audio reactivity and WebGL visualizations)
   useEffect(() => {
-    // Check if mediaDevices API is available
+    // Wait for WebGL check to complete
+    if (!webglChecked) {
+      return;
+    }
+    
+    // Check if mic access is possible (HTTPS or localhost)
     const checkAndEnableMic = async () => {
       const isHttps = window.location.protocol === 'https:';
       const isLocalhost = window.location.hostname === 'localhost' || 
                          window.location.hostname === '127.0.0.1' ||
                          window.location.hostname === '[::1]';
       
+      // If not HTTPS and not localhost, skip mic setup silently
+      if (!isHttps && !isLocalhost) {
+        console.log('⏭️ Skipping microphone - HTTP context (not localhost)');
+        return;
+      }
+      
       // Check if mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        if (!isHttps && !isLocalhost) {
-          setMicError(
-            'Microphone requires HTTPS when accessing via IP address. ' +
-            'Enable Chrome flag to allow HTTP access for development.'
-          );
-        } else {
-          setMicError('Browser does not support microphone access.');
-        }
+        console.log('⏭️ Skipping microphone - not supported by browser');
         return;
       }
 
@@ -106,21 +223,13 @@ function SharePageContent() {
           await enableMic();
         } catch (err) {
           console.error('❌ Failed to enable microphone:', err);
-          
-          if (!isHttps && !isLocalhost) {
-            setMicError(
-              'Microphone requires HTTPS when accessing via IP address. ' +
-              'Enable Chrome flag to allow HTTP access for development.'
-            );
-          } else {
-            setMicError('Failed to access microphone. Please check browser permissions.');
-          }
+          // Don't show error, just continue without mic
         }
       }
     };
 
     checkAndEnableMic();
-  }, [isMicEnabled, enableMic, micHookError]);
+  }, [isMicEnabled, enableMic, micHookError, webglChecked]);
   
   // Convert received state to component props
   const state = shareManager.viewerState;
@@ -136,7 +245,6 @@ function SharePageContent() {
   }, [state]);
   
   // Debug: Log received state on first receive
-  const hasLoggedRef = useRef(false);
   useEffect(() => {
     if (state && !hasLoggedRef.current) {
       console.log('✅ First state received:', {
@@ -163,6 +271,9 @@ function SharePageContent() {
 
   // Render visualization based on type
   const renderVisualization = () => {
+    // Don't render any visualization if WebGL is unavailable
+    if (webglUnavailable) return null;
+    
     if (!state && !micData) return null;
 
     const vizType = visualizationType;
@@ -298,6 +409,7 @@ function SharePageContent() {
             lyrics={lyrics}
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
+            onWebGLUnavailable={handleWebGLUnavailable}
           />
         );
       case "youtube":
@@ -320,10 +432,24 @@ function SharePageContent() {
             lyrics={lyrics}
             currentTimeMs={currentTimeMs}
             isPlaying={isPlaying}
+            onWebGLUnavailable={handleWebGLUnavailable}
           />
         );
     }
   };
+
+  // Show loading while checking for saved connection
+  if (isLoadingSavedConnection) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.message}>
+          <h1>Loading...</h1>
+          <p>Checking for saved connection</p>
+          <div className={styles.spinner} />
+        </div>
+      </div>
+    );
+  }
 
   // Show code input if no host ID
   if (showCodeInput && !hostPeerId) {
@@ -398,70 +524,79 @@ function SharePageContent() {
     );
   }
 
-  if (shareManager.connectionError) {
+  if (shareManager.connectionError || maxAttemptsReached) {
     return (
       <div className={styles.container}>
         <div className={styles.message}>
-          <h1>❌ Connection Error</h1>
-          <p>{shareManager.connectionError}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className={styles.retryButton}
-          >
-            🔄 Retry
-          </button>
+          <h1>❌ Connection Failed</h1>
+          <p>{shareManager.connectionError || 'Unable to connect to host after multiple attempts'}</p>
+          {maxAttemptsReached && (
+            <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem' }}>
+              The host may be offline or the connection code may have expired.
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'center' }}>
+            <button 
+              onClick={async () => {
+                setConnectionAttempts(0);
+                setMaxAttemptsReached(false);
+                hasAttemptedConnection.current = false;
+                if (hostPeerId) {
+                  shareManager.connectToHost(hostPeerId);
+                  setIsConnecting(true);
+                }
+              }}
+              className={styles.retryButton}
+            >
+              🔄 Retry Connection
+            </button>
+            <button 
+              onClick={async () => {
+                await clearHostPeerId();
+                window.location.reload();
+              }}
+              className={styles.retryButton}
+            >
+              🔑 Enter New Code
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (micError) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.message}>
-          <h1>🎤 Microphone Access Required</h1>
-          <p style={{ marginBottom: '1rem' }}>{micError}</p>
-          
-          {window.location.protocol !== 'https:' && 
-           window.location.hostname !== 'localhost' && 
-           window.location.hostname !== '127.0.0.1' && (
-            <div style={{ 
-              textAlign: 'left', 
-              background: 'rgba(255,255,255,0.05)', 
-              padding: '1rem', 
-              borderRadius: '8px',
-              fontSize: '0.875rem'
-            }}>
-              <p><strong>Quick Fix for Chrome/Edge:</strong></p>
-              <ol style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
-                <li>Open: <code style={{ 
-                  background: 'rgba(0,0,0,0.5)', 
-                  padding: '0.25rem 0.5rem', 
-                  borderRadius: '4px'
-                }}>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></li>
-                <li>Add: <code style={{ 
-                  background: 'rgba(0,0,0,0.5)', 
-                  padding: '0.25rem 0.5rem', 
-                  borderRadius: '4px'
-                }}>{window.location.origin}</code></li>
-                <li>Enable the flag and restart browser</li>
-              </ol>
-            </div>
-          )}
-          
-          <button 
-            onClick={() => {
-              setMicError(null);
-              enableMic();
-            }}
-            className={styles.retryButton}
-            style={{ marginTop: '1rem' }}
-          >
-            🔄 Try Again
-          </button>
+  // Skip mic error screen if WebGL is unavailable (we don't need mic for plain lyrics)
+  // Also skip if not on HTTPS/localhost (mic won't work anyway)
+  if (micError && !webglUnavailable) {
+    const isHttps = window.location.protocol === 'https:';
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname === '[::1]';
+    
+    // Only show error if we're in a context where mic should work
+    if (isHttps || isLocalhost) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.message}>
+            <h1>🎤 Microphone Access Required</h1>
+            <p style={{ marginBottom: '1rem' }}>{micError}</p>
+            
+            <button 
+              onClick={() => {
+                setMicError(null);
+                enableMic();
+              }}
+              className={styles.retryButton}
+              style={{ marginTop: '1rem' }}
+            >
+              🔄 Try Again
+            </button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+    // If not HTTPS/localhost, just clear the error and continue
+    setMicError(null);
   }
 
   if (isConnecting || !shareManager.isViewer) {
@@ -471,6 +606,24 @@ function SharePageContent() {
           <h1>🔗 Connecting...</h1>
           <p>Establishing connection to host</p>
           <div className={styles.spinner} />
+          <button 
+            onClick={async () => {
+              // Disconnect from current attempt
+              shareManager.disconnectFromHost();
+              // Clear saved code
+              await clearHostPeerId();
+              // Reset states
+              setHostPeerId(null);
+              setShowCodeInput(true);
+              setConnectionAttempts(0);
+              setMaxAttemptsReached(false);
+              hasAttemptedConnection.current = false;
+            }}
+            className={styles.retryButton}
+            style={{ marginTop: '1rem' }}
+          >
+            ❌ Cancel
+          </button>
         </div>
       </div>
     );
@@ -491,10 +644,82 @@ function SharePageContent() {
     );
   }
 
+  // Helper to get current lyric line with context
+  const getLyricLines = () => {
+    if (!lyrics || lyrics.length === 0) {
+      return { previous: null, current: null, next: null };
+    }
+    
+    // Find the current line based on currentTimeMs
+    let currentIndex = -1;
+    for (let i = 0; i < lyrics.length; i++) {
+      if (lyrics[i].time <= currentTimeMs) {
+        currentIndex = i;
+      } else {
+        break;
+      }
+    }
+    
+    return {
+      previous: currentIndex > 0 ? lyrics[currentIndex - 1] : null,
+      current: currentIndex >= 0 ? lyrics[currentIndex] : null,
+      next: currentIndex >= 0 && currentIndex < lyrics.length - 1 ? lyrics[currentIndex + 1] : null,
+    };
+  };
+
+  const lyricLines = getLyricLines();
+
+  // Calculate audio intensity for text scaling (when mic is available in text-only mode)
+  const audioIntensity = webglUnavailable && micData?.frequencyData 
+    ? (() => {
+        const data = micData.frequencyData;
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          sum += data[i];
+        }
+        return (sum / data.length) / 255; // Normalize to 0-1
+      })()
+    : 0;
+
+  // Scale factor: 1.0 to 1.3 based on audio intensity
+  const textScale = webglUnavailable && audioIntensity > 0 
+    ? 1 + (audioIntensity * 0.3) 
+    : 1;
+
   return (
     <div className={styles.container}>
       {/* Visualization */}
       {renderVisualization()}
+
+      {/* Plain HTML Lyrics when WebGL is unavailable */}
+      {webglUnavailable && lyrics && lyrics.length > 0 && (
+        <div className={styles.lyricsContainer}>
+          <div className={styles.lyricsWrapper}>
+            {lyricLines.previous && (
+              <div 
+                className={styles.previousLyric}
+                style={{ transform: `scale(${textScale * 0.8})` }}
+              >
+                {lyricLines.previous.text}
+              </div>
+            )}
+            <div 
+              className={styles.currentLyric}
+              style={{ transform: `scale(${textScale})` }}
+            >
+              {lyricLines.current?.text || '♪'}
+            </div>
+            {lyricLines.next && (
+              <div 
+                className={styles.nextLyric}
+                style={{ transform: `scale(${textScale * 0.8})` }}
+              >
+                {lyricLines.next.text}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Now Playing Info (overlay) */}
       {playbackState && (
@@ -551,11 +776,24 @@ function SharePageContent() {
           }}
           title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
         >
-          <span>👀 Viewer Mode</span>
+          <span>👀 Viewer Mode{webglUnavailable && ' (Lyrics Only)'}
+          {textOnlyParam && ' [Test Mode]'}</span>
           {!isMicEnabled && (
-            <span className={styles.micWarning}>🎤 Click to enable mic</span>
+            <span className={styles.micWarning}>🎤 Click to enable mic for audio reactivity</span>
           )}
         </div>
+        
+        {/* Disconnect button */}
+        <button
+          className={styles.disconnectButton}
+          onClick={async () => {
+            await clearHostPeerId();
+            window.location.reload();
+          }}
+          title="Disconnect and enter new code"
+        >
+          🔌 Disconnect
+        </button>
         
         {/* Latency indicator */}
         <div className={styles.latencyIndicator}>
