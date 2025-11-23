@@ -30,12 +30,13 @@ export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodePro
     <div className={styles.container}>
       {/* Compact Badge */}
       <div 
-        className={styles.badge}
+        className={`${styles.badge} ${connectedViewers > 0 ? styles.active : ''}`}
         onClick={() => setIsExpanded(!isExpanded)}
-        title="Click to show QR code"
+        title={`Screen sharing: ${connectedViewers} ${connectedViewers === 1 ? 'viewer' : 'viewers'}`}
       >
-        <span className={styles.icon}>📱</span>
-        <span className={styles.count}>{connectedViewers}</span>
+        <span className={styles.icon}>⧉</span>
+        <span className={styles.shareCode}>{shareCode}</span>
+        <span className={styles.viewerCount}>{connectedViewers}</span>
       </div>
 
       {/* Expanded QR Code */}
@@ -51,61 +52,39 @@ export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodePro
             </button>
           </div>
 
-          <div className={styles.qrContainer}>
-            <QRCode 
-              value={shareUrl}
-              size={200}
-              bgColor="#000000"
-              fgColor="#ffffff"
-              level="M"
-            />
-          </div>
-
           <div className={styles.info}>
+            <div 
+              className={styles.codeDisplay}
+              onClick={() => {
+                navigator.clipboard.writeText(shareCode);
+                alert("Code copied! 📋");
+              }}
+              title="Click to copy code"
+            >
+              <div className={styles.code}>{shareCode}</div>
+            </div>
+            
+            {connectedViewers > 0 && (
+              <div className={styles.viewers}>
+                <span className={styles.viewersIcon}>👀</span>
+                <span className={styles.viewersText}>
+                  {connectedViewers} {connectedViewers === 1 ? "viewer" : "viewers"} connected
+                </span>
+              </div>
+            )}
+            
             <p className={styles.instruction}>
-              Scan QR code or visit <strong>syns6.com/share</strong>
+              Visit <strong>syns6.com/share</strong>
             </p>
             
-            <div className={styles.codeDisplay}>
-              <div className={styles.codeLabel}>Enter this code:</div>
-              <div className={styles.code}>{shareCode}</div>
-              <button 
-                className={styles.copyCodeButton}
-                onClick={() => {
-                  navigator.clipboard.writeText(shareCode);
-                  alert("Code copied! 📋");
-                }}
-              >
-                📋 Copy Code
-              </button>
-            </div>
-            
-            <div className={styles.orDivider}>or</div>
-            
-            <div className={styles.urlContainer}>
-              <input 
-                type="text" 
+            <div className={styles.qrContainer}>
+              <QRCode 
                 value={shareUrl}
-                readOnly
-                className={styles.urlInput}
-                onClick={(e) => e.currentTarget.select()}
+                size={200}
+                bgColor="#000000"
+                fgColor="#ffffff"
+                level="M"
               />
-              <button 
-                className={styles.copyButton}
-                onClick={() => {
-                  navigator.clipboard.writeText(shareUrl);
-                  alert("Link copied! 📋");
-                }}
-              >
-                📋
-              </button>
-            </div>
-            
-            <div className={styles.viewers}>
-              <span className={styles.viewersIcon}>👀</span>
-              <span className={styles.viewersText}>
-                {connectedViewers} {connectedViewers === 1 ? "viewer" : "viewers"} connected
-              </span>
             </div>
           </div>
         </div>
