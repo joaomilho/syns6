@@ -4,9 +4,11 @@ import { useEffect, useState, useRef, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useShareManager } from "@/hooks/useShareManager";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
+import { useCamera } from "@/hooks/useCamera";
 import VisualizationDropdown, { VisualizationType } from "@/components/VisualizationDropdown";
 import NowPlayingFooter from "@/components/NowPlayingFooter";
 import Syns6Logo from "@/components/Syns6Logo";
+import ToolsMenu from "@/components/ToolsMenu";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
@@ -16,6 +18,7 @@ import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization"
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
+import CameraVisualization from "@/components/CameraVisualization";
 import CustomVisualization from "@/components/CustomVisualization";
 import DSLVisualization from "@/components/DSLVisualization";
 import CompiledVisualization from "@/components/CompiledVisualization";
@@ -51,7 +54,15 @@ function SharePageContent() {
   const [isLoadingSavedConnection, setIsLoadingSavedConnection] = useState(!hostPeerIdParam);
   
   // Use local microphone (each viewer hears music through speakers)
-  const { micData, isEnabled: isMicEnabled, enable: enableMic, error: micHookError } = useMicrophoneAnalysis();
+  const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic, error: micHookError } = useMicrophoneAnalysis();
+  
+  // Use local camera (viewers can enable their own camera)
+  const {
+    isEnabled: isCameraEnabled,
+    enable: enableCamera,
+    disable: disableCamera,
+    videoElement,
+  } = useCamera();
 
   // Refs
   const hasAttemptedConnection = useRef(false);
@@ -66,7 +77,6 @@ function SharePageContent() {
   useEffect(() => {
     // If textOnly mode is forced via query param, skip WebGL check
     if (textOnlyParam) {
-      console.log('📝 Text-only mode forced via query parameter');
       setWebglUnavailable(true);
       setWebglChecked(true);
       return;
@@ -78,7 +88,6 @@ function SharePageContent() {
         const gl = canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl');
         
         if (!gl) {
-          console.log('❌ WebGL not available - will use lyrics-only mode');
           setWebglUnavailable(true);
           setWebglChecked(true);
           return;
@@ -89,18 +98,14 @@ function SharePageContent() {
           const testGl = gl as WebGLRenderingContext;
           const precision = testGl.getShaderPrecisionFormat(testGl.VERTEX_SHADER, testGl.HIGH_FLOAT);
           if (!precision) {
-            console.log('❌ WebGL precision check failed - will use lyrics-only mode');
             setWebglUnavailable(true);
           } else {
-            console.log('✅ WebGL is available');
             setWebglUnavailable(false);
           }
         } catch (e) {
-          console.log('❌ WebGL test failed - will use lyrics-only mode');
           setWebglUnavailable(true);
         }
       } catch (e) {
-        console.log('❌ WebGL check failed - will use lyrics-only mode');
         setWebglUnavailable(true);
       }
       setWebglChecked(true);
@@ -149,7 +154,7 @@ function SharePageContent() {
         console.error('Failed to save host peer ID:', err);
       });
     }
-  }, [hostPeerId, shareManager, maxAttemptsReached, connectionAttempts, MAX_CONNECTION_ATTEMPTS]);
+  }, [hostPeerId, shareManager, maxAttemptsReached, MAX_CONNECTION_ATTEMPTS]); // Removed connectionAttempts from deps
 
   // Update connecting state
   useEffect(() => {
@@ -157,7 +162,7 @@ function SharePageContent() {
     if (shareManager.isViewer) {
       setIsConnecting(false);
       setConnectionAttempts(0); // Reset attempts on successful connection
-      hasAttemptedConnection.current = false; // Allow new connections
+      // DON'T reset hasAttemptedConnection here - it causes double connection!
       console.log('✅ [VIEWER] Connected! Waiting for data...');
     }
   }, [shareManager.isViewer, shareManager.viewerState]);
@@ -431,6 +436,17 @@ function SharePageContent() {
             micData={micData}
           />
         );
+      case "camera":
+        return (
+          <CameraVisualization
+            key="camera"
+            videoElement={videoElement}
+            micData={micData}
+            lyrics={lyrics}
+            currentTimeMs={currentTimeMs}
+            isPlaying={isPlaying}
+          />
+        );
       default:
         return (
           <FFTSpectrumVisualization
@@ -496,6 +512,7 @@ function SharePageContent() {
                       const code = newCode.join('');
                       const peerId = `syns-${code}`;
                       console.log('🔗 Connecting with code:', code);
+                      hasAttemptedConnection.current = false; // Allow new connection attempt
                       setHostPeerId(peerId);
                       setShowCodeInput(false);
                     }
@@ -520,6 +537,7 @@ function SharePageContent() {
               const code = codeInput.join('');
               const peerId = `syns-${code}`;
               console.log('🔗 Connecting with code:', code);
+              hasAttemptedConnection.current = false; // Allow new connection attempt
               setHostPeerId(peerId);
               setShowCodeInput(false);
             }}
@@ -808,6 +826,15 @@ function SharePageContent() {
             </span>
           </div>
           
+          {/* Tools Menu - shared component */}
+          <ToolsMenu
+            isPlaying={playbackState ? playbackState.is_playing : null}
+            isMicEnabled={isMicEnabled}
+            isCameraEnabled={isCameraEnabled}
+            onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
+            onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+          />
+          
           {/* Visualization Dropdown - allow viewer to override master's viz */}
           {!webglUnavailable && (
             <VisualizationDropdown
@@ -832,19 +859,10 @@ function SharePageContent() {
           {/* Viewer Mode Badge */}
           <div 
             className={styles.viewerBadge}
-            onClick={() => {
-              if (!isMicEnabled) {
-                enableMic().catch(err => {
-                  console.error('Failed to enable mic:', err);
-                  setMicError('Failed to access microphone. Check browser permissions.');
-                });
-              }
-            }}
-            title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
+            title="Viewer Mode"
           >
             <span className={styles.viewerIcon}>⧉</span>
             Viewer{webglUnavailable && ' (Lyrics)'}
-            {!isMicEnabled && !webglUnavailable && <span className={styles.micWarning}> 🎤</span>}
           </div>
         </div>
       </div>

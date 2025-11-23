@@ -41,6 +41,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
 import Syns6Logo from "@/components/Syns6Logo";
+import ToolsMenu from "@/components/ToolsMenu";
 
 interface Track {
   id: string;
@@ -990,64 +991,30 @@ export default function PlayerPage() {
           />
         ) : (
           <div 
-            style={{ 
-              padding: '0.5rem 0.75rem',
-              background: 'rgba(255, 165, 0, 0.1)',
-              border: '1px solid rgba(255, 165, 0, 0.3)',
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              opacity: 0.7
-            }}
+            className={styles.connectingBadge}
             title="Waiting for peer connection to initialize"
           >
-            📱 Connecting...
+            <span className={styles.connectingIcon}>⧉</span>
+            <span>Connecting...</span>
           </div>
         )}
         
-        {/* Actions Group */}
-        <div className={styles.vizSelector}>
-          {/* Play/Pause Status Indicator */}
-          <div className={styles.statusIcon}>
-            {!playbackState?.item && !lastKnownTrack?.item ? (
-              <span title="No song playing">⏹</span>
-            ) : playbackState?.is_playing ? (
-              <span title="Playing">▶</span>
-            ) : (
-              <span title="Paused">⏸</span>
-            )}
-          </div>
-
-          {/* Microphone Toggle */}
-          <button
-            className={`${styles.vizButton} ${
-              isMicEnabled ? styles.active : ""
-            }`}
-            onClick={() => (isMicEnabled ? disableMic() : enableMic())}
-            title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
-          >
-            ⦿
-          </button>
-          {/* Camera Toggle */}
-          <button
-            className={`${styles.vizButton} ${
-              isCameraEnabled ? styles.active : ""
-            }`}
-            onClick={() => (isCameraEnabled ? disableCamera() : enableCamera())}
-            title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
-          >
-            ⊡
-          </button>
-          {/* Hue Lights Toggle */}
-          <button
-            className={`${styles.vizButton} ${
-              hue.isConnected ? styles.active : ""
-            } ${showHueControls ? styles.highlighted : ""}`}
-            onClick={() => setShowHueControls(!showHueControls)}
-            title={hue.isConnected ? "Hue Connected" : "Connect Hue Lights"}
-          >
-            ◐
-          </button>
-        </div>
+        {/* Tools Menu */}
+        <ToolsMenu
+          isPlaying={
+            !playbackState?.item && !lastKnownTrack?.item
+              ? null
+              : playbackState?.is_playing ?? false
+          }
+          isMicEnabled={isMicEnabled}
+          isCameraEnabled={isCameraEnabled}
+          onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
+          onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+          showHue={true}
+          isHueConnected={hue.isConnected}
+          onHueToggle={() => setShowHueControls(!showHueControls)}
+          isHueHighlighted={showHueControls}
+        />
 
         {/* AI Create Button */}
         <button
