@@ -1,0 +1,49 @@
+.logoContainer {
+  position: relative;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 200;
+  letter-spacing: 0.5px;
+  /* text-transform: uppercase; */
+  flex-shrink: 0;
+  display: inline-block;
+  font-weight: 400 !important;
+}
+
+.logoRed,
+.logoBlue,
+.logoWhite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  /* text-transform: uppercase; */
+  white-space: nowrap;
+}
+
+/* Red channel - offset left */
+.logoRed {
+  color: #ff0000;
+  opacity: 0.6;
+  transform: translateX(-2px);
+  mix-blend-mode: screen;
+}
+
+/* Blue channel - offset right */
+.logoBlue {
+  color: #00d4ff;
+  opacity: 0.6;
+  transform: translateX(2px);
+  mix-blend-mode: screen;
+}
+
+.logoWhite {
+  color: #fff;
+  opacity: 0.8;
+  mix-blend-mode:hard-light;
+  background-clip: text;
+  position: relative;
+  z-index: 1;
+}
+

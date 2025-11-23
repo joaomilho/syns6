@@ -4,6 +4,9 @@ import { useEffect, useState, useRef, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useShareManager } from "@/hooks/useShareManager";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
+import VisualizationDropdown, { VisualizationType } from "@/components/VisualizationDropdown";
+import NowPlayingFooter from "@/components/NowPlayingFooter";
+import Syns6Logo from "@/components/Syns6Logo";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
@@ -37,6 +40,9 @@ function SharePageContent() {
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
   const MAX_CONNECTION_ATTEMPTS = 3;
+  
+  // Visualization state - allow viewer to override master's visualization
+  const [localVisualizationType, setLocalVisualizationType] = useState<VisualizationType | null>(null);
   
   // Code input state
   const [codeInput, setCodeInput] = useState<string[]>(['', '', '', '', '', '']);
@@ -262,7 +268,8 @@ function SharePageContent() {
   const playbackState = state?.playbackState;
   const queue = state?.queue || [];
   const isPlaying = playbackState?.is_playing || false;
-  const visualizationType = state?.visualizationType || "fftspectrum";
+  // Use local visualization if set, otherwise use master's visualization
+  const visualizationType = localVisualizationType || state?.visualizationType || "fftspectrum";
   
   // Adjust current time to compensate for network latency
   // This ensures lyrics appear in sync with what viewer hears through their mic
@@ -527,39 +534,103 @@ function SharePageContent() {
   if (shareManager.connectionError || maxAttemptsReached) {
     return (
       <div className={styles.container}>
-        <div className={styles.message}>
-          <h1>❌ Connection Failed</h1>
-          <p>{shareManager.connectionError || 'Unable to connect to host after multiple attempts'}</p>
+        <div className={styles.codeInputContainer}>
+          <h1 style={{ color: '#ff4444', marginBottom: '0.5rem' }}>Connection Failed</h1>
+          <p style={{ opacity: 0.8, marginBottom: '1rem' }}>
+            {shareManager.connectionError || 'Unable to connect to host after multiple attempts'}
+          </p>
           {maxAttemptsReached && (
-            <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem' }}>
+            <p style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: '2rem' }}>
               The host may be offline or the connection code may have expired.
             </p>
           )}
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'center' }}>
+          
+          {/* Show retry button if we still have a host peer ID */}
+          {hostPeerId && (
             <button 
               onClick={async () => {
                 setConnectionAttempts(0);
                 setMaxAttemptsReached(false);
                 hasAttemptedConnection.current = false;
-                if (hostPeerId) {
-                  shareManager.connectToHost(hostPeerId);
-                  setIsConnecting(true);
-                }
+                shareManager.connectToHost(hostPeerId);
+                setIsConnecting(true);
               }}
-              className={styles.retryButton}
+              className={styles.retryConnectionButton}
+              style={{ marginBottom: '2rem' }}
             >
-              🔄 Retry Connection
+              Retry Connection
             </button>
-            <button 
-              onClick={async () => {
-                await clearHostPeerId();
-                window.location.reload();
-              }}
-              className={styles.retryButton}
-            >
-              🔑 Enter New Code
-            </button>
+          )}
+          
+          {/* Code input form */}
+          <p className={styles.codeInputInstructions}>
+            Enter a new 6-digit code
+          </p>
+          
+          <div className={styles.codeInputs}>
+            {codeInput.map((digit, index) => (
+              <input
+                key={index}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]"
+                maxLength={1}
+                value={digit}
+                className={styles.codeDigit}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value.length <= 1) {
+                    const newCode = [...codeInput];
+                    newCode[index] = value;
+                    setCodeInput(newCode);
+                    
+                    // Auto-focus next input
+                    if (value && index < 5) {
+                      const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                      nextInput?.focus();
+                    }
+                    
+                    // Auto-connect when all 6 digits entered
+                    if (index === 5 && value && newCode.every(d => d)) {
+                      const code = newCode.join('');
+                      const peerId = `syns-${code}`;
+                      console.log('🔗 Connecting with code:', code);
+                      setConnectionAttempts(0);
+                      setMaxAttemptsReached(false);
+                      hasAttemptedConnection.current = false;
+                      setHostPeerId(peerId);
+                      setShowCodeInput(false);
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Backspace: move to previous input
+                  if (e.key === 'Backspace' && !codeInput[index] && index > 0) {
+                    const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
+                    prevInput?.focus();
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+            ))}
           </div>
+          
+          <button
+            className={styles.connectButton}
+            disabled={!codeInput.every(d => d)}
+            onClick={() => {
+              const code = codeInput.join('');
+              const peerId = `syns-${code}`;
+              console.log('🔗 Connecting with code:', code);
+              setConnectionAttempts(0);
+              setMaxAttemptsReached(false);
+              hasAttemptedConnection.current = false;
+              setHostPeerId(peerId);
+              setShowCodeInput(false);
+            }}
+          >
+            Connect
+          </button>
         </div>
       </div>
     );
@@ -603,7 +674,7 @@ function SharePageContent() {
     return (
       <div className={styles.container}>
         <div className={styles.message}>
-          <h1>🔗 Connecting...</h1>
+          <h1>Connecting...</h1>
           <p>Establishing connection to host</p>
           <div className={styles.spinner} />
           <button 
@@ -619,10 +690,10 @@ function SharePageContent() {
               setMaxAttemptsReached(false);
               hasAttemptedConnection.current = false;
             }}
-            className={styles.retryButton}
+            className={styles.cancelButton}
             style={{ marginTop: '1rem' }}
           >
-            ❌ Cancel
+            Cancel
           </button>
         </div>
       </div>
@@ -721,95 +792,77 @@ function SharePageContent() {
         </div>
       )}
 
-      {/* Now Playing Info (overlay) */}
-      {playbackState && (
-        <div className={styles.nowPlaying}>
-          <div className={styles.albumArt}>
-            {playbackState.albumArt && (
-              <img 
-                src={playbackState.albumArt} 
-                alt="Album Art"
-              />
-            )}
+      {/* Top Bar - matching master view */}
+      <div className={styles.topBar}>
+        <Syns6Logo />
+        
+        <div className={styles.viewerControls}>
+          {/* Latency indicator */}
+          <div className={styles.latencyIndicator}>
+            <span className={`${styles.latencyValue} ${
+              latency < 100 ? styles.latencyGood :
+              latency < 300 ? styles.latencyOk :
+              styles.latencyBad
+            }`}>
+              {latency}ms
+            </span>
           </div>
-          <div className={styles.trackInfo}>
-            <div className={styles.trackName}>{playbackState.trackName}</div>
-            <div className={styles.artistName}>{playbackState.artistName}</div>
-          </div>
-          <div className={styles.playState}>
-            {playbackState.is_playing ? "▶" : "⏸"}
-          </div>
-        </div>
-      )}
-
-      {/* Queue - Next 2 songs */}
-      {queue && queue.length > 0 && (
-        <div className={styles.queueOverlay}>
-          <div className={styles.queueHeader}>Next Up</div>
-          {queue.map((track, index) => (
-            <div key={track.id} className={styles.queueItem}>
-              <div className={styles.queueAlbumArt}>
-                {track.albumArt && (
-                  <img src={track.albumArt} alt="Album Art" />
-                )}
-              </div>
-              <div className={styles.queueTrackInfo}>
-                <div className={styles.queueTrackName}>{track.name}</div>
-                <div className={styles.queueArtistName}>{track.artistName}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Viewer Badge */}
-      <div className={styles.viewerBadgeContainer}>
-        <div 
-          className={styles.viewerBadge}
-          onClick={() => {
-            if (!isMicEnabled) {
-              enableMic().catch(err => {
-                console.error('Failed to enable mic:', err);
-                setMicError('Failed to access microphone. Check browser permissions.');
-              });
-            }
-          }}
-          title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
-        >
-          <span>👀 Viewer Mode{webglUnavailable && ' (Lyrics Only)'}
-          {textOnlyParam && ' [Test Mode]'}</span>
-          {!isMicEnabled && (
-            <span className={styles.micWarning}>🎤 Click to enable mic for audio reactivity</span>
+          
+          {/* Visualization Dropdown - allow viewer to override master's viz */}
+          {!webglUnavailable && (
+            <VisualizationDropdown
+              value={visualizationType}
+              onChange={(viz) => setLocalVisualizationType(viz)}
+              customVisualizations={customVisualizations}
+            />
           )}
-        </div>
-        
-        {/* Disconnect button */}
-        <button
-          className={styles.disconnectButton}
-          onClick={async () => {
-            await clearHostPeerId();
-            window.location.reload();
-          }}
-          title="Disconnect and enter new code"
-        >
-          🔌 Disconnect
-        </button>
-        
-        {/* Latency indicator */}
-        <div className={styles.latencyIndicator}>
-          <span className={styles.latencyLabel}>Latency:</span>
-          <span className={`${styles.latencyValue} ${
-            latency < 100 ? styles.latencyGood :
-            latency < 300 ? styles.latencyOk :
-            styles.latencyBad
-          }`}>
-            {latency}ms
-          </span>
-          <span className={styles.updateCounter}>
-            ({updateCount} updates)
-          </span>
+          
+          {/* Disconnect button */}
+          <button
+            className={styles.disconnectButton}
+            onClick={async () => {
+              await clearHostPeerId();
+              window.location.reload();
+            }}
+            title="Disconnect and enter new code"
+          >
+            Disconnect
+          </button>
+          
+          {/* Viewer Mode Badge */}
+          <div 
+            className={styles.viewerBadge}
+            onClick={() => {
+              if (!isMicEnabled) {
+                enableMic().catch(err => {
+                  console.error('Failed to enable mic:', err);
+                  setMicError('Failed to access microphone. Check browser permissions.');
+                });
+              }
+            }}
+            title={!isMicEnabled ? "Click to enable microphone" : "Viewer Mode"}
+          >
+            <span className={styles.viewerIcon}>⧉</span>
+            Viewer{webglUnavailable && ' (Lyrics)'}
+            {!isMicEnabled && !webglUnavailable && <span className={styles.micWarning}> 🎤</span>}
+          </div>
         </div>
       </div>
+
+      {/* Now Playing Footer - matching master view */}
+      {playbackState && (
+        <NowPlayingFooter
+          currentTrack={{
+            name: playbackState.trackName,
+            artistName: playbackState.artistName,
+            albumArt: playbackState.albumArt,
+            duration_ms: playbackState.duration_ms,
+          }}
+          currentProgress={currentTimeMs}
+          queue={queue}
+          isPlaying={isPlaying}
+        />
+      )}
     </div>
   );
 }

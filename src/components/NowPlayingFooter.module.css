@@ -1,0 +1,321 @@
+/* Bottom Controls */
+.bottomControls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  backdrop-filter: blur(9px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 18px;
+  transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottomControls.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.bottomControls.hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.controlsContainer {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.currentSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.queueSection {
+  flex: 0 0 380px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.albumArt {
+  flex-shrink: 0;
+  width: 90px;
+  height: 90px;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.albumArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trackInfoContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.trackInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trackName {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artistName {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeText {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-geist-mono);
+  min-width: 40px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #1db954, #1ed760);
+  border-radius: 3px;
+  transition: width 1s linear, background 0.5s ease;
+  box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+}
+
+.progressFill.nearEnd {
+  background: linear-gradient(90deg, #ff6b35, #ff8c3a);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  animation: pulseFill 1s ease-in-out infinite;
+}
+
+@keyframes pulseFill {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.9);
+  }
+}
+
+.nextUpTimer {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ff6b35;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-family: var(--font-geist-mono);
+  animation: pulseTimer 1s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+@keyframes pulseTimer {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+}
+
+.queueItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.queueItem.upcoming {
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  animation: pulseUpcoming 1s ease-in-out infinite;
+}
+
+@keyframes pulseUpcoming {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(255, 107, 53, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+  }
+}
+
+.queueAlbumArt {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.queueAlbumArt.smaller {
+  width: 24px;
+  height: 24px;
+}
+
+.queueAlbumArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.queueTrackInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.queueTrackName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queueArtistName {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .bottomControls {
+    padding: 16px 20px 24px;
+  }
+
+  .controlsContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .currentSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .albumArt {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    aspect-ratio: 1;
+    align-self: center;
+  }
+
+  .queueSection {
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 0;
+    padding-top: 24px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .trackName {
+    font-size: 20px;
+  }
+
+  .artistName {
+    font-size: 14px;
+  }
+
+  .trackInfoContainer {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .albumArt {
+    max-width: 160px;
+  }
+
+  .trackName {
+    font-size: 18px;
+  }
+
+  .timeText {
+    font-size: 11px;
+    min-width: 35px;
+  }
+
+  .progressBar {
+    height: 4px;
+  }
+}
+
