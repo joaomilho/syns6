@@ -551,6 +551,21 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                     prevInput?.focus();
                   }
                 }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                  if (pastedText.length === 6) {
+                    const newCode = pastedText.split('');
+                    setCodeInput(newCode);
+                    // Auto-connect
+                    const code = newCode.join('');
+                    const peerId = `syns-${code}`;
+                    console.log('🔗 Connecting with code:', code);
+                    hasAttemptedConnection.current = false;
+                    setHostPeerId(peerId);
+                    setShowCodeInput(false);
+                  }
+                }}
                 onFocus={(e) => e.target.select()}
               />
             ))}
@@ -652,6 +667,23 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                   if (e.key === 'Backspace' && !codeInput[index] && index > 0) {
                     const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
                     prevInput?.focus();
+                  }
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                  if (pastedText.length === 6) {
+                    const newCode = pastedText.split('');
+                    setCodeInput(newCode);
+                    // Auto-connect
+                    const code = newCode.join('');
+                    const peerId = `syns-${code}`;
+                    console.log('🔗 Connecting with code:', code);
+                    setConnectionAttempts(0);
+                    setMaxAttemptsReached(false);
+                    hasAttemptedConnection.current = false;
+                    setHostPeerId(peerId);
+                    setShowCodeInput(false);
                   }
                 }}
                 onFocus={(e) => e.target.select()}
@@ -854,6 +886,8 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             isCameraEnabled={isCameraEnabled}
             onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
             onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+            showMic={!webglUnavailable}
+            showCamera={!webglUnavailable}
           />
 
           {/* Visualization Dropdown - allow viewer to override master's viz */}
