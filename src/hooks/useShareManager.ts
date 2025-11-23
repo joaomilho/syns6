@@ -68,6 +68,8 @@ export function useShareManager(): UseShareManagerReturn {
   const hostConnectionRef = useRef<DataConnection | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hostConnectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hostRetryCountRef = useRef<number>(0);
+  const MAX_HOST_RETRIES = 3;
 
   // Start hosting (create peer and accept connections)
   const startHosting = useCallback(() => {
@@ -100,17 +102,49 @@ export function useShareManager(): UseShareManagerReturn {
     
     // Set connection timeout (15 seconds)
     hostConnectionTimeoutRef.current = setTimeout(() => {
-      console.error(`⏱️ [HOST] Connection timeout - failed to connect to PeerJS server`);
-      setConnectionError("Failed to connect to signaling server");
-      if (peerRef.current) {
-        peerRef.current.destroy();
-        peerRef.current = null;
-      }
-      // Clear saved ID so we try a new one next time
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('syns-host-peer-id');
+      const currentRetry = hostRetryCountRef.current;
+      
+      if (currentRetry < MAX_HOST_RETRIES - 1) {
+        // Retry
+        hostRetryCountRef.current++;
+        console.log(`🔄 [HOST] Connection timeout - retrying (${hostRetryCountRef.current}/${MAX_HOST_RETRIES})...`);
+        
+        // Destroy current peer
+        if (peerRef.current) {
+          peerRef.current.destroy();
+          peerRef.current = null;
+        }
+        
+        // Clear saved ID for fresh attempt
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('syns-host-peer-id');
+        }
+        
+        // Retry after short delay
+        setTimeout(() => {
+          startHosting();
+        }, 1000);
+      } else {
+        // Max retries reached
+        console.error(`❌ [HOST] Connection timeout - failed after ${MAX_HOST_RETRIES} attempts`);
+        setConnectionError(`Failed to connect to signaling server after ${MAX_HOST_RETRIES} attempts`);
+        
+        if (peerRef.current) {
+          peerRef.current.destroy();
+          peerRef.current = null;
+        }
+        
+        // Clear saved ID
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('syns-host-peer-id');
+        }
+        
+        // Reset retry count for next manual attempt
+        hostRetryCountRef.current = 0;
       }
     }, 15000);
+    
+    console.log(`🔌 [HOST] Creating PeerJS connection with ID: ${customPeerId}`);
     
     const peer = new Peer(customPeerId, {
       debug: 0,
@@ -126,6 +160,12 @@ export function useShareManager(): UseShareManagerReturn {
         clearTimeout(hostConnectionTimeoutRef.current);
         hostConnectionTimeoutRef.current = null;
       }
+      
+      // Reset retry count on success
+      hostRetryCountRef.current = 0;
+      
+      // Clear any connection errors
+      setConnectionError(null);
     });
 
     peer.on("connection", (conn) => {
@@ -160,17 +200,21 @@ export function useShareManager(): UseShareManagerReturn {
         hostConnectionTimeoutRef.current = null;
       }
       
-      // If peer ID is already taken, clear saved ID and reload
+      // If peer ID is already taken, clear saved ID and retry
       if (err.message?.includes('already taken') || err.message?.includes('unavailable') || err.message?.includes('ID is taken')) {
-        console.log("🔄 [HOST] Peer ID unavailable, clearing and will retry...");
+        console.log("🔄 [HOST] Peer ID unavailable, clearing and retrying...");
         if (typeof window !== 'undefined') {
           localStorage.removeItem('syns-host-peer-id');
         }
-        // Destroy the peer and trigger a retry by reloading
+        // Destroy the peer
         if (peerRef.current) {
           peerRef.current.destroy();
           peerRef.current = null;
         }
+        // Retry with new ID
+        setTimeout(() => {
+          startHosting();
+        }, 500);
       }
     });
 
