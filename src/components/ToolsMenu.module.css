@@ -30,6 +30,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-variation-settings: 'TEXT' 1;
+  -webkit-font-feature-settings: 'TEXT' 1;
+  font-feature-settings: 'TEXT' 1;
+  font-variant: normal;
+  text-rendering: auto;
 }
 
 .toolButton {

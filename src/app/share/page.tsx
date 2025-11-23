@@ -34,7 +34,7 @@ function CenteredMessage({ title, message, children }: PropsWithChildren<{ title
       <div className={styles.message}>
         <h1>{title}</h1>
         <p>{message}</p>
-        
+
         {children}
       </div>
     </div>
@@ -213,13 +213,13 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
     document.documentElement.style.backgroundColor = '#000000';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
-    
+
     // Detect page reloads
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       console.log('🔄 [VIEWER] Page is reloading/closing!');
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     return () => {
       console.log('💀 [VIEWER] SharePageContent unmounting - this should NOT happen during normal operation!');
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -749,24 +749,24 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   if (isConnecting || !shareManager.isViewer) {
     return (
       <CenteredMessage title="Connecting..." message="Establishing connection to host">
-          <button
-            onClick={async () => {
-              // Disconnect from current attempt
-              shareManager.disconnectFromHost();
-              // Clear saved code
-              await clearHostPeerId();
-              // Reset states
-              setHostPeerId(null);
-              setShowCodeInput(true);
-              setConnectionAttempts(0);
-              setMaxAttemptsReached(false);
-              hasAttemptedConnection.current = false;
-            }}
-            className={styles.cancelButton}
-          >
-            Cancel
-          </button>
-        
+        <button
+          onClick={async () => {
+            // Disconnect from current attempt
+            shareManager.disconnectFromHost();
+            // Clear saved code
+            await clearHostPeerId();
+            // Reset states
+            setHostPeerId(null);
+            setShowCodeInput(true);
+            setConnectionAttempts(0);
+            setMaxAttemptsReached(false);
+            hasAttemptedConnection.current = false;
+          }}
+          className={styles.cancelButton}
+        >
+          Cancel
+        </button>
+
       </CenteredMessage>
     );
   }
@@ -782,8 +782,8 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1rem' }}>
           Check console for connection details
         </p>
-        </CenteredMessage>
-      
+      </CenteredMessage>
+
     );
   }
 
@@ -803,14 +803,37 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
       }
     }
 
+    // If before first lyric (currentIndex = -1), show first lyric as "next"
+    if (currentIndex === -1) {
+      return {
+        previous: null,
+        current: null,
+        next: lyrics[0],
+      };
+    }
+
     return {
       previous: currentIndex > 0 ? lyrics[currentIndex - 1] : null,
-      current: currentIndex >= 0 ? lyrics[currentIndex] : null,
-      next: currentIndex >= 0 && currentIndex < lyrics.length - 1 ? lyrics[currentIndex + 1] : null,
+      current: lyrics[currentIndex],
+      next: currentIndex < lyrics.length - 1 ? lyrics[currentIndex + 1] : null,
     };
   };
 
   const lyricLines = getLyricLines();
+
+  // Calculate time until next lyric and show countdown if gap > 10s
+  // Works for first line (when current is null) and between lines
+  const timeUntilNext = lyricLines.next
+    ? lyricLines.next.time - currentTimeMs
+    : 0;
+  // Show countdown if the TOTAL gap is > 10s, but keep showing it even when counting down below 10
+  const gapDuration = lyricLines.next && lyricLines.current
+    ? lyricLines.next.time - lyricLines.current.time
+    : lyricLines.next && !lyricLines.current
+      ? lyricLines.next.time  // For first line, gap is from start to first line
+      : 0;
+  const showCountdown = gapDuration > 10000 && timeUntilNext > 0;
+  const secondsUntilNext = Math.ceil(timeUntilNext / 1000);
 
   // Calculate audio intensity for text scaling (when mic is available in text-only mode)
   const audioIntensity = webglUnavailable && micData?.frequencyData
@@ -841,23 +864,37 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             {lyricLines.previous && (
               <div
                 className={styles.previousLyric}
-                style={{ transform: `scale(${textScale * 0.8})` }}
               >
                 {lyricLines.previous.text}
               </div>
             )}
-            <div
-              className={styles.currentLyric}
-              style={{ transform: `scale(${textScale})` }}
-            >
-              {lyricLines.current?.text || '♪'}
-            </div>
+            {lyricLines.current && (
+              <div
+                className={styles.currentLyric}
+                style={{ transform: `scale(${textScale})` }}
+              >
+                {lyricLines.current.text}
+              </div>
+            )}
+
+
+
             {lyricLines.next && (
               <div
                 className={styles.nextLyric}
-                style={{ transform: `scale(${textScale * 0.8})` }}
+
               >
+                {/* Show countdown if next lyric is more than 10 seconds away */}
+                {showCountdown && (
+                  <div className={styles.lyricCountdown}>
+                    {secondsUntilNext}s
+                  </div>
+                )}
+                <div className={styles.nextLyricText}>
+                    
+                  
                 {lyricLines.next.text}
+                </div>
               </div>
             )}
           </div>
@@ -872,8 +909,8 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           {/* Latency indicator */}
           <div className={styles.latencyIndicator}>
             <span className={`${styles.latencyValue} ${latency < 100 ? styles.latencyGood :
-                latency < 300 ? styles.latencyOk :
-                  styles.latencyBad
+              latency < 300 ? styles.latencyOk :
+                styles.latencyBad
               }`}>
               {latency}ms
             </span>
@@ -945,9 +982,9 @@ function SharePageWrapper() {
   const searchParams = useSearchParams();
   const hostPeerIdParam = searchParams.get("host");
   const textOnlyParam = searchParams.get("textOnly") === "true";
-  
+
   return (
-    <SharePageContent 
+    <SharePageContent
       hostPeerIdParam={hostPeerIdParam}
       textOnlyParam={textOnlyParam}
     />
