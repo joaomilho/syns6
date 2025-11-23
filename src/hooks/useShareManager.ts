@@ -87,7 +87,9 @@ export function useShareManager(): UseShareManagerReturn {
     });
 
     peer.on("open", (id) => {
-      console.log("✅ Host peer ID:", id);
+      console.log("✅ [HOST] Host peer ID:", id);
+      const code = id.replace('syns-', '');
+      console.log(`📱 [HOST] Share Code: ${code}`);
       setPeerId(id);
       setIsHosting(true);
     });
