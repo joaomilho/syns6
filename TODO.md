@@ -19,3 +19,11 @@
     If phone we can amplify, else amplify can be done by calculating the basic input
 [ ] Download lyrics
 [ ] Automate creating visualization screenshots for the menu.
+[ ] Replace PeerJS with Vercel WebSocket signaling
+    Current issue: PeerJS cloud server (0.peerjs.com) has frequent timeouts
+    Solution: Implement custom WebRTC signaling using Vercel's Edge Runtime WebSockets
+    - More reliable than PeerJS cloud
+    - No external dependencies
+    - Full control over signaling logic
+    - Can still use self-hosted PeerJS as fallback
+    Reference: https://vercel.com/docs/functions/edge-functions/websockets

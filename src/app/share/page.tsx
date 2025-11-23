@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense, useCallback } from "react";
+import { useEffect, useState, useRef, Suspense, useCallback, PropsWithChildren } from "react";
 import { useSearchParams } from "next/navigation";
 import { useShareManager } from "@/hooks/useShareManager";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -27,11 +27,26 @@ import { getAllCustomVisualizations, CustomVisualization as CustomVizType } from
 import { loadHostPeerId, saveHostPeerId, clearHostPeerId } from "@/lib/viewerStorage";
 import styles from "./share.module.css";
 
-function SharePageContent() {
-  const searchParams = useSearchParams();
-  const hostPeerIdParam = searchParams.get("host");
-  const textOnlyParam = searchParams.get("textOnly") === "true";
-  
+function CenteredMessage({ title, message, children }: PropsWithChildren<{ title: string, message: string }>) {
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.message}>
+        <h1>{title}</h1>
+        <p>{message}</p>
+        
+        {children}
+      </div>
+    </div>
+  );
+}
+interface SharePageContentProps {
+  hostPeerIdParam: string | null;
+  textOnlyParam: boolean;
+}
+
+function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentProps) {
+
   const shareManager = useShareManager();
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [isConnecting, setIsConnecting] = useState(true);
@@ -43,19 +58,19 @@ function SharePageContent() {
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
   const MAX_CONNECTION_ATTEMPTS = 3;
-  
+
   // Visualization state - allow viewer to override master's visualization
   const [localVisualizationType, setLocalVisualizationType] = useState<VisualizationType | null>(null);
-  
+
   // Code input state
   const [codeInput, setCodeInput] = useState<string[]>(['', '', '', '', '', '']);
   const [showCodeInput, setShowCodeInput] = useState(!hostPeerIdParam);
   const [hostPeerId, setHostPeerId] = useState<string | null>(hostPeerIdParam);
   const [isLoadingSavedConnection, setIsLoadingSavedConnection] = useState(!hostPeerIdParam);
-  
+
   // Use local microphone (each viewer hears music through speakers)
   const { micData, isEnabled: isMicEnabled, enable: enableMic, disable: disableMic, error: micHookError } = useMicrophoneAnalysis();
-  
+
   // Use local camera (viewers can enable their own camera)
   const {
     isEnabled: isCameraEnabled,
@@ -67,6 +82,7 @@ function SharePageContent() {
   // Refs
   const hasAttemptedConnection = useRef(false);
   const hasLoggedRef = useRef(false);
+  const hasLoggedWaitingRef = useRef(false);
 
   // Memoize the WebGL unavailable callback to prevent unnecessary re-renders
   const handleWebGLUnavailable = useCallback(() => {
@@ -81,18 +97,18 @@ function SharePageContent() {
       setWebglChecked(true);
       return;
     }
-    
+
     const checkWebGL = () => {
       try {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl');
-        
+
         if (!gl) {
           setWebglUnavailable(true);
           setWebglChecked(true);
           return;
         }
-        
+
         // Test if we can actually use the context
         try {
           const testGl = gl as WebGLRenderingContext;
@@ -148,7 +164,7 @@ function SharePageContent() {
       shareManager.connectToHost(hostPeerId);
       setIsConnecting(true);
       setConnectionAttempts(prev => prev + 1);
-      
+
       // Save to IndexedDB for auto-reconnect
       saveHostPeerId(hostPeerId).catch(err => {
         console.error('Failed to save host peer ID:', err);
@@ -190,17 +206,27 @@ function SharePageContent() {
     loadCustomViz();
   }, []);
 
-  // Force body to be black
+  // Force body to be black and log lifecycle
   useEffect(() => {
+    console.log('🎬 [VIEWER] SharePageContent mounted');
     document.body.style.backgroundColor = '#000000';
     document.documentElement.style.backgroundColor = '#000000';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    
+    // Detect page reloads
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('🔄 [VIEWER] Page is reloading/closing!');
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
     return () => {
+      console.log('💀 [VIEWER] SharePageContent unmounting - this should NOT happen during normal operation!');
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       document.body.style.backgroundColor = '';
       document.documentElement.style.backgroundColor = '';
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-enable microphone on viewer (for text-only mode audio reactivity and WebGL visualizations)
   useEffect(() => {
@@ -208,20 +234,20 @@ function SharePageContent() {
     if (!webglChecked) {
       return;
     }
-    
+
     // Check if mic access is possible (HTTPS or localhost)
     const checkAndEnableMic = async () => {
       const isHttps = window.location.protocol === 'https:';
-      const isLocalhost = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname === '[::1]';
-      
+      const isLocalhost = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '[::1]';
+
       // If not HTTPS and not localhost, skip mic setup silently
       if (!isHttps && !isLocalhost) {
         console.log('⏭️ Skipping microphone - HTTP context (not localhost)');
         return;
       }
-      
+
       // Check if mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.log('⏭️ Skipping microphone - not supported by browser');
@@ -241,10 +267,10 @@ function SharePageContent() {
 
     checkAndEnableMic();
   }, [isMicEnabled, enableMic, micHookError, webglChecked]);
-  
+
   // Convert received state to component props
   const state = shareManager.viewerState;
-  
+
   // Calculate and update latency
   useEffect(() => {
     if (state?.timestamp) {
@@ -254,7 +280,7 @@ function SharePageContent() {
       setUpdateCount(prev => prev + 1);
     }
   }, [state]);
-  
+
   // Debug: Log received state on first receive
   useEffect(() => {
     if (state && !hasLoggedRef.current) {
@@ -267,7 +293,7 @@ function SharePageContent() {
       hasLoggedRef.current = true;
     }
   }, [state]);
-  
+
   // Extract state values
   const lyrics = state?.lyrics || undefined;
   const playbackState = state?.playbackState;
@@ -275,7 +301,7 @@ function SharePageContent() {
   const isPlaying = playbackState?.is_playing || false;
   // Use local visualization if set, otherwise use master's visualization
   const visualizationType = localVisualizationType || state?.visualizationType || "fftspectrum";
-  
+
   // Adjust current time to compensate for network latency
   // This ensures lyrics appear in sync with what viewer hears through their mic
   const rawCurrentTimeMs = state?.currentTimeMs || 0;
@@ -285,7 +311,7 @@ function SharePageContent() {
   const renderVisualization = () => {
     // Don't render any visualization if WebGL is unavailable
     if (webglUnavailable) return null;
-    
+
     if (!state && !micData) return null;
 
     const vizType = visualizationType;
@@ -294,11 +320,11 @@ function SharePageContent() {
     const customViz = customVisualizations.find((v) => v.id === vizType);
     if (customViz) {
       const isDSL = isDSLFormat(customViz.code);
-      
+
       if (isDSL) {
         try {
           const config = JSON.parse(customViz.code);
-          
+
           // Use compiled version if available
           if (customViz.compiledCode) {
             return (
@@ -312,7 +338,7 @@ function SharePageContent() {
               />
             );
           }
-          
+
           // Fallback to DSL interpreter
           return (
             <DSLVisualization
@@ -483,7 +509,7 @@ function SharePageContent() {
           <p className={styles.codeInputInstructions}>
             Enter the 6-digit code from the host screen
           </p>
-          
+
           <div className={styles.codeInputs}>
             {codeInput.map((digit, index) => (
               <input
@@ -500,13 +526,13 @@ function SharePageContent() {
                     const newCode = [...codeInput];
                     newCode[index] = value;
                     setCodeInput(newCode);
-                    
+
                     // Auto-focus next input
                     if (value && index < 5) {
                       const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
                       nextInput?.focus();
                     }
-                    
+
                     // Auto-connect when all 6 digits entered
                     if (index === 5 && value && newCode.every(d => d)) {
                       const code = newCode.join('');
@@ -529,7 +555,7 @@ function SharePageContent() {
               />
             ))}
           </div>
-          
+
           <button
             className={styles.connectButton}
             disabled={!codeInput.every(d => d)}
@@ -562,10 +588,10 @@ function SharePageContent() {
               The host may be offline or the connection code may have expired.
             </p>
           )}
-          
+
           {/* Show retry button if we still have a host peer ID */}
           {hostPeerId && (
-            <button 
+            <button
               onClick={async () => {
                 setConnectionAttempts(0);
                 setMaxAttemptsReached(false);
@@ -579,12 +605,12 @@ function SharePageContent() {
               Retry Connection
             </button>
           )}
-          
+
           {/* Code input form */}
           <p className={styles.codeInputInstructions}>
             Enter a new 6-digit code
           </p>
-          
+
           <div className={styles.codeInputs}>
             {codeInput.map((digit, index) => (
               <input
@@ -601,13 +627,13 @@ function SharePageContent() {
                     const newCode = [...codeInput];
                     newCode[index] = value;
                     setCodeInput(newCode);
-                    
+
                     // Auto-focus next input
                     if (value && index < 5) {
                       const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
                       nextInput?.focus();
                     }
-                    
+
                     // Auto-connect when all 6 digits entered
                     if (index === 5 && value && newCode.every(d => d)) {
                       const code = newCode.join('');
@@ -632,7 +658,7 @@ function SharePageContent() {
               />
             ))}
           </div>
-          
+
           <button
             className={styles.connectButton}
             disabled={!codeInput.every(d => d)}
@@ -658,10 +684,10 @@ function SharePageContent() {
   // Also skip if not on HTTPS/localhost (mic won't work anyway)
   if (micError && !webglUnavailable) {
     const isHttps = window.location.protocol === 'https:';
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.hostname === '[::1]';
-    
+    const isLocalhost = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '[::1]';
+
     // Only show error if we're in a context where mic should work
     if (isHttps || isLocalhost) {
       return (
@@ -669,8 +695,8 @@ function SharePageContent() {
           <div className={styles.message}>
             <h1>🎤 Microphone Access Required</h1>
             <p style={{ marginBottom: '1rem' }}>{micError}</p>
-            
-            <button 
+
+            <button
               onClick={() => {
                 setMicError(null);
                 enableMic();
@@ -690,12 +716,8 @@ function SharePageContent() {
 
   if (isConnecting || !shareManager.isViewer) {
     return (
-      <div className={styles.container}>
-        <div className={styles.message}>
-          <h1>Connecting...</h1>
-          <p>Establishing connection to host</p>
-          <div className={styles.spinner} />
-          <button 
+      <CenteredMessage title="Connecting..." message="Establishing connection to host">
+          <button
             onClick={async () => {
               // Disconnect from current attempt
               shareManager.disconnectFromHost();
@@ -709,27 +731,27 @@ function SharePageContent() {
               hasAttemptedConnection.current = false;
             }}
             className={styles.cancelButton}
-            style={{ marginTop: '1rem' }}
           >
             Cancel
           </button>
-        </div>
-      </div>
+        
+      </CenteredMessage>
     );
   }
 
   if (!state) {
-    console.log('⏳ [VIEWER] Connected but no state yet. isViewer:', shareManager.isViewer);
+    // Only log once when we first enter "waiting for data" state
+    if (!hasLoggedWaitingRef.current) {
+      console.log('⏳ [VIEWER] Connected but no state yet. isViewer:', shareManager.isViewer);
+      hasLoggedWaitingRef.current = true;
+    }
     return (
-      <div className={styles.container}>
-        <div className={styles.message}>
-          <h1>⏳ Waiting for data...</h1>
-          <p>Connected! Waiting for host to start broadcasting</p>
-          <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1rem' }}>
-            Check console for connection details
-          </p>
-        </div>
-      </div>
+      <CenteredMessage title="Waiting for data..." message="Connected! Waiting for host to start broadcasting" >
+        <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1rem' }}>
+          Check console for connection details
+        </p>
+        </CenteredMessage>
+      
     );
   }
 
@@ -738,7 +760,7 @@ function SharePageContent() {
     if (!lyrics || lyrics.length === 0) {
       return { previous: null, current: null, next: null };
     }
-    
+
     // Find the current line based on currentTimeMs
     let currentIndex = -1;
     for (let i = 0; i < lyrics.length; i++) {
@@ -748,7 +770,7 @@ function SharePageContent() {
         break;
       }
     }
-    
+
     return {
       previous: currentIndex > 0 ? lyrics[currentIndex - 1] : null,
       current: currentIndex >= 0 ? lyrics[currentIndex] : null,
@@ -759,20 +781,20 @@ function SharePageContent() {
   const lyricLines = getLyricLines();
 
   // Calculate audio intensity for text scaling (when mic is available in text-only mode)
-  const audioIntensity = webglUnavailable && micData?.frequencyData 
+  const audioIntensity = webglUnavailable && micData?.frequencyData
     ? (() => {
-        const data = micData.frequencyData;
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) {
-          sum += data[i];
-        }
-        return (sum / data.length) / 255; // Normalize to 0-1
-      })()
+      const data = micData.frequencyData;
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        sum += data[i];
+      }
+      return (sum / data.length) / 255; // Normalize to 0-1
+    })()
     : 0;
 
   // Scale factor: 1.0 to 1.3 based on audio intensity
-  const textScale = webglUnavailable && audioIntensity > 0 
-    ? 1 + (audioIntensity * 0.3) 
+  const textScale = webglUnavailable && audioIntensity > 0
+    ? 1 + (audioIntensity * 0.3)
     : 1;
 
   return (
@@ -785,21 +807,21 @@ function SharePageContent() {
         <div className={styles.lyricsContainer}>
           <div className={styles.lyricsWrapper}>
             {lyricLines.previous && (
-              <div 
+              <div
                 className={styles.previousLyric}
                 style={{ transform: `scale(${textScale * 0.8})` }}
               >
                 {lyricLines.previous.text}
               </div>
             )}
-            <div 
+            <div
               className={styles.currentLyric}
               style={{ transform: `scale(${textScale})` }}
             >
               {lyricLines.current?.text || '♪'}
             </div>
             {lyricLines.next && (
-              <div 
+              <div
                 className={styles.nextLyric}
                 style={{ transform: `scale(${textScale * 0.8})` }}
               >
@@ -813,19 +835,18 @@ function SharePageContent() {
       {/* Top Bar - matching master view */}
       <div className={styles.topBar}>
         <Syns6Logo />
-        
+
         <div className={styles.viewerControls}>
           {/* Latency indicator */}
           <div className={styles.latencyIndicator}>
-            <span className={`${styles.latencyValue} ${
-              latency < 100 ? styles.latencyGood :
-              latency < 300 ? styles.latencyOk :
-              styles.latencyBad
-            }`}>
+            <span className={`${styles.latencyValue} ${latency < 100 ? styles.latencyGood :
+                latency < 300 ? styles.latencyOk :
+                  styles.latencyBad
+              }`}>
               {latency}ms
             </span>
           </div>
-          
+
           {/* Tools Menu - shared component */}
           <ToolsMenu
             isPlaying={playbackState ? playbackState.is_playing : null}
@@ -834,7 +855,7 @@ function SharePageContent() {
             onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
             onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
           />
-          
+
           {/* Visualization Dropdown - allow viewer to override master's viz */}
           {!webglUnavailable && (
             <VisualizationDropdown
@@ -843,7 +864,7 @@ function SharePageContent() {
               customVisualizations={customVisualizations}
             />
           )}
-          
+
           {/* Disconnect button */}
           <button
             className={styles.disconnectButton}
@@ -855,9 +876,9 @@ function SharePageContent() {
           >
             Disconnect
           </button>
-          
+
           {/* Viewer Mode Badge */}
-          <div 
+          <div
             className={styles.viewerBadge}
             title="Viewer Mode"
           >
@@ -886,6 +907,11 @@ function SharePageContent() {
 }
 
 export default function SharePage() {
+  // Read search params OUTSIDE Suspense boundary to prevent re-suspension
+  const searchParams = useSearchParams();
+  const hostPeerIdParam = searchParams.get("host");
+  const textOnlyParam = searchParams.get("textOnly") === "true";
+  
   return (
     <Suspense fallback={
       <div className={styles.container}>
@@ -894,7 +920,10 @@ export default function SharePage() {
         </div>
       </div>
     }>
-      <SharePageContent />
+      <SharePageContent 
+        hostPeerIdParam={hostPeerIdParam}
+        textOnlyParam={textOnlyParam}
+      />
     </Suspense>
   );
 }
