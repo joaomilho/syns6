@@ -18,6 +18,7 @@ interface FFTSpectrumVisualizationProps {
   fps?: number;
   onRowsChange?: (rows: number) => void;
   isLandingPage?: boolean;
+  onWebGLUnavailable?: () => void;
 }
 
 
@@ -359,12 +360,14 @@ export default function FFTSpectrumVisualization({
   currentTimeMs,
   isPlaying,
   fps = 60,
-  isLandingPage=false
+  isLandingPage=false,
+  onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const [rows, setRows] = useState(200);
   
   const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
 
+  // Render the 3D canvas with WebGL
   return (
     <div
       style={{
@@ -381,7 +384,13 @@ export default function FFTSpectrumVisualization({
         style={{
           background: "linear-gradient(to bottom, #000000 0%, #0a0020 100%)",
         }}
-        gl={{ antialias: true }}
+        gl={{ 
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false,
+        }}
+        dpr={[1, 2]}
       >
         {/* Bloom Effect */}
         

@@ -199,15 +199,19 @@ button.secondary {
 
 /* Landing Page Styles */
 .landingPage {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #000000;
   font-family: var(--font-geist-sans);
   padding: 20px;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .backgroundViz {
@@ -420,6 +424,10 @@ button.secondary {
 }
 
 @media (max-width: 600px) {
+  .landingPage {
+    padding: 16px;
+  }
+
   .landingTitle {
     font-size: 48px;
   }
@@ -439,5 +447,9 @@ button.secondary {
   .features {
     flex-direction: column;
     gap: 12px;
+  }
+  
+  .emailForm {
+    padding: 20px;
   }
 }

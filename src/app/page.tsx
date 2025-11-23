@@ -20,15 +20,23 @@ export default function Home() {
     enableMic();
   }, [enableMic]);
 
-  // Force body to be black
+  // Force body to be black and prevent scrolling
   useEffect(() => {
     document.body.style.backgroundColor = '#000000';
     document.documentElement.style.backgroundColor = '#000000';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.body.style.width = '100vw';
     return () => {
       document.body.style.backgroundColor = '';
       document.documentElement.style.backgroundColor = '';
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.height = '';
+      document.body.style.width = '';
     };
   }, []);
 
