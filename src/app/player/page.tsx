@@ -105,14 +105,21 @@ export default function PlayerPage() {
   
   // Start hosting when component mounts
   useEffect(() => {
+    console.log("🎭 [PLAYER] Initializing screen sharing...");
     shareManager.startHosting();
-    console.log("🎭 Started hosting mode for screen sharing");
     
     return () => {
+      console.log("🛑 [PLAYER] Stopping screen sharing");
       shareManager.stopHosting();
-      console.log("🛑 Stopped hosting mode");
     };
   }, []);
+  
+  // Debug: Log when peerId changes
+  useEffect(() => {
+    console.log(`🔑 [PLAYER] Peer ID state:`, shareManager.peerId || 'null');
+    console.log(`📊 [PLAYER] Is hosting:`, shareManager.isHosting);
+    console.log(`👥 [PLAYER] Connected viewers:`, shareManager.connectedViewers);
+  }, [shareManager.peerId, shareManager.isHosting, shareManager.connectedViewers]);
   
   // Broadcast state to viewers (lightweight - only song/lyrics/queue info)
   useEffect(() => {
@@ -975,11 +982,25 @@ export default function PlayerPage() {
 
         <div className={styles.controlGroups}>
         {/* Share QR Code (leftmost) */}
-        {shareManager.peerId && (
+        {shareManager.peerId ? (
           <ShareQRCode 
             peerId={shareManager.peerId}
             connectedViewers={shareManager.connectedViewers}
           />
+        ) : (
+          <div 
+            style={{ 
+              padding: '0.5rem 0.75rem',
+              background: 'rgba(255, 165, 0, 0.1)',
+              border: '1px solid rgba(255, 165, 0, 0.3)',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              opacity: 0.7
+            }}
+            title="Waiting for peer connection to initialize"
+          >
+            📱 Connecting...
+          </div>
         )}
         
         {/* Actions Group */}
