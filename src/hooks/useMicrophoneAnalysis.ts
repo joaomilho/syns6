@@ -45,7 +45,44 @@ export interface MicrophoneData {
   waveform?: Float32Array; // time-domain waveform data for oscilloscope (Float32 like woscope)
   waveformLeft?: Float32Array; // LEFT channel (X-axis) - direct signal
   waveformRight?: Float32Array; // RIGHT channel (Y-axis) - phase-shifted for patterns
+  waveformRightHilbert?: Float32Array; // RIGHT channel (Y-axis) - Hilbert transform (true 90° shift)
   sampleRate?: number;
+}
+
+// Hilbert Transform using FFT-based method
+// Returns the imaginary part (90° phase-shifted version) of the analytic signal
+function hilbertTransform(signal: Float32Array): Float32Array {
+  const N = signal.length;
+  
+  // Simple FFT implementation (using Web Audio OfflineAudioContext for performance)
+  // For real-time, we'll use a simplified approach: conjugate pairs method
+  
+  // Create output buffer
+  const output = new Float32Array(N);
+  
+  // Simple approximation using time-domain convolution with truncated sinc kernel
+  // This is faster than full FFT and works well enough for visualization
+  const kernelSize = 65; // Odd number for symmetric kernel
+  const halfKernel = Math.floor(kernelSize / 2);
+  
+  for (let i = 0; i < N; i++) {
+    let sum = 0;
+    for (let k = -halfKernel; k <= halfKernel; k++) {
+      if (k === 0) continue; // Skip center (would be infinite)
+      
+      const sampleIdx = i + k;
+      if (sampleIdx >= 0 && sampleIdx < N) {
+        // Hilbert transform kernel: h(n) = 2/(π*n) for odd n, 0 for even n
+        if (k % 2 !== 0) {
+          const h = 2.0 / (Math.PI * k);
+          sum += signal[sampleIdx] * h;
+        }
+      }
+    }
+    output[i] = sum;
+  }
+  
+  return output;
 }
 
 export function useMicrophoneAnalysis() {
@@ -164,14 +201,19 @@ export function useMicrophoneAnalysis() {
           const timeData = timeDataArrayRef.current;
           const bufferLength = freqData.length;
           
-          // Create pseudo-stereo for X-Y oscilloscope using phase shift
-          // Left (X) = direct signal, Right (Y) = quarter-cycle phase shift
+          // Create pseudo-stereo for X-Y oscilloscope
+          // Left (X) = direct signal
           const timeDataLeft = new Float32Array(timeData);
+          
+          // Right (Y) - Simple phase shift (fast but approximate)
           const timeDataRight = new Float32Array(timeData.length);
           const phaseShift = Math.floor(timeData.length / 4);
           for (let i = 0; i < timeData.length; i++) {
             timeDataRight[i] = timeData[(i + phaseShift) % timeData.length];
           }
+          
+          // Right (Y) - Hilbert transform (slower but accurate 90° phase shift)
+          const timeDataRightHilbert = hilbertTransform(timeData);
 
           // === STEP 1: Calculate RMS (Root Mean Square) for true volume ===
           let rmsSum = 0;
@@ -364,7 +406,8 @@ export function useMicrophoneAnalysis() {
             frequencyData: new Uint8Array(freqData),
             waveform: new Float32Array(timeData), // Float32Array like woscope
             waveformLeft: new Float32Array(timeDataLeft), // LEFT channel (X-axis) - direct
-            waveformRight: new Float32Array(timeDataRight), // RIGHT channel (Y-axis) - phase-shifted
+            waveformRight: new Float32Array(timeDataRight), // RIGHT channel (Y-axis) - simple phase shift
+            waveformRightHilbert: new Float32Array(timeDataRightHilbert), // RIGHT channel (Y-axis) - Hilbert transform
             sampleRate: audioContextRef.current?.sampleRate,
           });
 

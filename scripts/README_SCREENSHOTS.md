@@ -26,11 +26,24 @@ npm run dev
 
 ## Usage
 
+### Capture All Visualizations
+
 Run the screenshot capture script:
 
 ```bash
 npm run capture-screenshots
 ```
+
+### Capture a Single Visualization
+
+To capture only one visualization (faster for testing):
+
+```bash
+npm run capture-screenshots oscilloscope
+```
+
+Available visualization IDs:
+- `fftspectrum`, `particles`, `fractal`, `psychedelic`, `waves`, `animated`, `spectrum3d`, `wavespectrum`, `camera`, `youtube`, `debug`, `oscilloscope`
 
 This will:
 1. Check if dev server is running
