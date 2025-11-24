@@ -65,7 +65,7 @@ void main() {
 // Fragment shader - woscope style with Gaussian antialiasing
 const fragmentShader = `
 precision highp float;
-#define EPS 1E-6
+#define EPS 0.0001
 #define SQRT2 1.4142135623730951
 
 uniform float uSize;
@@ -90,8 +90,8 @@ void main() {
   float sigma = uSize / 4.0;
   
   if (len < EPS) {
-    // Short segment: calculate intensity at position
-    alpha = exp(-pow(length(xy), 2.0) / (2.0 * sigma * sigma)) / 2.0 / sqrt(uSize);
+    // Very short segment: skip rendering to avoid dots
+    alpha = 0.0;
   } else {
     // Normal segment: use analytical integral for smooth antialiasing
     alpha = erf((len - xy.x) / SQRT2 / sigma) + erf(xy.x / SQRT2 / sigma);
@@ -441,24 +441,23 @@ export default function OscilloscopeVisualization({
     if (waveform && waveform.length > 0) {
       // Use real waveform data - X/Y mode (Lissajous patterns)
       const numSegments = nSamples - 1;
-      const amplification = 3.0;
       
       for (let i = 0; i < numSegments; i++) {
         // Get X from waveform for start point
         const idx1 = Math.floor((i / nSamples) * waveform.length);
-        // Get Y from phase-shifted waveform
+        // Get Y from phase-shifted waveform (quarter phase shift for X-Y mode)
         const idx2 = Math.floor(((i + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
         
-        // Convert 0-255 to -1 to 1, then AMPLIFY by 3x for visibility
-        const x = (waveform[idx1] / 127.5 - 1) * scale * amplification;
-        const y = (waveform[idx2] / 127.5 - 1) * scale * amplification;
+        // waveform is already Float32Array in -1 to 1 range (like woscope)
+        const x = waveform[idx1] * scale;
+        const y = waveform[idx2] * scale;
         
         // Get end point (next sample)
         const nextI = i + 1;
         const nextIdx1 = Math.floor((nextI / nSamples) * waveform.length);
         const nextIdx2 = Math.floor(((nextI + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
-        const nextX = (waveform[nextIdx1] / 127.5 - 1) * scale * amplification;
-        const nextY = (waveform[nextIdx2] / 127.5 - 1) * scale * amplification;
+        const nextX = waveform[nextIdx1] * scale;
+        const nextY = waveform[nextIdx2] * scale;
         
         // Set all 4 vertices of the quad to the same start/end positions
         const vi = i * 4;
