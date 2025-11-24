@@ -15,6 +15,7 @@ interface Lyrics3DProps {
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
+  reducedEmissive?: boolean; // Reduce emissive intensity to avoid excessive bloom
 }
 
 /**
@@ -66,6 +67,7 @@ function LyricText3D({
   showCountdown,
   countdownSeconds,
   micData,
+  reducedEmissive,
 }: {
   text: string;
   position: [number, number, number];
@@ -77,6 +79,7 @@ function LyricText3D({
   showCountdown?: boolean;
   countdownSeconds?: number;
   micData?: MicrophoneData;
+  reducedEmissive?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const targetScaleRef = useRef(1);
@@ -156,7 +159,9 @@ function LyricText3D({
             color={color === "#000000" ? "#000000" : color}
             emissive={color === "#000000" ? "#000000" : color}
             emissiveIntensity={
-              color === "#000000" ? 0 : isCurrent ? 1.9 : isPast ? 0.9 : 0.7
+              color === "#000000" ? 0 : reducedEmissive 
+                ? (isCurrent ? 0.6 : isPast ? 0.3 : 0.2)
+                : (isCurrent ? 1.9 : isPast ? 0.9 : 0.7)
             }
             transparent
             opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
@@ -184,7 +189,7 @@ function LyricText3D({
           <meshStandardMaterial
             color="#ffffff"
             emissive="#ffffff"
-            emissiveIntensity={1.5}
+            emissiveIntensity={reducedEmissive ? 0.5 : 1.5}
             transparent
             opacity={1.0}
             side={THREE.DoubleSide}
@@ -205,6 +210,7 @@ export default function Lyrics3D({
   font,
   color = "#1ed760",
   micData,
+  reducedEmissive = false,
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -257,7 +263,7 @@ export default function Lyrics3D({
           <meshStandardMaterial
             color="#ff3333"
             emissive="#ff3333"
-            emissiveIntensity={0.8}
+            emissiveIntensity={reducedEmissive ? 0.4 : 0.8}
             transparent
             opacity={0.9}
           />
@@ -320,6 +326,7 @@ export default function Lyrics3D({
             showCountdown={showCountdown}
             countdownSeconds={countdownSeconds}
             micData={micData}
+            reducedEmissive={reducedEmissive}
           />
         );
       })}

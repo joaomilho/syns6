@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
@@ -16,7 +16,6 @@ interface FFTSpectrumVisualizationProps {
   currentTimeMs?: number;
   isPlaying?: boolean;
   fps?: number;
-  isLandingPage?: boolean;
   onWebGLUnavailable?: () => void;
 }
 
@@ -25,14 +24,12 @@ function FFTSpectrumPlanes({
   micData, 
   fps = 60,
   bassIntensity,
-  isLandingPage,
   rows
 
 }: { 
   micData?: MicrophoneData; 
   fps?: number;
   bassIntensity?: number;
-  isLandingPage?: boolean;
   rows: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -326,7 +323,6 @@ export default function FFTSpectrumVisualization({
   currentTimeMs,
   isPlaying,
   fps = 60,
-  isLandingPage=false,
   onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
@@ -348,9 +344,6 @@ export default function FFTSpectrumVisualization({
         }}
         dpr={[1, 2]}
       >
-        {/* Bloom Effect */}
-        
-        
         {/* Orbit Controls */}
         <OrbitControls
           enableDamping
@@ -365,22 +358,10 @@ export default function FFTSpectrumVisualization({
           rotation={[0.3, Math.PI, 0]}
           scale={[-1.5, 1.5, 1.5]}
         >
-          {isLandingPage && (
-            <EffectComposer>
-              <Bloom 
-                intensity={Math.pow(bassIntensity*10,3)}
-                luminanceThreshold={0}
-                luminanceSmoothing={1.8}
-                radius={0.3}
-              />
-            </EffectComposer>
-          )}
-          
           <FFTSpectrumPlanes 
             micData={micData} 
             fps={fps} 
             bassIntensity={bassIntensity} 
-            isLandingPage={isLandingPage}
             rows={rows}
           />
         
@@ -401,10 +382,21 @@ export default function FFTSpectrumVisualization({
             isPlaying={isPlaying || false}
             syncedData={null}
             micData={micData}
+            reducedEmissive={true}
           />
           
           
         )}
+        
+        {/* Bloom Effect - ALWAYS active */}
+        <EffectComposer>
+          <Bloom 
+            intensity={Math.pow(bassIntensity*10,3)}
+            luminanceThreshold={0}
+            luminanceSmoothing={1.8}
+            radius={0.3}
+          />
+        </EffectComposer>
       </Canvas>
       
     
