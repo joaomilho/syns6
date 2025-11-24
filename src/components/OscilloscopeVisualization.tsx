@@ -424,6 +424,8 @@ export default function OscilloscopeVisualization({
     // Use ref to get current micData (not closed-over value)
     const currentMicData = micDataRef.current;
     const waveform = currentMicData?.waveform;
+    const waveformLeft = currentMicData?.waveformLeft; // X-axis (woscope style)
+    const waveformRight = currentMicData?.waveformRight; // Y-axis (woscope style)
     const bass = currentMicData?.bass || 0;
     const energy = currentMicData?.energy || 0;
     const volume = currentMicData?.volume || 0;
@@ -438,26 +440,23 @@ export default function OscilloscopeVisualization({
     
     updateWaveformRef.current++;
 
-    if (waveform && waveform.length > 0) {
-      // Use real waveform data - X/Y mode (Lissajous patterns)
+    if (waveformLeft && waveformRight && waveformLeft.length > 0 && waveformRight.length > 0) {
+      // Use STEREO waveform data - X/Y mode (woscope style)
+      // LEFT channel = X-axis, RIGHT channel = Y-axis
       const numSegments = nSamples - 1;
       
       for (let i = 0; i < numSegments; i++) {
-        // Get X from waveform for start point
-        const idx1 = Math.floor((i / nSamples) * waveform.length);
-        // Get Y from phase-shifted waveform (quarter phase shift for X-Y mode)
-        const idx2 = Math.floor(((i + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
+        // Get X from LEFT channel, Y from RIGHT channel
+        const idx = Math.floor((i / nSamples) * waveformLeft.length);
         
         // waveform is already Float32Array in -1 to 1 range (like woscope)
-        const x = waveform[idx1] * scale;
-        const y = waveform[idx2] * scale;
+        const x = waveformLeft[idx] * scale;
+        const y = waveformRight[idx] * scale;
         
         // Get end point (next sample)
-        const nextI = i + 1;
-        const nextIdx1 = Math.floor((nextI / nSamples) * waveform.length);
-        const nextIdx2 = Math.floor(((nextI + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
-        const nextX = waveform[nextIdx1] * scale;
-        const nextY = waveform[nextIdx2] * scale;
+        const nextIdx = Math.floor(((i + 1) / nSamples) * waveformLeft.length);
+        const nextX = waveformLeft[nextIdx] * scale;
+        const nextY = waveformRight[nextIdx] * scale;
         
         // Set all 4 vertices of the quad to the same start/end positions
         const vi = i * 4;
