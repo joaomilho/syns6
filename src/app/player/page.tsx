@@ -8,6 +8,7 @@ import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
 import { useCamera } from "@/hooks/useCamera";
 import { useFPS } from "@/hooks/useFPS";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
@@ -86,6 +87,7 @@ export default function PlayerPage() {
     videoElement,
   } = useCamera();
   const hue = useHueLights();
+  const wakeLock = useWakeLock();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
