@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import Lyrics3D from "./Lyrics3D";
 import { LyricLine } from "@/lib/lyrics";
+import { MarchingCubes } from "@/lib/MarchingCubes";
 
 interface AnimatedSceneVisualizationProps {
   micData: {
@@ -20,137 +22,196 @@ interface AnimatedSceneVisualizationProps {
   isPlaying?: boolean;
 }
 
-// Metaball-like blob that morphs with music
-function MorphingBlob({
-  position,
-  index,
-  group,
+// Physics-based particle system for blobs
+interface Particle {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+}
+
+// Morphing blobs using Marching Cubes algorithm with physics
+function MorphingBlobs({
   micData,
 }: {
-  position: [number, number, number];
-  index: number;
-  group: number;
   micData: AnimatedSceneVisualizationProps["micData"];
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [color] = useState(() => {
-    const hue = (index / 24) % 1;
-    return new THREE.Color().setHSL(hue, 0.8, 0.5);
-  });
+  const effectRef = useRef<MarchingCubes | null>(null);
+  const timeRef = useRef(0);
+  const particlesRef = useRef<Particle[]>([]);
 
-  useFrame((state) => {
-    if (!meshRef.current) return;
+  // Initialize marching cubes with premium GLOWING material
+  const material = useMemo(() => {
+    // Create a MeshPhysicalMaterial for advanced effects
+    return new THREE.MeshPhysicalMaterial({
+      color: 0xff6644, // Warm orange-red
+      roughness: 0.2,
+      metalness: 0.8,
+      emissive: 0xff3300,
+      emissiveIntensity: 2.0,
+      clearcoat: 1.0, // Glass-like coating
+      clearcoatRoughness: 0.1,
+      reflectivity: 1.0,
+      ior: 1.5, // Index of refraction
+      thickness: 1.0,
+      transmission: 0.0, // Adjust for transparency
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+  }, []);
 
-    const time = state.clock.getElapsedTime();
+  useFrame((state, delta) => {
+    if (!effectRef.current) {
+      // Initialize on first frame with HIGHER RESOLUTION
+      const resolution = 36; // Increased from 28 for better quality
+      const effect = new MarchingCubes(resolution, material, false, false, 100000);
+      effect.position.set(0, -5, -12);
+      effect.scale.set(25, 25, 25);
+      effect.isolation = 80;
+      effectRef.current = effect;
+      state.scene.add(effect);
+
+      // Initialize particles inside the main blob - they'll get kicked out by bass
+      const numParticles = 25; // Good number for lava lamp effect
+      particlesRef.current = Array.from({ length: numParticles }, () => {
+        // Start particles inside/near the center blob
+        const angle1 = Math.random() * Math.PI * 2;
+        const angle2 = Math.random() * Math.PI;
+        const radius = 0.08 + Math.random() * 0.12; // Tighter starting positions
+        
+        const x = 0.5 + Math.cos(angle1) * Math.sin(angle2) * radius;
+        const y = 0.5 + Math.sin(angle1) * Math.sin(angle2) * radius;
+        const z = 0.5 + Math.cos(angle2) * radius;
+        
+        // Very gentle initial velocity - let bass do the kicking
+        return {
+          x, y, z,
+          vx: (Math.random() - 0.5) * 0.005,
+          vy: (Math.random() - 0.5) * 0.005,
+          vz: (Math.random() - 0.5) * 0.005,
+        };
+      });
+    }
+
+    const effect = effectRef.current;
     const energy = micData?.energy || 0;
     const bass = micData?.bass || 0;
     const mid = micData?.mid || 0;
 
-    // Tighter orbit so blobs can intersect
-    const radius = 16 + Math.sin(time * 0.5 + index) * 2;
-    const localIndex = index % 8;
-    const angle = time * 0.3 + localIndex * ((Math.PI * 2) / 8);
+    // Update time
+    timeRef.current += delta * 0.5;
+    const time = timeRef.current;
 
-    // Different orbit planes for each group
-    if (group === 0) {
-      // Horizontal orbit (XZ plane)
-      meshRef.current.position.x = Math.cos(angle) * radius;
-      meshRef.current.position.y = -12 + Math.sin(time * 0.7 + index * 0.5) * 6;
-      meshRef.current.position.z = -12 + Math.sin(angle) * radius;
-    } else if (group === 1) {
-      // Vertical orbit (XY plane)
-      meshRef.current.position.x = Math.cos(angle) * radius;
-      meshRef.current.position.y = -12 + Math.sin(angle) * radius;
-      meshRef.current.position.z = -12 + Math.sin(time * 0.7 + index * 0.5) * 6;
-    } else {
-      // Diagonal orbit (YZ plane)
-      meshRef.current.position.x = -12 + Math.sin(time * 0.7 + index * 0.5) * 6;
-      meshRef.current.position.y = -12 + Math.cos(angle) * radius;
-      meshRef.current.position.z = -12 + Math.sin(angle) * radius;
+    // Reset the field
+    effect.reset();
+
+    // Add large central ball that PULSES with BASS - creates pressure on small blobs
+    const centralStrength = 6.0 + bass * 10.0 + energy * 1.5;
+    const centralSubtract = 2;
+    effect.addBall(0.5, 0.5, 0.5, centralStrength, centralSubtract);
+
+    // Physics constants for BASS-REACTIVE LAVA LAMP effect
+    const centerX = 0.5, centerY = 0.5, centerZ = 0.5;
+    const gravityStrength = 0.25; // Constant gentle pull towards center
+    const repulsionStrength = bass * 3 ; // BASS KICKS THEM OUT!
+    const repulsionDistance = 0.22 + bass * 0.1; // Larger repulsion zone when bass hits
+    const damping = 0.995; // Less friction for smoother movement
+    const maxSpeed = 0.05 + bass * 0.08; // Faster movement when bass hits
+
+    // Update particle physics
+    const particles = particlesRef.current;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+
+      // Calculate distance from center
+      const dx = centerX - p.x;
+      const dy = centerY - p.y;
+      const dz = centerZ - p.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+      if (dist > 0.001) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const nz = dz / dist;
+
+        // Gravity force (gentle pull towards center)
+        const gravityForce = gravityStrength * delta;
+        p.vx += nx * gravityForce;
+        p.vy += ny * gravityForce;
+        p.vz += nz * gravityForce;
+
+        // BASS-DRIVEN Repulsion force - kicks blobs out!
+        if (dist < repulsionDistance) {
+          // Exponential repulsion - bass makes it explosive
+          const proximityFactor = Math.pow(1 - dist / repulsionDistance, 2);
+          const repulsionForce = repulsionStrength * proximityFactor * delta * 5.0;
+          p.vx -= nx * repulsionForce;
+          p.vy -= ny * repulsionForce;
+          p.vz -= nz * repulsionForce;
+        }
+      }
+
+      // Subtle random perturbations for organic movement
+      p.vx += (Math.random() - 0.5) * 0.0003;
+      p.vy += (Math.random() - 0.5) * 0.0003;
+      p.vz += (Math.random() - 0.5) * 0.0003;
+
+      // Apply damping
+      p.vx *= damping;
+      p.vy *= damping;
+      p.vz *= damping;
+
+      // Limit speed
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz);
+      if (speed > maxSpeed) {
+        const scale = maxSpeed / speed;
+        p.vx *= scale;
+        p.vy *= scale;
+        p.vz *= scale;
+      }
+
+      // Update position
+      p.x += p.vx;
+      p.y += p.vy;
+      p.z += p.vz;
+
+      // Keep particles in bounds [0.05, 0.95] with gentle bounce
+      if (p.x < 0.05) { p.x = 0.05; p.vx *= -0.7; }
+      if (p.x > 0.95) { p.x = 0.95; p.vx *= -0.7; }
+      if (p.y < 0.05) { p.y = 0.05; p.vy *= -0.7; }
+      if (p.y > 0.95) { p.y = 0.95; p.vy *= -0.7; }
+      if (p.z < 0.05) { p.z = 0.05; p.vz *= -0.7; }
+      if (p.z > 0.95) { p.z = 0.95; p.vz *= -0.7; }
+
+      // Add particle to marching cubes (visible but small)
+      const strength = 0.6;
+      const subtract = 14;
+      effect.addBall(p.x, p.y, p.z, strength, subtract);
     }
 
-    // Scale with music
-    const scale = 0.3 + bass * 0.4 + mid * 0.2;
-    meshRef.current.scale.setScalar(scale);
+    // Update the mesh
+    effect.update();
 
-    // Rotate
-    meshRef.current.rotation.x += 0.01 + energy * 0.02;
-    meshRef.current.rotation.y += 0.01 + energy * 0.02;
+    // Update material with beautiful color cycling and balanced glow
+    const hue = (time * 0.1 + energy * 0.3) % 1;
+    
+    // Use warmer, more saturated colors
+    material.color.setHSL(hue, 0.9, 0.5 + energy * 0.1);
+    material.emissive.setHSL(hue, 1.0, 0.4 + energy * 0.3);
+    material.emissiveIntensity = 1.2 + energy * 1.5 + bass * 0.8;
+    
+    // Dynamic surface properties for interesting reflections
+    material.roughness = 0.15 + Math.sin(time * 0.5) * 0.05;
+    material.metalness = 0.8 + Math.cos(time * 0.3) * 0.1;
+    
+    // Clearcoat creates a glass-like shine
+    material.clearcoat = 0.9 + energy * 0.1;
+    material.clearcoatRoughness = 0.1 - energy * 0.05;
   });
 
-  return (
-    <mesh ref={meshRef} position={position}>
-      <icosahedronGeometry args={[3, 4]} />
-      <MeshDistortMaterial
-        color={color}
-        attach="material"
-        distort={0.4}
-        speed={2}
-        roughness={0.1}
-        metalness={1.0}
-      />
-    </mesh>
-  );
-}
-
-// Central pulsing core
-function CentralCore({
-  micData,
-}: {
-  micData: AnimatedSceneVisualizationProps["micData"];
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const pointLightRef = useRef<THREE.PointLight>(null);
-
-  useFrame((state) => {
-    if (!meshRef.current) return;
-
-    const time = state.clock.getElapsedTime();
-    const energy = micData?.energy || 0;
-    const bass = micData?.bass || 0;
-
-    // Pulse with music
-    const scale = 1 + bass * 0.8 + energy * 0.3;
-    meshRef.current.scale.setScalar(scale);
-
-    // Rotate slowly
-    meshRef.current.rotation.x = time * 0.2;
-    meshRef.current.rotation.y = time * 0.3;
-
-    // Change color with energy
-    const material = meshRef.current.material as THREE.MeshStandardMaterial;
-    const hue = (time * 0.1 + energy * 0.5) % 1;
-    material.color.setHSL(hue, 0.8, 0.5);
-    material.emissive.setHSL(hue, 0.8, 0.3);
-
-    // Emissive intensity based on energy
-    material.emissiveIntensity = 0.5 + energy * 0.5;
-
-    // Update point light at sphere center
-    if (pointLightRef.current) {
-      pointLightRef.current.color.setHSL(hue, 1.0, 0.5);
-      pointLightRef.current.intensity = 100 + energy * 100;
-    }
-  });
-
-  return (
-    <group position={[0, 0, -12]}>
-      <mesh ref={meshRef}>
-        <icosahedronGeometry args={[12, 3]} />
-        <meshStandardMaterial
-          metalness={0.9}
-          roughness={0.1}
-          emissiveIntensity={0.5}
-        />
-      </mesh>
-      <pointLight
-        ref={pointLightRef}
-        position={[0, 0, 0]}
-        intensity={10}
-        decay={2}
-      />
-    </group>
-  );
+  return null;
 }
 
 // Lighting that reacts to music
@@ -160,11 +221,13 @@ function Lighting({
   micData: AnimatedSceneVisualizationProps["micData"];
 }) {
   const pointLightRef = useRef<THREE.PointLight>(null);
+  const centralLightRef = useRef<THREE.PointLight>(null);
   const spotLightRef = useRef<THREE.SpotLight>(null);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
     const energy = micData?.energy || 0;
+    const bass = micData?.bass || 0;
     const treble = micData?.treble || 0;
 
     if (pointLightRef.current) {
@@ -178,6 +241,13 @@ function Lighting({
       pointLightRef.current.color.setHSL(hue, 0.8, 0.6);
     }
 
+    // Central light that gives the main blob its luminosity - BRIGHTER with music
+    if (centralLightRef.current) {
+      const hue = (time * 0.1 + energy * 0.3) % 1;
+      centralLightRef.current.color.setHSL(hue, 1.0, 0.5);
+      centralLightRef.current.intensity = 150 + bass * 150 + energy * 100; // Much brighter!
+    }
+
     if (spotLightRef.current) {
       spotLightRef.current.intensity = 1 + treble * 2;
     }
@@ -186,12 +256,43 @@ function Lighting({
   return (
     <>
       <ambientLight intensity={0.4} />
+      <directionalLight position={[0.5, 0.5, 1]} intensity={2.5} color="#ffffff" />
+      
+      {/* Orbiting colored light for interesting reflections */}
       <pointLight
         ref={pointLightRef}
         position={[0, 15, 0]}
         intensity={3}
         distance={60}
+        decay={2}
       />
+      
+      {/* Strong central light to make the main blob luminous */}
+      <pointLight
+        ref={centralLightRef}
+        position={[0, -5, -12]}
+        intensity={150}
+        color="#ff7c00"
+        decay={2}
+        distance={100}
+      />
+      
+      {/* Additional accent lights for better material definition */}
+      <pointLight
+        position={[-20, -5, -12]}
+        intensity={2}
+        color="#00ffff"
+        decay={2}
+        distance={50}
+      />
+      <pointLight
+        position={[20, -5, -12]}
+        intensity={2}
+        color="#ff00ff"
+        decay={2}
+        distance={50}
+      />
+      
       <spotLight
         ref={spotLightRef}
         position={[30, 30, 30]}
@@ -210,34 +311,13 @@ export default function AnimatedSceneVisualization({
   currentTimeMs,
   isPlaying,
 }: AnimatedSceneVisualizationProps) {
-  // Create multiple groups of blobs orbiting in different directions
-  const blobGroups = useMemo(() => {
-    return [
-      // Group 1: Horizontal orbit (XZ plane)
-      ...Array.from({ length: 8 }, (_, i) => ({
-        position: [0, 0, 0] as [number, number, number],
-        index: i,
-        group: 0,
-      })),
-      // Group 2: Vertical orbit (XY plane)
-      ...Array.from({ length: 8 }, (_, i) => ({
-        position: [0, 0, 0] as [number, number, number],
-        index: i + 8,
-        group: 1,
-      })),
-      // Group 3: Diagonal orbit (YZ plane)
-      ...Array.from({ length: 8 }, (_, i) => ({
-        position: [0, 0, 0] as [number, number, number],
-        index: i + 16,
-        group: 2,
-      })),
-    ];
-  }, []);
+  // Calculate bloom intensity based on music - subtle glow
+  const bloomIntensity = 0.9 + (micData?.energy || 0) * 1.0 + (micData?.bass || 0) * 1.8;
 
   return (
     <Canvas shadows camera={{ position: [0, 0, 30], fov: 75 }}>
       <OrbitControls
-        target={[0, 0, 0]}
+        target={[0, -5, -12]}
         enablePan={false}
         enableDamping
         dampingFactor={0.05}
@@ -250,19 +330,8 @@ export default function AnimatedSceneVisualization({
 
       <Lighting micData={micData} />
 
-      {/* Central core */}
-      <CentralCore micData={micData} />
-
-      {/* Orbiting blobs in multiple groups */}
-      {blobGroups.map((blob) => (
-        <MorphingBlob
-          key={blob.index}
-          position={blob.position}
-          index={blob.index}
-          group={blob.group}
-          micData={micData}
-        />
-      ))}
+      {/* Morphing blobs using marching cubes - includes central sphere */}
+      <MorphingBlobs micData={micData} />
 
       {/* 3D Lyrics */}
       {lyrics && lyrics.length > 0 && (
@@ -274,6 +343,17 @@ export default function AnimatedSceneVisualization({
           micData={undefined}
         />
       )}
+
+      {/* Post-processing for refined GLOW effect */}
+      <EffectComposer>
+        <Bloom 
+          intensity={bloomIntensity}
+          luminanceThreshold={0.4}
+          luminanceSmoothing={0.7}
+          radius={0.8}
+          levels={6}
+        />
+      </EffectComposer>
     </Canvas>
   );
 }

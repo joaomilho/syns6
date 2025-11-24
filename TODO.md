@@ -30,3 +30,5 @@
     - Can still use self-hosted PeerJS as fallback
     Reference: https://vercel.com/docs/functions/edge-functions/websockets
 [ ] Verify why some lyrics are not loading, eg Texas BigXtahPlug
+[ ] 2 mics
+    Figure how to have 2 ins on mac, so we can capture Spotify and then an external mic for proper karaoke.
