@@ -13,46 +13,96 @@ interface OscilloscopeVisualizationProps {
   fps?: number;
 }
 
-// Vertex shader - creates thick lines by offsetting vertices perpendicular to line direction
+// Vertex shader - woscope style with quads and tangent extension
 const vertexShader = `
 precision highp float;
-
-attribute float aIdx;
-attribute vec2 aStart;
-attribute vec2 aEnd;
+#define EPS 1E-6
 
 uniform float uInvert;
 uniform float uSize;
 
-varying float vIntensity;
+attribute vec2 aStart, aEnd;
+attribute float aIdx;
+
+varying vec4 uvl;
+varying float vLen;
 
 void main() {
-  vec2 diff = aEnd - aStart;
-  float len = length(diff);
+  float tang;
+  vec2 current;
   
-  // Handle zero-length segments
-  vec2 dir = len > 0.0001 ? diff / len : vec2(1.0, 0.0);
-  vec2 normal = vec2(-dir.y, dir.x) * uSize;
+  // Determine position from quad index (0-3)
+  float idx = mod(aIdx, 4.0);
+  if (idx >= 2.0) {
+    current = aEnd;
+    tang = 1.0;
+  } else {
+    current = aStart;
+    tang = -1.0;
+  }
   
-  // Offset vertices perpendicular to create thick line
-  vec2 pos = aStart + normal * (aIdx * 2.0 - 1.0);
+  float side = (mod(idx, 2.0) - 0.5) * 2.0;
+  uvl.xy = vec2(tang, side);
+  uvl.w = floor(aIdx / 4.0 + 0.5);
   
-  vIntensity = 1.0;
+  vec2 dir = aEnd - aStart;
+  uvl.z = length(dir);
+  
+  if (uvl.z > EPS) {
+    dir = dir / uvl.z;
+  } else {
+    // If segment is too short, draw a square
+    dir = vec2(1.0, 0.0);
+  }
+  
+  vec2 norm = vec2(-dir.y, dir.x);
+  vec2 pos = current + (tang * dir + norm * side) * uSize;
+  
   gl_Position = vec4(pos.x, pos.y * uInvert, 0.0, 1.0);
 }
 `;
 
-// Fragment shader - simple color output
+// Fragment shader - woscope style with Gaussian antialiasing
 const fragmentShader = `
-precision mediump float;
+precision highp float;
+#define EPS 1E-6
+#define SQRT2 1.4142135623730951
 
-uniform vec4 uColor;
+uniform float uSize;
 uniform float uIntensity;
+uniform vec4 uColor;
 
-varying float vIntensity;
+varying vec4 uvl;
+
+// Error function approximation for Gaussian integration
+float erf(float x) {
+  float s = sign(x), a = abs(x);
+  x = 1.0 + (0.278393 + (0.230389 + (0.000972 + 0.078108 * a) * a) * a) * a;
+  x *= x;
+  return s - s / (x * x);
+}
 
 void main() {
-  gl_FragColor = uColor * uIntensity * vIntensity;
+  float len = uvl.z;
+  vec2 xy = vec2((len/2.0 + uSize) * uvl.x + len/2.0, uSize * uvl.y);
+  float alpha;
+  
+  float sigma = uSize / 4.0;
+  
+  if (len < EPS) {
+    // Short segment: calculate intensity at position
+    alpha = exp(-pow(length(xy), 2.0) / (2.0 * sigma * sigma)) / 2.0 / sqrt(uSize);
+  } else {
+    // Normal segment: use analytical integral for smooth antialiasing
+    alpha = erf((len - xy.x) / SQRT2 / sigma) + erf(xy.x / SQRT2 / sigma);
+    alpha *= exp(-xy.y * xy.y / (2.0 * sigma * sigma)) / 2.0 / len * uSize;
+  }
+  
+  // Afterglow effect (fade older segments)
+  float afterglow = smoothstep(0.0, 0.33, uvl.w / 2048.0);
+  alpha *= afterglow * uIntensity;
+  
+  gl_FragColor = vec4(vec3(uColor), uColor.a * alpha);
 }
 `;
 
@@ -133,59 +183,57 @@ export default function OscilloscopeVisualization({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // Create geometry
+    // Create geometry - WOSCOPE STYLE with 4 vertices per segment
     const geometry = new THREE.BufferGeometry();
     
-    // Number of vertices: 2 per sample point (for the quad)
-    const numVertices = nSamples * 2;
+    const numSegments = nSamples - 1;
+    const numVertices = numSegments * 4; // 4 vertices per quad
     
-    // aIdx attribute: 0 or 1 for each vertex (which side of the line)
+    // aIdx attribute: 0-3 for quad vertices, plus segment index for afterglow
     const idxArray = new Float32Array(numVertices);
-    for (let i = 0; i < nSamples; i++) {
-      idxArray[i * 2 + 0] = 0.0;
-      idxArray[i * 2 + 1] = 1.0;
+    for (let i = 0; i < numSegments; i++) {
+      const base = i * 4;
+      idxArray[base + 0] = i * 4 + 0;
+      idxArray[base + 1] = i * 4 + 1;
+      idxArray[base + 2] = i * 4 + 2;
+      idxArray[base + 3] = i * 4 + 3;
     }
     
     // aStart and aEnd attributes: positions (will be updated each frame)
     const startArray = new Float32Array(numVertices * 2);
     const endArray = new Float32Array(numVertices * 2);
     
-    // Initialize with a circle
-    for (let i = 0; i < nSamples; i++) {
+    // Initialize with a circle - one quad per segment
+    for (let i = 0; i < numSegments; i++) {
       const angle = (i / nSamples) * Math.PI * 2;
       const x = Math.cos(angle) * 0.5;
       const y = Math.sin(angle) * 0.5;
       
-      // Both vertices of this sample get the same start position
-      startArray[(i * 2 + 0) * 2 + 0] = x;
-      startArray[(i * 2 + 0) * 2 + 1] = y;
-      startArray[(i * 2 + 1) * 2 + 0] = x;
-      startArray[(i * 2 + 1) * 2 + 1] = y;
-      
-      // End position (next point)
-      const nextI = (i + 1) % nSamples;
-      const nextAngle = (nextI / nSamples) * Math.PI * 2;
+      const nextAngle = ((i + 1) / nSamples) * Math.PI * 2;
       const nextX = Math.cos(nextAngle) * 0.5;
       const nextY = Math.sin(nextAngle) * 0.5;
       
-      endArray[(i * 2 + 0) * 2 + 0] = nextX;
-      endArray[(i * 2 + 0) * 2 + 1] = nextY;
-      endArray[(i * 2 + 1) * 2 + 0] = nextX;
-      endArray[(i * 2 + 1) * 2 + 1] = nextY;
+      // All 4 vertices of the quad get the same start and end positions
+      const base = i * 4;
+      for (let j = 0; j < 4; j++) {
+        startArray[(base + j) * 2 + 0] = x;
+        startArray[(base + j) * 2 + 1] = y;
+        endArray[(base + j) * 2 + 0] = nextX;
+        endArray[(base + j) * 2 + 1] = nextY;
+      }
     }
     
     // Index buffer: create triangles for quads
-    const indices = new Uint16Array((nSamples - 1) * 6);
-    for (let i = 0; i < nSamples - 1; i++) {
-      const vi = i * 2;
+    const indices = new Uint16Array(numSegments * 6);
+    for (let i = 0; i < numSegments; i++) {
+      const vi = i * 4;
       const idx = i * 6;
       
-      // First triangle
+      // Two triangles forming a quad
       indices[idx + 0] = vi + 0;
       indices[idx + 1] = vi + 1;
       indices[idx + 2] = vi + 2;
       
-      // Second triangle
       indices[idx + 3] = vi + 1;
       indices[idx + 4] = vi + 3;
       indices[idx + 5] = vi + 2;
@@ -260,7 +308,8 @@ export default function OscilloscopeVisualization({
     console.log('📝 Vertex shader length:', vertexShader.length);
     console.log('📝 Fragment shader length:', fragmentShader.length);
 
-    console.log('✅ Oscilloscope initialized:', {
+    console.log('✅ Oscilloscope initialized (woscope style):', {
+      segments: numSegments,
       vertices: numVertices,
       triangles: indices.length / 3,
       samples: nSamples,
@@ -391,52 +440,53 @@ export default function OscilloscopeVisualization({
 
     if (waveform && waveform.length > 0) {
       // Use real waveform data - X/Y mode (Lissajous patterns)
+      const numSegments = nSamples - 1;
+      const amplification = 3.0;
       
-      for (let i = 0; i < nSamples; i++) {
-        // Get X from waveform
+      for (let i = 0; i < numSegments; i++) {
+        // Get X from waveform for start point
         const idx1 = Math.floor((i / nSamples) * waveform.length);
         // Get Y from phase-shifted waveform
         const idx2 = Math.floor(((i + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
         
         // Convert 0-255 to -1 to 1, then AMPLIFY by 3x for visibility
-        const amplification = 3.0;
         const x = (waveform[idx1] / 127.5 - 1) * scale * amplification;
         const y = (waveform[idx2] / 127.5 - 1) * scale * amplification;
         
-        // Set start position for both vertices
-        const vi = i * 2;
-        startAttr.setXY(vi + 0, x, y);
-        startAttr.setXY(vi + 1, x, y);
-        
-        // Set end position (next point)
-        const nextI = (i + 1) % nSamples;
+        // Get end point (next sample)
+        const nextI = i + 1;
         const nextIdx1 = Math.floor((nextI / nSamples) * waveform.length);
         const nextIdx2 = Math.floor(((nextI + nSamples / 4) / nSamples) * waveform.length) % waveform.length;
+        const nextX = (waveform[nextIdx1] / 127.5 - 1) * scale * amplification;
+        const nextY = (waveform[nextIdx2] / 127.5 - 1) * scale * amplification;
         
-        const nextX = (waveform[nextIdx1] / 127.5 - 1) * scale;
-        const nextY = (waveform[nextIdx2] / 127.5 - 1) * scale;
-        
-        endAttr.setXY(vi + 0, nextX, nextY);
-        endAttr.setXY(vi + 1, nextX, nextY);
+        // Set all 4 vertices of the quad to the same start/end positions
+        const vi = i * 4;
+        for (let j = 0; j < 4; j++) {
+          startAttr.setXY(vi + j, x, y);
+          endAttr.setXY(vi + j, nextX, nextY);
+        }
       }
     } else {
       // Animated Lissajous curve fallback
-      for (let i = 0; i < nSamples; i++) {
+      const numSegments = nSamples - 1;
+      
+      for (let i = 0; i < numSegments; i++) {
         const t = (i / nSamples) * Math.PI * 2;
         const x = Math.sin(t * 3 + time * 0.5) * scale;
         const y = Math.sin(t * 2 + time * 0.3) * scale;
         
-        const vi = i * 2;
-        startAttr.setXY(vi + 0, x, y);
-        startAttr.setXY(vi + 1, x, y);
-        
-        const nextI = (i + 1) % nSamples;
+        const nextI = i + 1;
         const nextT = (nextI / nSamples) * Math.PI * 2;
         const nextX = Math.sin(nextT * 3 + time * 0.5) * scale;
         const nextY = Math.sin(nextT * 2 + time * 0.3) * scale;
         
-        endAttr.setXY(vi + 0, nextX, nextY);
-        endAttr.setXY(vi + 1, nextX, nextY);
+        // Set all 4 vertices of the quad
+        const vi = i * 4;
+        for (let j = 0; j < 4; j++) {
+          startAttr.setXY(vi + j, x, y);
+          endAttr.setXY(vi + j, nextX, nextY);
+        }
       }
     }
     
