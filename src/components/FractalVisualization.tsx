@@ -122,21 +122,8 @@ function MandelbrotPlane({
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   
   // Dynamic iterations based on FPS
-  const [maxIterations, setMaxIterations] = React.useState(128);
   
-  React.useEffect(() => {
-    if (fps <= 0) return;
-    
-    // Adjust iterations based on FPS
-    if (fps < 30) {
-      setMaxIterations(64); // Low detail
-      console.log(`⬇️ FPS low (${fps.toFixed(1)}), reducing fractal detail: 64 iterations`);
-    } else if (fps < 45) {
-      setMaxIterations(128); // Medium detail
-    } else if (fps > 55) {
-      setMaxIterations(256); // High detail
-    }
-  }, [fps]);
+  
 
   // Famous Mandelbrot locations with infinite detail and mini-mandelbrots
   const interestingLocations = useMemo(
@@ -159,17 +146,12 @@ function MandelbrotPlane({
       center: { value: new THREE.Vector2(-0.7463, 0.1102) },
       micEnergy: { value: 0 },
       micBass: { value: 0 },
-      maxIterations: { value: 128 },
+      maxIterations: { value: 36 },
     }),
     []
   );
   
   // Update maxIterations uniform when it changes
-  React.useEffect(() => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.maxIterations.value = maxIterations;
-    }
-  }, [maxIterations]);
 
   useFrame((state) => {
     if (!materialRef.current) return;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signIn } from "next-auth/react";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -102,7 +102,6 @@ export default function PlayerPage() {
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [useCompiledMode, setUseCompiledMode] = useState(true); // Performance mode toggle
   const fps = useFPS();
-  const [fftRows, setFftRows] = useState<number>(200); // Track FFT visualization rows
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
   const hasStartedHosting = useRef(false); // Track if we've already called startHosting
   const [webglAvailable, setWebglAvailable] = useState(true);
@@ -959,7 +958,6 @@ export default function PlayerPage() {
           currentTimeMs={currentProgress}
           isPlaying={playbackState?.is_playing || false}
           fps={fps}
-          onRowsChange={setFftRows}
         />
         );
       case "oscilloscope":
@@ -1223,12 +1221,6 @@ export default function PlayerPage() {
           <span className={styles.statLabel}>FPS</span>
           <span className={styles.statValue}>{fps}</span>
         </div>
-        {visualizationType === "fftspectrum" && (
-          <div className={styles.statItem}>
-            <span className={styles.statLabel}>Rows</span>
-            <span className={styles.statValue}>{fftRows}</span>
-          </div>
-        )}
         {(() => {
           const customViz = customVisualizations.find((v) => v.id === visualizationType);
           const isDSL = customViz && isDSLFormat(customViz.code);
