@@ -9,7 +9,7 @@ import Lyrics3D from "./Lyrics3D";
 import { LyricLine } from "@/lib/lyrics";
 import { MarchingCubes } from "@/lib/MarchingCubes";
 
-interface AnimatedSceneVisualizationProps {
+interface LavaLampVisualizationProps {
   micData: {
     energy: number;
     bass: number;
@@ -33,10 +33,10 @@ interface Particle {
 }
 
 // Morphing blobs using Marching Cubes algorithm with physics
-function MorphingBlobs({
+function LavaLampBlobs({
   micData,
 }: {
-  micData: AnimatedSceneVisualizationProps["micData"];
+  micData: LavaLampVisualizationProps["micData"];
 }) {
   const effectRef = useRef<MarchingCubes | null>(null);
   const timeRef = useRef(0);
@@ -229,10 +229,10 @@ function MorphingBlobs({
 }
 
 // Lighting that reacts to music
-function Lighting({
+function LavaLampLighting({
   micData,
 }: {
-  micData: AnimatedSceneVisualizationProps["micData"];
+  micData: LavaLampVisualizationProps["micData"];
 }) {
   const pointLightRef = useRef<THREE.PointLight>(null);
   const centralLightRef = useRef<THREE.PointLight>(null);
@@ -319,12 +319,12 @@ function Lighting({
   );
 }
 
-export default function AnimatedSceneVisualization({
+export default function LavaLampVisualization({
   micData,
   lyrics,
   currentTimeMs,
   isPlaying,
-}: AnimatedSceneVisualizationProps) {
+}: LavaLampVisualizationProps) {
   // Calculate bloom intensity based on music - subtle glow
   const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
 
@@ -342,12 +342,12 @@ export default function AnimatedSceneVisualization({
       <color attach="background" args={["#050505"]} />
       <fog attach="fog" args={["#050505", 15, 60]} />
 
-      <Lighting micData={micData} />
+      <LavaLampLighting micData={micData} />
 
       {/* Morphing blobs using marching cubes - includes central sphere */}
-      <MorphingBlobs micData={micData} />
+      <LavaLampBlobs micData={micData} />
 
-      {/* 3D Lyrics */}
+      {/* 3D Lyrics - positioned forward */}
       {lyrics && lyrics.length > 0 && (
         <Lyrics3D
           lyrics={lyrics}
@@ -355,6 +355,7 @@ export default function AnimatedSceneVisualization({
           isPlaying={isPlaying || false}
           syncedData={null}
           micData={undefined}
+          position={[0, 3, 8.2]}
         />
       )}
 
@@ -373,3 +374,4 @@ export default function AnimatedSceneVisualization({
     </Canvas>
   );
 }
+

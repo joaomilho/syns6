@@ -85,8 +85,8 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   },
   {
     id: "animated",
-    name: "Morphing Blobs",
-    icon: "◉",
+    name: "Lava Lamp",
+    icon: "⦿",
     thumbnail: "/viz-thumbnails/animated.png",
     assets: {
       static: "/viz-thumbnails/animated.png",
