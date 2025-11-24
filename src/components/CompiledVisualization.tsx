@@ -222,8 +222,29 @@ export default function CompiledVisualization({
 
     // Cleanup
     return () => {
+      console.log('[perf] 🧹 CompiledVisualization unmounting, disposing resources');
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
+
+      // Dispose of scene objects (geometries and materials)
+      if (sceneRef.current) {
+        sceneRef.current.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            if (object.geometry) {
+              object.geometry.dispose();
+            }
+            if (Array.isArray(object.material)) {
+              object.material.forEach((material) => material.dispose());
+            } else if (object.material) {
+              object.material.dispose();
+            }
+          }
+        });
+        // Clear all children
+        while (sceneRef.current.children.length > 0) {
+          sceneRef.current.remove(sceneRef.current.children[0]);
+        }
+      }
 
       if (controlsRef.current) {
         controlsRef.current.dispose();
@@ -233,6 +254,14 @@ export default function CompiledVisualization({
       if (rendererRef.current) {
         const canvas = rendererRef.current.domElement;
         rendererRef.current.dispose();
+        // Force WebGL context loss
+        const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
+        if (gl) {
+          const loseContext = gl.getExtension('WEBGL_lose_context');
+          if (loseContext) {
+            loseContext.loseContext();
+          }
+        }
         // Forcefully remove the canvas from DOM
         if (canvas && canvas.parentNode) {
           canvas.parentNode.removeChild(canvas);
@@ -245,6 +274,11 @@ export default function CompiledVisualization({
         while (containerRef.current.firstChild) {
           containerRef.current.removeChild(containerRef.current.firstChild);
         }
+      }
+      
+      // Clear scene userData to release references
+      if (sceneRef.current) {
+        sceneRef.current.userData = {};
       }
       
       sceneRef.current = null;

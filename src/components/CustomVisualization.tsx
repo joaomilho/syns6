@@ -227,20 +227,57 @@ export default function CustomVisualization({
 
     // Cleanup
     return () => {
+      console.log('[perf] 🧹 CustomVisualization unmounting, disposing resources');
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
 
+      // Dispose of scene objects (geometries and materials)
+      if (sceneRef.current) {
+        sceneRef.current.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            if (object.geometry) {
+              object.geometry.dispose();
+            }
+            if (Array.isArray(object.material)) {
+              object.material.forEach((material) => material.dispose());
+            } else if (object.material) {
+              object.material.dispose();
+            }
+          }
+        });
+        // Clear all children
+        while (sceneRef.current.children.length > 0) {
+          sceneRef.current.remove(sceneRef.current.children[0]);
+        }
+        // Clear userData to release references
+        sceneRef.current.userData = {};
+      }
+
       if (controlsRef.current) {
         controlsRef.current.dispose();
+        controlsRef.current = null;
       }
 
       if (rendererRef.current) {
+        const canvas = rendererRef.current.domElement;
         rendererRef.current.dispose();
+        // Force WebGL context loss
+        const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
+        if (gl) {
+          const loseContext = gl.getExtension('WEBGL_lose_context');
+          if (loseContext) {
+            loseContext.loseContext();
+          }
+        }
+        rendererRef.current = null;
       }
 
       if (containerRef.current && containerRef.current.firstChild) {
         containerRef.current.removeChild(containerRef.current.firstChild);
       }
+      
+      sceneRef.current = null;
+      cameraRef.current = null;
     };
   }, [code]);
 
