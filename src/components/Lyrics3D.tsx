@@ -16,6 +16,7 @@ interface Lyrics3DProps {
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
   reducedEmissive?: boolean; // Reduce emissive intensity to avoid excessive bloom
+  position?: [number, number, number]; // Optional position override, defaults to [0, 3, 0]
 }
 
 /**
@@ -211,6 +212,7 @@ export default function Lyrics3D({
   color = "#1ed760",
   micData,
   reducedEmissive = false,
+  position = [0, 3, 0],
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -248,7 +250,7 @@ export default function Lyrics3D({
   // If no lyrics, show "Lyrics not found" message
   if (!lyrics || lyrics.length === 0) {
     return (
-      <group position={[0, 3, 0]}>
+      <group position={position}>
         <Text
           position={[0, 0, 5]}
           fontSize={2}
@@ -273,7 +275,7 @@ export default function Lyrics3D({
   }
 
   return (
-    <group ref={groupRef} position={[0, 3, 0]}>
+    <group ref={groupRef} position={position}>
       {visibleLines.map(({ line, index, isAdjacent }, i) => {
         const isPast = index < currentIndex;
         const offset = index - currentIndex;

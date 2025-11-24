@@ -8,7 +8,7 @@ import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
-import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization";
+import LavaLampVisualization from "@/components/LavaLampVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
@@ -215,7 +215,7 @@ export default function ScreenshotPage() {
         );
       case "animated":
         return (
-          <AnimatedSceneVisualization
+          <LavaLampVisualization
             isPlaying={true}
             lyrics={mockLyrics}
             currentTimeMs={currentTime}
