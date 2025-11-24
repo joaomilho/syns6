@@ -42,7 +42,7 @@ export interface MicrophoneData {
   instruments: InstrumentLevels; // instrument detection
   // Raw spectrum data for visualization
   frequencyData?: Uint8Array;
-  waveform?: Uint8Array; // time-domain waveform data for oscilloscope
+  waveform?: Float32Array; // time-domain waveform data for oscilloscope (Float32 like woscope)
   sampleRate?: number;
 }
 
@@ -86,7 +86,7 @@ export function useMicrophoneAnalysis() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
-  const timeDataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const timeDataArrayRef = useRef<Float32Array<ArrayBuffer> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const previousVolumeRef = useRef(0);
   const previousEnergyRef = useRef<number[]>([]);
@@ -140,7 +140,7 @@ export function useMicrophoneAnalysis() {
         audioContextRef.current = audioContext;
         analyserRef.current = analyser;
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-        timeDataArrayRef.current = new Uint8Array(analyser.fftSize);
+        timeDataArrayRef.current = new Float32Array(analyser.fftSize); // Float32 for woscope compatibility
 
         // Start analysis loop
         const analyze = () => {
@@ -153,7 +153,7 @@ export function useMicrophoneAnalysis() {
 
           // Get both frequency and time domain data
           analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-          analyserRef.current.getByteTimeDomainData(timeDataArrayRef.current);
+          analyserRef.current.getFloatTimeDomainData(timeDataArrayRef.current);
 
           const freqData = dataArrayRef.current;
           const timeData = timeDataArrayRef.current;
@@ -348,7 +348,7 @@ export function useMicrophoneAnalysis() {
             },
             // Include raw frequency data for visualization
             frequencyData: new Uint8Array(freqData),
-            waveform: new Uint8Array(timeData),
+            waveform: new Float32Array(timeData), // Float32Array like woscope
             sampleRate: audioContextRef.current?.sampleRate,
           });
 
