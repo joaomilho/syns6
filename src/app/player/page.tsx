@@ -17,6 +17,7 @@ import AnimatedSceneVisualization from "@/components/AnimatedSceneVisualization"
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
+import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
@@ -300,6 +301,7 @@ export default function PlayerPage() {
         "animated",
         "spectrum3d",
         "wavespectrum",
+        "oscilloscope",
         "camera",
         "youtube",
       ];
@@ -956,6 +958,17 @@ export default function PlayerPage() {
           isPlaying={playbackState?.is_playing || false}
           fps={fps}
           onRowsChange={setFftRows}
+        />
+        );
+      case "oscilloscope":
+        return (
+        <OscilloscopeVisualization
+            key="oscilloscope"
+          micData={micData}
+          lyrics={lyrics || noTrackLyrics}
+          currentTimeMs={currentProgress}
+          isPlaying={playbackState?.is_playing || false}
+          fps={fps}
         />
         );
       case "camera":

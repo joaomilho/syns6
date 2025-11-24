@@ -15,6 +15,7 @@ export type VisualizationType =
   | "spectrum3d"
   | "wavespectrum"
   | "fftspectrum"
+  | "oscilloscope"
   | "camera"
   | "debug"
   | string; // Allow custom IDs
@@ -110,6 +111,16 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/wavespectrum.png",
       animated: "/viz-thumbnails/wavespectrum.webp",
+    },
+  },
+  {
+    id: "oscilloscope",
+    name: "Oscilloscope X-Y",
+    icon: "◉",
+    thumbnail: "/viz-thumbnails/oscilloscope.png",
+    assets: {
+      static: "/viz-thumbnails/oscilloscope.png",
+      animated: "/viz-thumbnails/oscilloscope.webp",
     },
   },
   {
