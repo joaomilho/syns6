@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Syns - Music Visualization",
-  description: "Spotify-powered music visualization with synced lyrics",
+  title: "syns6",
+  description: "Neon-soaked bass-pounding karaoke machine",
 };
 
 export default function RootLayout({

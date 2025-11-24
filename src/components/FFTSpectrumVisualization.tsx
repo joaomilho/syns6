@@ -16,130 +16,72 @@ interface FFTSpectrumVisualizationProps {
   currentTimeMs?: number;
   isPlaying?: boolean;
   fps?: number;
-  onRowsChange?: (rows: number) => void;
   isLandingPage?: boolean;
   onWebGLUnavailable?: () => void;
 }
 
 
-/**
- * Calculate target row count based on FPS
- * Goal: Maintain 60 FPS
- * - If FPS < 60: Reduce rows to improve performance
- * - If FPS >= 60: Can increase rows (up to 800 max)
- */
-function calculateTargetRows(fps: number, currentRows: number): number {
-  const TARGET_FPS = 60;
-  const MIN_ROWS = 100;
-  const MAX_ROWS = 800;
-  
-  if (fps >= TARGET_FPS) {
-    // FPS is good, we can increase rows towards maximum
-    // Gradually increase based on how much above 60 we are
-    const excessFPS = fps - TARGET_FPS;
-    const maxIncrease = Math.min(MAX_ROWS - currentRows, excessFPS * 10); // 10 rows per FPS above 60
-    return Math.min(MAX_ROWS, currentRows + maxIncrease);
-  } else {
-    // FPS is below target, REDUCE rows to improve performance
-    // Reduce more aggressively the further below 60 we are
-    const fpsDeficit = TARGET_FPS - fps;
-    const reductionFactor = fpsDeficit / TARGET_FPS; // 0 to 1, how far below target
-    const reduction = Math.max(50, currentRows * reductionFactor * 0.3); // Reduce by up to 30% of current
-    return Math.max(MIN_ROWS, currentRows - reduction);
-  }
-}
-
 function FFTSpectrumPlanes({ 
   micData, 
   fps = 60,
-  onRowsChange,
   bassIntensity,
-  isLandingPage
+  isLandingPage,
+  rows
 
 }: { 
   micData?: MicrophoneData; 
   fps?: number;
-  onRowsChange?: (rows: number) => void;
   bassIntensity?: number;
   isLandingPage?: boolean;
+  rows: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  
-  // Dynamic row count based on FPS - start with low rows that work well
-  const [rows, setRows] = useState(200); // Start low (user confirmed 100-200 works at 60fps)
-  
-  // Notify parent when rows change
-  useEffect(() => {
-    onRowsChange?.(rows);
-  }, [rows, onRowsChange]);
-  
-  // Track FPS history for stable averaging (avoid reacting to temporary spikes/drops)
-  const fpsHistory = useRef<number[]>([]);
-  const lastRowChangeTime = useRef<number>(0);
-  const isChangingRows = useRef<boolean>(false);
-  
-  // Update rows based on FPS with debouncing and averaging
-  useEffect(() => {
-    if (fps <= 0) return;
-    
-    // Add to history (keep last 5 seconds of FPS readings)
-    fpsHistory.current.push(fps);
-    if (fpsHistory.current.length > 5) {
-      fpsHistory.current.shift();
-    }
-    
-    // Only proceed if we have enough history and haven't changed recently
-    const now = Date.now();
-    const timeSinceLastChange = now - lastRowChangeTime.current;
-    const minTimeBetweenChanges = 3000; // Wait at least 3 seconds between changes
-    
-    if (fpsHistory.current.length < 3 || timeSinceLastChange < minTimeBetweenChanges) {
-      return; // Not enough data or too soon after last change
-    }
-    
-    // Calculate average FPS over history
-    const avgFPS = fpsHistory.current.reduce((a, b) => a + b, 0) / fpsHistory.current.length;
-    
-    // Calculate target rows based on FPS
-    // If FPS < 60: reduce rows, if FPS >= 60: can increase rows
-    const targetRows = isLandingPage ? 100 : calculateTargetRows(avgFPS, rows);
-    const rowDiff = Math.abs(targetRows - rows);
-    
-    // Only change if difference is substantial (at least 100 rows) and sustained
-    // This prevents constant recreation which causes the performance issue
-    // Be more aggressive when reducing (FPS < 60) - reduce even with smaller differences
-    const minDiff = avgFPS < 60 ? 50 : 150;
-    if (rowDiff >= minDiff && !isChangingRows.current) {
-      isChangingRows.current = true;
-      lastRowChangeTime.current = now;
-      
-      // Update rows
-      setRows(targetRows);
-      
-      // Reset flag after a delay (mesh recreation takes time)
-      setTimeout(() => {
-        isChangingRows.current = false;
-      }, 1000);
-    }
-  }, [fps, rows]);
   
   // Reuse objects outside useFrame to avoid allocations every frame
   const dummy = useRef(new THREE.Object3D());
   const tempColor = useRef(new THREE.Color());
+  const silentFrequencyData = useRef(new Uint8Array(512).fill(0)); // Reuse silent data
+  const currentFrequencies = useRef<number[]>(new Array(64).fill(0)); // Reuse frequency array
 
   // Grid configuration - similar to the original project
   const cols = 64; // Number of frequency bars
   const spacingX = 0.45;
   const spacingZ = 0.5;
 
+  // Store previous meshes for cleanup
+  const prevInstancedMeshes = useRef<{
+    mesh: THREE.InstancedMesh;
+    baseColor: THREE.Color;
+    col: number;
+  }[]>([]);
+  const prevGeometry = useRef<THREE.CylinderGeometry | null>(null);
+
   // Create instanced mesh for thick lines using cylinders
   const { cylinderGeometry, instancedMeshes } = useMemo(() => {
+    // Dispose previous meshes before creating new ones
+    if (prevInstancedMeshes.current.length > 0) {
+      console.log(`[perf] 🧹 Disposing ${prevInstancedMeshes.current.length} old instanced meshes`);
+      prevInstancedMeshes.current.forEach(({ mesh }) => {
+        if (mesh.material instanceof THREE.Material) {
+          mesh.material.dispose();
+        }
+        // Note: geometry is shared and disposed separately
+      });
+      prevInstancedMeshes.current = [];
+    }
+    
+    if (prevGeometry.current) {
+      prevGeometry.current.dispose();
+      prevGeometry.current = null;
+    }
+
     const sampleRate = 48000;
     const nyquist = sampleRate / 2;
     const binsPerBar = 1024 / cols;
 
     // Create a cylinder geometry for line segments (rotated to be vertical)
     const cylGeo = new THREE.CylinderGeometry(0.03, 0.03, 1, 8);
+    prevGeometry.current = cylGeo;
 
     // Create one instanced mesh per column
     const meshes: {
@@ -171,8 +113,11 @@ function FFTSpectrumPlanes({
         b = 1; // Blue
       }
 
+      // Reuse single Color object instead of creating two
+      const baseColor = new THREE.Color(r, g, b);
+      
       const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(r, g, b),
+        color: baseColor,
         transparent: true,
       });
 
@@ -184,13 +129,35 @@ function FFTSpectrumPlanes({
 
       meshes.push({
         mesh: instancedMesh,
-        baseColor: new THREE.Color(r, g, b),
+        baseColor: baseColor, // Reuse same Color object
         col,
       });
     }
 
+    // Store for next cleanup
+    prevInstancedMeshes.current = meshes;
+
     return { cylinderGeometry: cylGeo, instancedMeshes: meshes };
   }, [cols, rows, spacingX, spacingZ]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('[perf] 🧹 FFTSpectrumPlanes unmounting, disposing resources');
+      if (prevInstancedMeshes.current.length > 0) {
+        prevInstancedMeshes.current.forEach(({ mesh }) => {
+          if (mesh.material instanceof THREE.Material) {
+            mesh.material.dispose();
+          }
+        });
+        prevInstancedMeshes.current = [];
+      }
+      if (prevGeometry.current) {
+        prevGeometry.current.dispose();
+        prevGeometry.current = null;
+      }
+    };
+  }, []);
 
   // Store frequency history for wave effect
   const frequencyHistory = useRef<number[][]>([]);
@@ -228,8 +195,8 @@ function FFTSpectrumPlanes({
   useFrame(() => {
     if (!groupRef.current) return;
 
-    // Use silent mic data if no mic is available
-    const frequencyData = micData?.frequencyData || new Uint8Array(512).fill(0);
+    // Use silent mic data if no mic is available (REUSE, don't allocate!)
+    const frequencyData = micData?.frequencyData || silentFrequencyData.current;
     const binsPerBar = Math.floor(frequencyData.length / cols);
 
     // Calculate bass intensity using shared helper
@@ -254,8 +221,8 @@ function FFTSpectrumPlanes({
       groupRef.current.rotation.z *= 0.85;
     }
 
-    // Calculate current frequency values for all columns
-    const currentFrequencies: number[] = [];
+    // Calculate current frequency values for all columns (REUSE array!)
+    const currentFreqs = currentFrequencies.current;
     for (let col = 0; col < cols; col++) {
       let sum = 0;
       const startBin = col * binsPerBar;
@@ -265,13 +232,12 @@ function FFTSpectrumPlanes({
         sum += frequencyData[j];
       }
       const avgValue = sum / (endBin - startBin);
-      currentFrequencies.push(avgValue / 255);
+      currentFreqs[col] = avgValue / 255;
     }
 
     // Add current frequencies to history (newest at front)
-    // Note: unshift is O(n) but necessary for correct ordering
-    // Could be optimized with circular buffer, but this works for now
-    frequencyHistory.current.unshift(currentFrequencies);
+    // Clone the array since we're reusing currentFreqs
+    frequencyHistory.current.unshift([...currentFreqs]);
     if (frequencyHistory.current.length > maxHistoryLength) {
       frequencyHistory.current.pop(); // Remove oldest
     }
@@ -363,22 +329,12 @@ export default function FFTSpectrumVisualization({
   isLandingPage=false,
   onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
-  const [rows, setRows] = useState(200);
-  
+  const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
 
   // Render the 3D canvas with WebGL
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        zIndex: 0,
-      }}
-    >
+    
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
         style={{
@@ -420,7 +376,13 @@ export default function FFTSpectrumVisualization({
             </EffectComposer>
           )}
           
-          <FFTSpectrumPlanes micData={micData} fps={fps} onRowsChange={setRows} bassIntensity={bassIntensity} isLandingPage={isLandingPage} />
+          <FFTSpectrumPlanes 
+            micData={micData} 
+            fps={fps} 
+            bassIntensity={bassIntensity} 
+            isLandingPage={isLandingPage}
+            rows={rows}
+          />
         
         
           {/* Grid floor */}
@@ -444,6 +406,7 @@ export default function FFTSpectrumVisualization({
           
         )}
       </Canvas>
-    </div>
+      
+    
   );
 }
