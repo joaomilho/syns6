@@ -67,7 +67,7 @@ function MorphingBlobs({
       // Initialize on first frame with HIGHER RESOLUTION
       const resolution = 36; // Increased from 28 for better quality
       const effect = new MarchingCubes(resolution, material, false, false, 100000);
-      effect.position.set(0, -5, -12);
+      effect.position.set(0, -5, -20); // Moved further back to avoid lyrics
       effect.scale.set(25, 25, 25);
       effect.isolation = 80;
       effectRef.current = effect;
@@ -114,9 +114,9 @@ function MorphingBlobs({
 
     // Physics constants for BASS-REACTIVE LAVA LAMP effect
     const centerX = 0.5, centerY = 0.5, centerZ = 0.5;
-    const gravityStrength = 0.25; // Constant gentle pull towards center
-    const repulsionStrength = bass * 3 ; // BASS KICKS THEM OUT!
-    const repulsionDistance = 0.22 + bass * 0.1; // Larger repulsion zone when bass hits
+    const gravityStrength = 0.36; // Constant gentle pull towards center
+    const repulsionStrength = bass * 4 ; // BASS KICKS THEM OUT!
+    const repulsionDistance = 0.16 + bass * 0.16; // Larger repulsion zone when bass hits
     const damping = 0.995; // Less friction for smoother movement
     const maxSpeed = 0.05 + bass * 0.08; // Faster movement when bass hits
 
@@ -185,9 +185,20 @@ function MorphingBlobs({
       if (p.z < 0.05) { p.z = 0.05; p.vz *= -0.7; }
       if (p.z > 0.95) { p.z = 0.95; p.vz *= -0.7; }
 
-      // Add particle to marching cubes (visible but small)
-      const strength = 0.6;
-      const subtract = 14;
+      // Add particle to marching cubes - size based on distance from center
+      // Closer to center = bigger (more mass), further away = smaller
+      const particleDist = Math.sqrt(
+        Math.pow(p.x - centerX, 2) + 
+        Math.pow(p.y - centerY, 2) + 
+        Math.pow(p.z - centerZ, 2)
+      );
+      
+      // Particles inside/near the main blob are big (taking mass from it)
+      // Particles far away are small (separated from main mass)
+      const normalizedDist = Math.min(particleDist / 0.3, 1.0); // 0.3 is max distance for size variation
+      const strength = 0.8 - normalizedDist * 0.5; // 0.8 when inside, 0.3 when far
+      const subtract = 13 + normalizedDist * 3; // 13 when inside, 16 when far
+      
       effect.addBall(p.x, p.y, p.z, strength, subtract);
     }
 
@@ -200,7 +211,7 @@ function MorphingBlobs({
     // Use warmer, more saturated colors
     material.color.setHSL(hue, 0.9, 0.5 + energy * 0.1);
     material.emissive.setHSL(hue, 1.0, 0.4 + energy * 0.3);
-    material.emissiveIntensity = 1.2 + energy * 1.5 + bass * 0.8;
+    material.emissiveIntensity = 1.5 + energy * 2.0 + bass * 1.2; // Strong emissive for bloom
     
     // Dynamic surface properties for interesting reflections
     material.roughness = 0.15 + Math.sin(time * 0.5) * 0.05;
@@ -209,6 +220,9 @@ function MorphingBlobs({
     // Clearcoat creates a glass-like shine
     material.clearcoat = 0.9 + energy * 0.1;
     material.clearcoatRoughness = 0.1 - energy * 0.05;
+    
+    // Force material update for bloom
+    material.needsUpdate = true;
   });
 
   return null;
@@ -270,7 +284,7 @@ function Lighting({
       {/* Strong central light to make the main blob luminous */}
       <pointLight
         ref={centralLightRef}
-        position={[0, -5, -12]}
+        position={[0, -5, -20]}
         intensity={150}
         color="#ff7c00"
         decay={2}
@@ -279,14 +293,14 @@ function Lighting({
       
       {/* Additional accent lights for better material definition */}
       <pointLight
-        position={[-20, -5, -12]}
+        position={[-20, -5, -20]}
         intensity={2}
         color="#00ffff"
         decay={2}
         distance={50}
       />
       <pointLight
-        position={[20, -5, -12]}
+        position={[20, -5, -20]}
         intensity={2}
         color="#ff00ff"
         decay={2}
@@ -312,17 +326,17 @@ export default function AnimatedSceneVisualization({
   isPlaying,
 }: AnimatedSceneVisualizationProps) {
   // Calculate bloom intensity based on music - subtle glow
-  const bloomIntensity = 0.9 + (micData?.energy || 0) * 1.0 + (micData?.bass || 0) * 1.8;
+  const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
 
   return (
     <Canvas shadows camera={{ position: [0, 0, 30], fov: 75 }}>
       <OrbitControls
-        target={[0, -5, -12]}
+        target={[0, -5, -20]}
         enablePan={false}
         enableDamping
         dampingFactor={0.05}
         minDistance={10}
-        maxDistance={50}
+        maxDistance={60}
       />
 
       <color attach="background" args={["#050505"]} />
@@ -345,13 +359,15 @@ export default function AnimatedSceneVisualization({
       )}
 
       {/* Post-processing for refined GLOW effect */}
-      <EffectComposer>
+      <EffectComposer multisampling={8}>
         <Bloom 
           intensity={bloomIntensity}
-          luminanceThreshold={0.4}
-          luminanceSmoothing={0.7}
+          luminanceThreshold={0.35}
+          luminanceSmoothing={6}
           radius={0.8}
-          levels={6}
+          levels={8}
+          // opacity={0.5}
+          mipmapBlur={true}
         />
       </EffectComposer>
     </Canvas>
