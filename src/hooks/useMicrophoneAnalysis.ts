@@ -42,6 +42,7 @@ export interface MicrophoneData {
   instruments: InstrumentLevels; // instrument detection
   // Raw spectrum data for visualization
   frequencyData?: Uint8Array;
+  waveform?: Uint8Array; // time-domain waveform data for oscilloscope
   sampleRate?: number;
 }
 
@@ -347,6 +348,7 @@ export function useMicrophoneAnalysis() {
             },
             // Include raw frequency data for visualization
             frequencyData: new Uint8Array(freqData),
+            waveform: new Uint8Array(timeData),
             sampleRate: audioContextRef.current?.sampleRate,
           });
 
