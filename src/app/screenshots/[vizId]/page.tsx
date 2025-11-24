@@ -86,7 +86,6 @@ function useAnimatedMicData(): MicrophoneData {
       const waveform = new Float32Array(waveformSize);
       const waveformLeft = new Float32Array(waveformSize);
       const waveformRight = new Float32Array(waveformSize);
-      const waveformRightHilbert = new Float32Array(waveformSize);
       
       for (let i = 0; i < waveformSize; i++) {
         // Complex waveform: mix of frequencies
@@ -99,7 +98,6 @@ function useAnimatedMicData(): MicrophoneData {
         // Phase-shifted for right channel
         const phaseShift = Math.floor(waveformSize / 4);
         waveformRight[i] = waveform[(i + phaseShift) % waveformSize];
-        waveformRightHilbert[i] = waveformRight[i]; // Same for mock data
       }
 
       // Animated values with realistic patterns
@@ -148,7 +146,6 @@ function useAnimatedMicData(): MicrophoneData {
         waveform,
         waveformLeft,
         waveformRight,
-        waveformRightHilbert,
         sampleRate: 48000,
       });
 
