@@ -13,12 +13,12 @@
 [ ] Mobile app
     A mobile app could focus only on lyrics so people in a group 
     can sing together. Could even capture the mic and send to the main view.
-[ ] Avoid screen saver 
+[X] Avoid screen saver 
     Find a way to avoid the screen to go into screen saver mode from the browser, is that possible? Else what, use a wrapper and make it an app?
 [ ] Check Spotify device
     If phone we can amplify, else amplify can be done by calculating the basic input
-[ ] Download lyrics
-[ ] Automate creating visualization screenshots for the menu.
+[X] Download lyrics
+[X] Automate creating visualization screenshots for the menu.
 [ ] Replace PeerJS with Vercel WebSocket signaling
     Current issue: PeerJS cloud server (0.peerjs.com) has frequent timeouts
     Solution: Implement custom WebRTC signaling using Vercel's Edge Runtime WebSockets
@@ -27,3 +27,4 @@
     - Full control over signaling logic
     - Can still use self-hosted PeerJS as fallback
     Reference: https://vercel.com/docs/functions/edge-functions/websockets
+[ ] Verify why some lyrics are not loading, eg Texas BigXtahPlug
