@@ -43,6 +43,8 @@ export interface MicrophoneData {
   // Raw spectrum data for visualization
   frequencyData?: Uint8Array;
   waveform?: Float32Array; // time-domain waveform data for oscilloscope (Float32 like woscope)
+  waveformLeft?: Float32Array; // LEFT channel (X-axis in woscope)
+  waveformRight?: Float32Array; // RIGHT channel (Y-axis in woscope)
   sampleRate?: number;
 }
 
@@ -128,19 +130,21 @@ export function useMicrophoneAnalysis() {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         console.log('✅ Microphone access granted!');
 
-        // Create audio context and analyser
+        // Create audio context and analysers
         const audioContext = new AudioContext();
+        
+        // Main analyser for frequency analysis and waveform
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 4096; // Higher resolution for better frequency analysis
-        analyser.smoothingTimeConstant = 0.3; // Less smoothing for more responsive detection
-
+        analyser.fftSize = 4096;
+        analyser.smoothingTimeConstant = 0.3;
+        
         const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
 
         audioContextRef.current = audioContext;
         analyserRef.current = analyser;
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-        timeDataArrayRef.current = new Float32Array(analyser.fftSize); // Float32 for woscope compatibility
+        timeDataArrayRef.current = new Float32Array(analyser.fftSize);
 
         // Start analysis loop
         const analyze = () => {
@@ -158,12 +162,21 @@ export function useMicrophoneAnalysis() {
           const freqData = dataArrayRef.current;
           const timeData = timeDataArrayRef.current;
           const bufferLength = freqData.length;
+          
+          // For mono microphone: create pseudo-stereo for X-Y oscilloscope
+          // Left (X) = direct signal, Right (Y) = quarter-cycle phase shift
+          const timeDataLeft = new Float32Array(timeData);
+          const timeDataRight = new Float32Array(timeData.length);
+          const phaseShift = Math.floor(timeData.length / 4);
+          for (let i = 0; i < timeData.length; i++) {
+            timeDataRight[i] = timeData[(i + phaseShift) % timeData.length];
+          }
 
           // === STEP 1: Calculate RMS (Root Mean Square) for true volume ===
           let rmsSum = 0;
           for (let i = 0; i < timeData.length; i++) {
-            const normalized = (timeData[i] - 128) / 128; // Convert to -1 to 1
-            rmsSum += normalized * normalized;
+            // timeData is already Float32Array in -1 to 1 range
+            rmsSum += timeData[i] * timeData[i];
           }
           const rms = Math.sqrt(rmsSum / timeData.length);
           const volume = Math.min(1, rms * 3); // Amplify for better range
@@ -349,6 +362,8 @@ export function useMicrophoneAnalysis() {
             // Include raw frequency data for visualization
             frequencyData: new Uint8Array(freqData),
             waveform: new Float32Array(timeData), // Float32Array like woscope
+            waveformLeft: new Float32Array(timeDataLeft), // LEFT channel (X-axis)
+            waveformRight: new Float32Array(timeDataRight), // RIGHT channel (Y-axis)
             sampleRate: audioContextRef.current?.sampleRate,
           });
 
