@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     
     // Credentials
     const validUsername = "admin";
-    const validPassword = isProduction ? "G6h*s^0js7D^" : "admin"; // Hardcoded prod password, local is simple
+    const validPassword = "admin"; //isProduction ? "G6h*s^0js7D^" : "admin"; // Hardcoded prod password, local is simple
     
     if (!authHeader) {
       return new NextResponse("Authentication required", {

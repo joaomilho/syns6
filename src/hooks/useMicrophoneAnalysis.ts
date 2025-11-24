@@ -43,8 +43,8 @@ export interface MicrophoneData {
   // Raw spectrum data for visualization
   frequencyData?: Uint8Array;
   waveform?: Float32Array; // time-domain waveform data for oscilloscope (Float32 like woscope)
-  waveformLeft?: Float32Array; // LEFT channel (X-axis in woscope)
-  waveformRight?: Float32Array; // RIGHT channel (Y-axis in woscope)
+  waveformLeft?: Float32Array; // LEFT channel (X-axis) - direct signal
+  waveformRight?: Float32Array; // RIGHT channel (Y-axis) - phase-shifted for patterns
   sampleRate?: number;
 }
 
@@ -100,9 +100,6 @@ export function useMicrophoneAnalysis() {
       const savedPreference = await getMicrophoneEnabled();
       
       // Always try to enable mic (app requires it)
-      console.log('🎤 Auto-requesting microphone access (required for app)');
-      console.log(`📱 Saved preference: ${savedPreference === true ? 'enabled' : savedPreference === false ? 'disabled' : 'none'}`);
-      
       setIsEnabled(true);
     };
     checkMicrophonePreference();
@@ -125,20 +122,24 @@ export function useMicrophoneAnalysis() {
           );
         }
 
-        console.log('🎤 Requesting microphone permission...');
-        // Request microphone access
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('✅ Microphone access granted!');
-
-        // Create audio context and analysers
-        const audioContext = new AudioContext();
+        // Request microphone access with minimal processing
+        const constraints = {
+          audio: {
+            echoCancellation: false, // Disable processing for pure audio
+            noiseSuppression: false,
+            autoGainControl: false,
+          }
+        };
         
-        // Main analyser for frequency analysis and waveform
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        // Create audio context and analyser (MONO only - phase shift for oscilloscope)
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 4096;
         analyser.smoothingTimeConstant = 0.3;
-        
-        const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
 
         audioContextRef.current = audioContext;
@@ -163,7 +164,7 @@ export function useMicrophoneAnalysis() {
           const timeData = timeDataArrayRef.current;
           const bufferLength = freqData.length;
           
-          // For mono microphone: create pseudo-stereo for X-Y oscilloscope
+          // Create pseudo-stereo for X-Y oscilloscope using phase shift
           // Left (X) = direct signal, Right (Y) = quarter-cycle phase shift
           const timeDataLeft = new Float32Array(timeData);
           const timeDataRight = new Float32Array(timeData.length);
@@ -362,8 +363,8 @@ export function useMicrophoneAnalysis() {
             // Include raw frequency data for visualization
             frequencyData: new Uint8Array(freqData),
             waveform: new Float32Array(timeData), // Float32Array like woscope
-            waveformLeft: new Float32Array(timeDataLeft), // LEFT channel (X-axis)
-            waveformRight: new Float32Array(timeDataRight), // RIGHT channel (Y-axis)
+            waveformLeft: new Float32Array(timeDataLeft), // LEFT channel (X-axis) - direct
+            waveformRight: new Float32Array(timeDataRight), // RIGHT channel (Y-axis) - phase-shifted
             sampleRate: audioContextRef.current?.sampleRate,
           });
 
