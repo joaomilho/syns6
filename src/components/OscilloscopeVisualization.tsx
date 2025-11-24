@@ -125,7 +125,7 @@ export default function OscilloscopeVisualization({
   const isInitializedRef = useRef(false); // Prevent double initialization
   
   const nSamples = 2048;
-  const baseLineSize = 0.0015; // Much thinner lines
+  const baseLineSize = 0.012; // Woscope default line size
   
   // Update ref whenever micData changes
   useEffect(() => {
