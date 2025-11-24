@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import * as THREE from "three";
+import { Canvas } from "@react-three/fiber";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { LyricLine } from "@/lib/lyrics";
+import Lyrics3D from "./Lyrics3D";
 
 interface OscilloscopeVisualizationProps {
   micData?: MicrophoneData;
@@ -123,8 +125,6 @@ export default function OscilloscopeVisualization({
   const updateWaveformRef = useRef(0);
   const micDataRef = useRef(micData); // Keep current micData in a ref
   const isInitializedRef = useRef(false); // Prevent double initialization
-  
-  const [useHilbert, setUseHilbert] = useState(false); // Toggle between simple shift and Hilbert transform
   
   const nSamples = 2048;
   const baseLineSize = 0.012; // Woscope default line size
@@ -366,10 +366,7 @@ export default function OscilloscopeVisualization({
     const currentMicData = micDataRef.current;
     const waveform = currentMicData?.waveform;
     const waveformLeft = currentMicData?.waveformLeft; // X-axis
-    // Y-axis: use Hilbert or simple shift based on toggle
-    const waveformRight = useHilbert 
-      ? currentMicData?.waveformRightHilbert 
-      : currentMicData?.waveformRight;
+    const waveformRight = currentMicData?.waveformRight; // Y-axis (phase-shifted)
     const bass = currentMicData?.bass || 0;
     const energy = currentMicData?.energy || 0;
     const volume = currentMicData?.volume || 0;
@@ -378,7 +375,7 @@ export default function OscilloscopeVisualization({
     
     // Dynamic scale based on audio intensity - gets MUCH bigger with bass
     const baseScale = 0.7;
-    const scale = baseScale + bass * 0.5 + energy * 0.3 + volume * 0.2;
+    const scale = baseScale + bass * 0.9 + energy * 0.3 + volume * 0.2;
     
     const time = Date.now() / 1000;
     
@@ -443,7 +440,7 @@ export default function OscilloscopeVisualization({
     // DRAMATIC color changes based on audio
     // Bass hits: Green -> Yellow -> Red
     // High energy: Cyan/Blue tones
-    const bassColor = bass * 0.5; // 0 to 0.5 (green to red via yellow)
+    const bassColor = bass * 1.8; // 0 to 0.5 (green to red via yellow)
     const energyColor = energy * 0.2; // Shift toward cyan
     const hue = 0.33 - bassColor + energyColor; // Green base, moves to red with bass, cyan with energy
     
@@ -475,70 +472,32 @@ export default function OscilloscopeVisualization({
         background: "#000000",
       }}
     >
-      {/* Overlay lyrics if available */}      {/* Hilbert Transform Toggle */}
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          pointerEvents: "all",
-          zIndex: 10,
-        }}
-      >
-        <button
-          onClick={() => setUseHilbert(!useHilbert)}
-          style={{
-            padding: "10px 15px",
-            background: useHilbert ? "#00ff00" : "rgba(0, 0, 0, 0.7)",
-            color: useHilbert ? "#000" : "#00ff00",
-            border: "2px solid #00ff00",
-            borderRadius: "8px",
-            fontFamily: "monospace",
-            fontSize: "0.85rem",
-            fontWeight: "bold",
-            cursor: "pointer",
-            textShadow: useHilbert ? "none" : "0 0 10px rgba(0, 255, 0, 0.8)",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.05)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-        >
-          <div style={{ marginBottom: "3px" }}>
-            {useHilbert ? "✓ HILBERT" : "○ SIMPLE SHIFT"}
-          </div>
-          <div style={{ fontSize: "0.65rem", opacity: 0.7 }}>
-            {useHilbert ? "True 90° phase" : "Circular buffer"}
-          </div>
-        </button>
-      </div>
-      
       {lyrics && lyrics.length > 0 && currentTimeMs !== undefined && (
         <div
           style={{
             position: "absolute",
-            bottom: "20%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            textAlign: "center",
-            color: "#00ff00",
-            fontSize: "2rem",
-            textShadow: "0 0 10px #00ff00",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
             pointerEvents: "none",
             zIndex: 1,
-            maxWidth: "80%",
           }}
         >
-          {(() => {
-            const currentLine = lyrics.find((line, index) => {
-              const nextLine = lyrics[index + 1];
-              return currentTimeMs >= line.time && (!nextLine || currentTimeMs < nextLine.time);
-            });
-            return currentLine?.text || "";
-          })()}
+          <Canvas
+            camera={{ position: [0, 0, 15], fov: 75 }}
+            style={{ pointerEvents: "none" }}
+          >
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} intensity={1} />
+            <Lyrics3D
+              lyrics={lyrics}
+              currentTimeMs={currentTimeMs}
+              isPlaying={isPlaying || false}
+              color="#00ff00"
+              micData={micData}
+            />
+          </Canvas>
         </div>
       )}
     </div>
