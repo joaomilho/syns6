@@ -7,7 +7,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 // List of all visualizations to capture
-const visualizations = [
+const allVisualizations = [
   'fftspectrum',
   'particles',
   'fractal',
@@ -19,7 +19,21 @@ const visualizations = [
   'camera',
   'youtube',
   'debug',
+  'oscilloscope',
 ];
+
+// Check if a specific visualization was requested via command line
+// Usage: npm run screenshots [vizId]
+const requestedViz = process.argv[2];
+const visualizations = requestedViz 
+  ? (allVisualizations.includes(requestedViz) 
+      ? [requestedViz] 
+      : (() => {
+          console.error(`❌ Unknown visualization: ${requestedViz}`);
+          console.error(`   Available: ${allVisualizations.join(', ')}`);
+          process.exit(1);
+        })())
+  : allVisualizations;
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'viz-thumbnails');
@@ -33,6 +47,13 @@ const FPS = ANIMATION_FRAMES / ANIMATION_DURATION; // ~18 FPS
 const FRAME_DELAY = 1000 / FPS; // ~55ms between frames
 
 async function captureScreenshots() {
+  // Show what we're capturing
+  if (requestedViz) {
+    console.log(`📸 Capturing single visualization: ${requestedViz}`);
+  } else {
+    console.log(`📸 Capturing all ${allVisualizations.length} visualizations`);
+  }
+  
   // Check if dev server is running
   console.log('🔍 Checking if dev server is running...');
   try {
@@ -160,7 +181,11 @@ async function captureScreenshots() {
       }
     }
 
-    console.log('\n🎉 All screenshots captured successfully!');
+    if (requestedViz) {
+      console.log(`\n🎉 Screenshot captured for ${requestedViz}!`);
+    } else {
+      console.log('\n🎉 All screenshots captured successfully!');
+    }
     console.log(`📂 Output directory: ${OUTPUT_DIR}`);
     
     // Clean up temp directory
