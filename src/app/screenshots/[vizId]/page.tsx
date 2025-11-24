@@ -15,6 +15,7 @@ import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
+import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
 
 // Empty mock lyrics (prevents "no lyrics found" messages)
 const mockLyrics: LyricLine[] = [
@@ -80,6 +81,27 @@ function useAnimatedMicData(): MicrophoneData {
         frequencyData[i] = Math.min(255, (bass + mid + treble) * falloff);
       }
 
+      // Create waveform data for oscilloscope (Float32Array in -1 to 1 range)
+      const waveformSize = 4096;
+      const waveform = new Float32Array(waveformSize);
+      const waveformLeft = new Float32Array(waveformSize);
+      const waveformRight = new Float32Array(waveformSize);
+      const waveformRightHilbert = new Float32Array(waveformSize);
+      
+      for (let i = 0; i < waveformSize; i++) {
+        // Complex waveform: mix of frequencies
+        const freq1 = Math.sin(t * 2 + i * 0.02) * 0.3;
+        const freq2 = Math.sin(t * 3 + i * 0.03) * 0.2;
+        const freq3 = Math.sin(t * 5 + i * 0.01) * 0.15;
+        waveform[i] = freq1 + freq2 + freq3;
+        waveformLeft[i] = waveform[i];
+        
+        // Phase-shifted for right channel
+        const phaseShift = Math.floor(waveformSize / 4);
+        waveformRight[i] = waveform[(i + phaseShift) % waveformSize];
+        waveformRightHilbert[i] = waveformRight[i]; // Same for mock data
+      }
+
       // Animated values with realistic patterns
       const kick = Math.abs(Math.sin(t * 2)) * 0.8 + 0.2;
       const snare = Math.abs(Math.sin(t * 4 + 1)) * 0.6 + 0.1;
@@ -123,6 +145,10 @@ function useAnimatedMicData(): MicrophoneData {
           strings: Math.abs(Math.cos(t * 2.7)) * 0.6,
         },
         frequencyData,
+        waveform,
+        waveformLeft,
+        waveformRight,
+        waveformRightHilbert,
         sampleRate: 48000,
       });
 
@@ -249,6 +275,15 @@ export default function ScreenshotPage() {
           <YouTubeVisualization
             currentTimeMs={currentTime}
             lyrics={mockLyrics}
+          />
+        );
+      case "oscilloscope":
+        return (
+          <OscilloscopeVisualization
+            isPlaying={true}
+            lyrics={mockLyrics}
+            currentTimeMs={currentTime}
+            micData={micData}
           />
         );
       default:
