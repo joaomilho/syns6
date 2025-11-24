@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useShareManager } from "@/hooks/useShareManager";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useCamera } from "@/hooks/useCamera";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import VisualizationDropdown, { VisualizationType } from "@/components/VisualizationDropdown";
 import NowPlayingFooter from "@/components/NowPlayingFooter";
 import Syns6Logo from "@/components/Syns6Logo";
@@ -48,6 +49,7 @@ interface SharePageContentProps {
 function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentProps) {
 
   const shareManager = useShareManager();
+  const wakeLock = useWakeLock();
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [isConnecting, setIsConnecting] = useState(true);
   const [micError, setMicError] = useState<string | null>(null);
