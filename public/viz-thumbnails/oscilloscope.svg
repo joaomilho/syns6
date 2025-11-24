@@ -1,0 +1,31 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="200" height="200" fill="#001100"/>
+  
+  <!-- Grid lines -->
+  <line x1="0" y1="100" x2="200" y2="100" stroke="#003300" stroke-width="1"/>
+  <line x1="100" y1="0" x2="100" y2="200" stroke="#003300" stroke-width="1"/>
+  
+  <!-- Oscilloscope trace (Lissajous curve) -->
+  <path d="M 100 100 Q 150 50, 170 70 Q 180 90, 170 130 Q 150 150, 100 160 Q 50 150, 30 130 Q 20 110, 30 70 Q 50 50, 100 100" 
+        fill="none" 
+        stroke="#00ff00" 
+        stroke-width="3"
+        opacity="0.9"
+        filter="url(#glow)"/>
+  
+  <!-- Glow effect -->
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Center dot -->
+  <circle cx="100" cy="100" r="2" fill="#00ff00" opacity="0.5"/>
+</svg>
+
