@@ -137,7 +137,6 @@ export default function OscilloscopeVisualization({
     
     // Prevent double initialization in React Strict Mode
     if (isInitializedRef.current) {
-      console.log('⚠️ Skipping re-initialization (already initialized)');
       return;
     }
     isInitializedRef.current = true;
@@ -165,13 +164,6 @@ export default function OscilloscopeVisualization({
     
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
-    
-    console.log('🖼️ Canvas appended to DOM:', {
-      canvasWidth: renderer.domElement.width,
-      canvasHeight: renderer.domElement.height,
-      styleWidth: renderer.domElement.style.width,
-      styleHeight: renderer.domElement.style.height,
-    });
 
     // Create orthographic camera for 2D
     const aspect = width / height;
@@ -276,16 +268,12 @@ export default function OscilloscopeVisualization({
       side: THREE.DoubleSide, // Render both sides
     });
     materialRef.current = material;
-    
-    console.log('🎨 Material created with uniforms:', material.uniforms);
 
     // Create oscilloscope mesh
     const mesh = new THREE.Mesh(geometry, material);
     mesh.frustumCulled = false; // CRITICAL: Always render, don't cull based on bounding box
     scene.add(mesh);
     meshRef.current = mesh;
-    
-    console.log('🎯 Mesh frustumCulled:', mesh.frustumCulled);
     
     // Force shader compilation and check for errors
     renderer.compile(scene, camera);
@@ -295,31 +283,7 @@ export default function OscilloscopeVisualization({
     const glError = gl.getError();
     if (glError !== gl.NO_ERROR) {
       console.error('❌ WebGL Error after setup:', glError);
-    } else {
-      console.log('✅ No WebGL errors detected');
     }
-    
-    // Check if shader compiled successfully
-    material.addEventListener('dispose', () => {
-      console.log('🗑️ Material disposed');
-    });
-    
-    // Log shader info
-    console.log('📝 Vertex shader length:', vertexShader.length);
-    console.log('📝 Fragment shader length:', fragmentShader.length);
-
-    console.log('✅ Oscilloscope initialized (woscope style):', {
-      segments: numSegments,
-      vertices: numVertices,
-      triangles: indices.length / 3,
-      samples: nSamples,
-      camera: {
-        left: camera.left,
-        right: camera.right,
-        top: camera.top,
-        bottom: camera.bottom,
-      },
-    });
 
     // Force initial waveform update before first render
     let frameCount = 0;
@@ -333,35 +297,11 @@ export default function OscilloscopeVisualization({
       
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
-        
-        // Debug render call
-        if (frameCount === 120) {
-          console.log('🎥 Render at frame 120:', {
-            sceneChildren: sceneRef.current.children.length,
-            meshVisible: meshRef.current?.visible,
-            meshInScene: sceneRef.current.children.includes(meshRef.current!),
-            rendererInfo: rendererRef.current.info.render,
-          });
-        }
-      }
-      
-      // Debug first few frames
-      if (frameCount <= 5) {
-        if (frameCount === 1) {
-          console.log('🎬 First frame rendered');
-          console.log('Material uniforms:', materialRef.current?.uniforms);
-          console.log('Geometry attributes:', {
-            aIdx: geometry.getAttribute('aIdx'),
-            aStart: geometry.getAttribute('aStart'),
-            aEnd: geometry.getAttribute('aEnd'),
-          });
-        }
       }
       
       animationFrameRef.current = requestAnimationFrame(animate);
     };
     
-    console.log('🚀 Starting animation loop...');
     animate();
 
     // Handle resize
@@ -381,7 +321,6 @@ export default function OscilloscopeVisualization({
     window.addEventListener('resize', handleResize);
 
     return () => {
-      console.log('🧹 Cleaning up oscilloscope...');
       window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -441,12 +380,12 @@ export default function OscilloscopeVisualization({
     updateWaveformRef.current++;
 
     if (waveformLeft && waveformRight && waveformLeft.length > 0 && waveformRight.length > 0) {
-      // Use STEREO waveform data - X/Y mode (woscope style)
-      // LEFT channel = X-axis, RIGHT channel = Y-axis
+      // Use phase-shifted waveform data - X/Y mode (woscope style)
+      // LEFT = X-axis (direct), RIGHT = Y-axis (phase-shifted)
       const numSegments = nSamples - 1;
       
       for (let i = 0; i < numSegments; i++) {
-        // Get X from LEFT channel, Y from RIGHT channel
+        // Get X from LEFT channel, Y from RIGHT channel (phase-shifted)
         const idx = Math.floor((i / nSamples) * waveformLeft.length);
         
         // waveform is already Float32Array in -1 to 1 range (like woscope)
