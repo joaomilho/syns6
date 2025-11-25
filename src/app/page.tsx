@@ -146,8 +146,6 @@ export default function Home() {
             currentTimeMs={0}
             isPlaying={true}
             fps={fps}
-            onRowsChange={() => {}}
-            isLandingPage={true}
           />
         ) : (
           // WebGL not available - show fallback image
