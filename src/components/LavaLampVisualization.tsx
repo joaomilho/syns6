@@ -64,8 +64,8 @@ function LavaLampBlobs({
 
   useFrame((state, delta) => {
     if (!effectRef.current) {
-      // Initialize on first frame with HIGHER RESOLUTION
-      const resolution = 36; // Increased from 28 for better quality
+      // Initialize on first frame - optimized resolution for performance
+      const resolution = 28; // Balanced quality/performance
       const effect = new MarchingCubes(resolution, material, false, false, 100000);
       effect.position.set(0, -5, -20); // Moved further back to avoid lyrics
       effect.scale.set(25, 25, 25);
@@ -74,7 +74,7 @@ function LavaLampBlobs({
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      const numParticles = 25; // Good number for lava lamp effect
+      const numParticles = 20; // Reduced for better performance
       particlesRef.current = Array.from({ length: numParticles }, () => {
         // Start particles inside/near the center blob
         const angle1 = Math.random() * Math.PI * 2;
@@ -119,6 +119,7 @@ function LavaLampBlobs({
     const repulsionDistance = 0.16 + bass * 0.16; // Larger repulsion zone when bass hits
     const damping = 0.995; // Less friction for smoother movement
     const maxSpeed = 0.05 + bass * 0.08; // Faster movement when bass hits
+    const maxSpeedSq = maxSpeed * maxSpeed; // Precompute for optimization
 
     // Update particle physics
     const particles = particlesRef.current;
@@ -129,7 +130,8 @@ function LavaLampBlobs({
       const dx = centerX - p.x;
       const dy = centerY - p.y;
       const dz = centerZ - p.z;
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const distSq = dx * dx + dy * dy + dz * dz;
+      const dist = Math.sqrt(distSq);
 
       if (dist > 0.001) {
         const nx = dx / dist;
@@ -163,9 +165,10 @@ function LavaLampBlobs({
       p.vy *= damping;
       p.vz *= damping;
 
-      // Limit speed
-      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz);
-      if (speed > maxSpeed) {
+      // Limit speed (using squared values to avoid sqrt)
+      const speedSq = p.vx * p.vx + p.vy * p.vy + p.vz * p.vz;
+      if (speedSq > maxSpeedSq) {
+        const speed = Math.sqrt(speedSq);
         const scale = maxSpeed / speed;
         p.vx *= scale;
         p.vy *= scale;
@@ -186,16 +189,8 @@ function LavaLampBlobs({
       if (p.z > 0.95) { p.z = 0.95; p.vz *= -0.7; }
 
       // Add particle to marching cubes - size based on distance from center
-      // Closer to center = bigger (more mass), further away = smaller
-      const particleDist = Math.sqrt(
-        Math.pow(p.x - centerX, 2) + 
-        Math.pow(p.y - centerY, 2) + 
-        Math.pow(p.z - centerZ, 2)
-      );
-      
-      // Particles inside/near the main blob are big (taking mass from it)
-      // Particles far away are small (separated from main mass)
-      const normalizedDist = Math.min(particleDist / 0.3, 1.0); // 0.3 is max distance for size variation
+      // Reuse already calculated distance for performance
+      const normalizedDist = Math.min(dist / 0.3, 1.0); // 0.3 is max distance for size variation
       const strength = 0.8 - normalizedDist * 0.5; // 0.8 when inside, 0.3 when far
       const subtract = 13 + normalizedDist * 3; // 13 when inside, 16 when far
       
@@ -220,15 +215,12 @@ function LavaLampBlobs({
     // Clearcoat creates a glass-like shine
     material.clearcoat = 0.9 + energy * 0.1;
     material.clearcoatRoughness = 0.1 - energy * 0.05;
-    
-    // Force material update for bloom
-    material.needsUpdate = true;
   });
 
   return null;
 }
 
-// Lighting that reacts to music
+// Lighting that reacts to music - optimized
 function LavaLampLighting({
   micData,
 }: {
@@ -236,13 +228,11 @@ function LavaLampLighting({
 }) {
   const pointLightRef = useRef<THREE.PointLight>(null);
   const centralLightRef = useRef<THREE.PointLight>(null);
-  const spotLightRef = useRef<THREE.SpotLight>(null);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
     const energy = micData?.energy || 0;
     const bass = micData?.bass || 0;
-    const treble = micData?.treble || 0;
 
     if (pointLightRef.current) {
       // Orbit light around scene
@@ -261,25 +251,12 @@ function LavaLampLighting({
       centralLightRef.current.color.setHSL(hue, 1.0, 0.5);
       centralLightRef.current.intensity = 150 + bass * 150 + energy * 100; // Much brighter!
     }
-
-    if (spotLightRef.current) {
-      spotLightRef.current.intensity = 1 + treble * 2;
-    }
   });
 
   return (
     <>
-      <ambientLight intensity={0.4} />
+      <ambientLight intensity={0.5} />
       <directionalLight position={[0.5, 0.5, 1]} intensity={2.5} color="#ffffff" />
-      
-      {/* Orbiting colored light for interesting reflections */}
-      <pointLight
-        ref={pointLightRef}
-        position={[0, 15, 0]}
-        intensity={3}
-        distance={60}
-        decay={2}
-      />
       
       {/* Strong central light to make the main blob luminous */}
       <pointLight
@@ -291,29 +268,13 @@ function LavaLampLighting({
         distance={100}
       />
       
-      {/* Additional accent lights for better material definition */}
+      {/* Single accent light for material definition */}
       <pointLight
-        position={[-20, -5, -20]}
-        intensity={2}
-        color="#00ffff"
+        ref={pointLightRef}
+        position={[0, 15, 0]}
+        intensity={3}
+        distance={60}
         decay={2}
-        distance={50}
-      />
-      <pointLight
-        position={[20, -5, -20]}
-        intensity={2}
-        color="#ff00ff"
-        decay={2}
-        distance={50}
-      />
-      
-      <spotLight
-        ref={spotLightRef}
-        position={[30, 30, 30]}
-        angle={0.3}
-        penumbra={1}
-        intensity={2}
-        castShadow
       />
     </>
   );
@@ -329,7 +290,7 @@ export default function LavaLampVisualization({
   const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
 
   return (
-    <Canvas shadows camera={{ position: [0, 0, 30], fov: 75 }}>
+    <Canvas camera={{ position: [0, 0, 30], fov: 75 }}>
       <OrbitControls
         target={[0, -5, -20]}
         enablePan={false}
@@ -367,7 +328,6 @@ export default function LavaLampVisualization({
           luminanceSmoothing={6}
           radius={0.8}
           levels={8}
-          // opacity={0.5}
           mipmapBlur={true}
         />
       </EffectComposer>
