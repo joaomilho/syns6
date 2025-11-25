@@ -53,6 +53,10 @@ model User {
   sessions      Session[]
   preferences   UserPreferences?
   playHistory   PlayHistory[]
+  subscription  Subscription?
+  
+  // Stripe customer ID
+  stripeCustomerId String? @unique
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -177,4 +181,51 @@ model EmailSubscriber {
   
   @@index([email])
   @@map("email_subscribers")
+}
+
+// Stripe Subscriptions
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Stripe subscription details
+  stripeSubscriptionId String    @unique
+  stripePriceId        String
+  stripeProductId      String?
+  
+  // Subscription status
+  status               String    // active, canceled, past_due, unpaid, trialing, etc.
+  
+  // Billing period
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  
+  // Trial period
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  
+  // Timestamps
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Stripe webhook events log for debugging
+model StripeEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique // Stripe event ID
+  type        String   // event type (e.g., customer.subscription.updated)
+  data        String   @db.Text // JSON data
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([type])
+  @@index([processed])
+  @@map("stripe_events")
 }
