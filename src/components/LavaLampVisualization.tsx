@@ -84,7 +84,7 @@ function LavaLampBlobs({
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      const numParticles = 12; // Reduced for better performance
+      const numParticles = 18; // Reduced for better performance
       particlesRef.current = Array.from({ length: numParticles }, () => {
         // Start particles inside/near the center blob
         const angle1 = Math.random() * Math.PI * 2;
