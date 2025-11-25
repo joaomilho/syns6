@@ -45,7 +45,7 @@ function LavaLampBlobs({
   // Initialize marching cubes with premium GLOWING material
   const material = useMemo(() => {
     // Create a MeshPhysicalMaterial for advanced effects
-    return new THREE.MeshPhysicalMaterial({
+    const mat = new THREE.MeshPhysicalMaterial({
       color: 0xff6644, // Warm orange-red
       roughness: 0.2,
       metalness: 0.8,
@@ -60,21 +60,31 @@ function LavaLampBlobs({
       side: THREE.DoubleSide,
       toneMapped: false,
     });
+    mat.shadowSide = THREE.DoubleSide;
+    return mat;
   }, []);
 
   useFrame((state, delta) => {
     if (!effectRef.current) {
       // Initialize on first frame - optimized resolution for performance
-      const resolution = 28; // Balanced quality/performance
+      const resolution = 28; // Balanced resolution for performance
       const effect = new MarchingCubes(resolution, material, false, false, 100000);
       effect.position.set(0, -5, -20); // Moved further back to avoid lyrics
       effect.scale.set(25, 25, 25);
-      effect.isolation = 80;
+      effect.isolation = 80; // Back to original
+      
+      // Fix bounding sphere to prevent frustum culling
+      effect.geometry.boundingSphere = new THREE.Sphere(
+        new THREE.Vector3(0, 0, 0),
+        50
+      );
+      effect.frustumCulled = false;
+      
       effectRef.current = effect;
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      const numParticles = 20; // Reduced for better performance
+      const numParticles = 12; // Reduced for better performance
       particlesRef.current = Array.from({ length: numParticles }, () => {
         // Start particles inside/near the center blob
         const angle1 = Math.random() * Math.PI * 2;
@@ -123,6 +133,7 @@ function LavaLampBlobs({
 
     // Update particle physics
     const particles = particlesRef.current;
+    
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
 
@@ -189,7 +200,6 @@ function LavaLampBlobs({
       if (p.z > 0.95) { p.z = 0.95; p.vz *= -0.7; }
 
       // Add particle to marching cubes - size based on distance from center
-      // Reuse already calculated distance for performance
       const normalizedDist = Math.min(dist / 0.3, 1.0); // 0.3 is max distance for size variation
       const strength = 0.8 - normalizedDist * 0.5; // 0.8 when inside, 0.3 when far
       const subtract = 13 + normalizedDist * 3; // 13 when inside, 16 when far
@@ -290,7 +300,7 @@ export default function LavaLampVisualization({
   const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
 
   return (
-    <Canvas camera={{ position: [0, 0, 30], fov: 75 }}>
+    <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }}>
       <OrbitControls
         target={[0, -5, -20]}
         enablePan={false}
