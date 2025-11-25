@@ -14,7 +14,7 @@ export default function Icon() {
     (
       <div
         style={{
-          background: '#000000',
+          background: 'transparent',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -22,14 +22,14 @@ export default function Icon() {
           justifyContent: 'center',
         }}
       >
-        {/* Green circle with shadow */}
+        {/* Hollow green circle (ring) with shadow */}
         <div
           style={{
             width: '20px',
             height: '20px',
             borderRadius: '50%',
-            background: '#00ff00',
-            boxShadow: '0 0 8px 2px rgba(0, 255, 0, 0.6)',
+            border: '3px solid #00ff00',
+            boxShadow: '0 0 4px 1px rgba(0, 255, 0, 0.6)',
           }}
         />
       </div>
