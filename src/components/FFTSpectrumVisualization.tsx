@@ -4,17 +4,12 @@ import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import { LyricLine } from "@/lib/lyrics";
-import Lyrics3D from "./Lyrics3D";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
   micData?: MicrophoneData;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
-  isPlaying?: boolean;
   fps?: number;
   onWebGLUnavailable?: () => void;
 }
@@ -319,86 +314,69 @@ function FFTSpectrumPlanes({
 
 export default function FFTSpectrumVisualization({
   micData,
-  lyrics,
-  currentTimeMs,
-  isPlaying,
   fps = 60,
   onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
 
-  // Render the 3D canvas with WebGL
+  // Render FFT visualization with bloom
   return (
-    
-      <Canvas
-        camera={{ position: [0, 0, 30], fov: 75 }}
-        style={{
-          background: "linear-gradient(to bottom, #000000 0%, #0a0020 100%)",
-        }}
-        gl={{ 
-          antialias: true,
-          alpha: false,
-          powerPreference: "high-performance",
-          failIfMajorPerformanceCaveat: false,
-        }}
-        dpr={[1, 2]}
+    <Canvas
+      camera={{ position: [0, 0, 30], fov: 75 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: "linear-gradient(to bottom, #000000 0%, #0a0020 100%)",
+      }}
+      gl={{ 
+        antialias: true,
+        alpha: false,
+        powerPreference: "high-performance",
+        failIfMajorPerformanceCaveat: false,
+      }}
+      dpr={[1, 2]}
+    >
+      {/* Orbit Controls */}
+      <OrbitControls
+        enableDamping
+        dampingFactor={0.05}
+        minDistance={5}
+        maxDistance={50}
+      />
+
+      {/* FFT Spectrum grid - rotated 180 degrees so wave comes toward you, mirrored on X to fix RTL */}
+      <group
+        position={[0, -8, 10]}
+        rotation={[0.3, Math.PI, 0]}
+        scale={[-1.5, 1.5, 1.5]}
       >
-        {/* Orbit Controls */}
-        <OrbitControls
-          enableDamping
-          dampingFactor={0.05}
-          minDistance={5}
-          maxDistance={50}
+        <FFTSpectrumPlanes 
+          micData={micData} 
+          fps={fps} 
+          bassIntensity={bassIntensity} 
+          rows={rows}
         />
-
-        {/* FFT Spectrum grid - rotated 180 degrees so wave comes toward you, mirrored on X to fix RTL */}
-        <group
-          position={[0, -8, 10]}
-          rotation={[0.3, Math.PI, 0]}
-          scale={[-1.5, 1.5, 1.5]}
-        >
-          <FFTSpectrumPlanes 
-            micData={micData} 
-            fps={fps} 
-            bassIntensity={bassIntensity} 
-            rows={rows}
-          />
-        
-        
-          {/* Grid floor */}
-          <gridHelper
-            args={[80, 80, "#333344", "#111122"]}
-            position={[0, -0.1, 0]}
-          />
-        </group>
-
-        {/* 3D Lyrics - stays in normal position */}
-        {lyrics && lyrics.length > 0 && (
-         
-          <Lyrics3D
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs || 0}
-            isPlaying={isPlaying || false}
-            syncedData={null}
-            micData={micData}
-            reducedEmissive={true}
-          />
-          
-          
-        )}
-        
-        {/* Bloom Effect - ALWAYS active */}
-        <EffectComposer>
-          <Bloom 
-            intensity={Math.pow(bassIntensity*10,3)}
-            luminanceThreshold={0}
-            luminanceSmoothing={1.8}
-            radius={0.3}
-          />
-        </EffectComposer>
-      </Canvas>
       
-    
+        {/* Grid floor */}
+        <gridHelper
+          args={[80, 80, "#333344", "#111122"]}
+          position={[0, -0.1, 0]}
+        />
+      </group>
+      
+      {/* Bloom Effect */}
+      <EffectComposer>
+        <Bloom 
+          intensity={Math.pow(bassIntensity*10,3)}
+          luminanceThreshold={0}
+          luminanceSmoothing={1.8}
+          radius={0.3}
+        />
+      </EffectComposer>
+    </Canvas>
   );
 }

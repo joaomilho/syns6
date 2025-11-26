@@ -5,9 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import Lyrics3D from "./Lyrics3D";
 
 // Camera shake component
 function CameraShake({ micData }: { micData?: MicrophoneData }) {
@@ -47,8 +45,6 @@ interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
 }
 
@@ -364,8 +360,6 @@ export default function WavyLinesVisualization({
   audioFeatures,
   isPlaying,
   syncedData,
-  lyrics,
-  currentTimeMs,
   micData,
 }: VisualizationProps) {
   return (
@@ -388,17 +382,6 @@ export default function WavyLinesVisualization({
 
         <WavyLineField audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} micData={micData} />
         <FlowingParticles audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} />
-
-        {/* 3D Lyrics - always show, component handles "not found" */}
-        {currentTimeMs !== undefined && (
-          <Lyrics3D
-            lyrics={lyrics || null}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
-            syncedData={null}
-            micData={micData}
-          />
-        )}
 
         <OrbitControls
           enableZoom={true}

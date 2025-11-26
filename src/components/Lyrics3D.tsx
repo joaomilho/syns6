@@ -157,6 +157,7 @@ function LyricText3D({
         >
           {line}
           <meshStandardMaterial
+            toneMapped={false}
             color={color === "#000000" ? "#000000" : color}
             emissive={color === "#000000" ? "#000000" : color}
             emissiveIntensity={

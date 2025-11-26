@@ -4,14 +4,10 @@ import React, { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import Lyrics3D from "./Lyrics3D";
 
 interface VisualizationProps {
   isPlaying: boolean;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
   fps?: number;
 }
@@ -519,8 +515,6 @@ function OrbitalPaths({
 
 function SceneContent({
   isPlaying,
-  lyrics,
-  currentTimeMs,
   micData,
   fps = 60,
 }: VisualizationProps) {
@@ -549,18 +543,6 @@ function SceneContent({
       <CenterCore micData={micData} />
 
       {/* 3D Lyrics - positioned closer to camera */}
-      {currentTimeMs !== undefined && (
-        <group position={[0, 0, 15]}>
-          <Lyrics3D
-            lyrics={lyrics || null}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
-            syncedData={null}
-            micData={micData}
-          />
-        </group>
-      )}
-
       <OrbitControls
         enableZoom={true}
         enablePan={false}
@@ -575,8 +557,6 @@ function SceneContent({
 
 export default function MusicVisualization({
   isPlaying,
-  lyrics,
-  currentTimeMs,
   micData,
   fps = 60,
 }: VisualizationProps) {
@@ -599,8 +579,6 @@ export default function MusicVisualization({
       >
         <SceneContent
           isPlaying={isPlaying}
-          lyrics={lyrics}
-          currentTimeMs={currentTimeMs}
           micData={micData}
           fps={fps}
         />
