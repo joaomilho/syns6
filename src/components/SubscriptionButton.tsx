@@ -3,11 +3,20 @@
 import { useState } from 'react';
 import styles from './SubscriptionButton.module.css';
 
+
 interface SubscriptionButtonProps {
   priceId: string;
   planName: string;
-  price: string;
-  interval: 'monthly' | 'yearly';
+  primary: {
+    price: string;
+    interval: 'week' | 'month' | 'year';
+    currency: string;
+  };
+  secondary?: {
+    price: string;
+    interval: 'week' | 'month' | 'year';
+    currency: string;
+  };
   features?: string[];
   disabled?: boolean;
 }
@@ -15,8 +24,8 @@ interface SubscriptionButtonProps {
 export default function SubscriptionButton({
   priceId,
   planName,
-  price,
-  interval,
+  primary,
+  secondary,
   disabled = false,
 }: SubscriptionButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -35,7 +44,10 @@ export default function SubscriptionButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ 
+          priceId,
+          currency: primary.currency.toLowerCase(), // Stripe expects lowercase currency codes
+        }),
       });
 
       const data = await response.json();
@@ -58,11 +70,30 @@ export default function SubscriptionButton({
   return (
     <div className={styles.subscriptionCard}>
       <div className={styles.planHeader}>
-        <h3 className={styles.planName}>{planName} - {priceId}</h3>
-        <div className={styles.priceContainer}>
-          <span className={styles.price}>{price}</span>
-          <span className={styles.interval}>/{interval}</span>
+        <h3 className={styles.planName}>{planName}</h3>
+        
+        {secondary && (
+            <>
+            
+          <div className={styles.priceContainer}>
+          <span style={{ fontSize: '1.5rem' }}>{primary.price}</span>
+          <span className={styles.interval}>/{primary.interval}</span>
+
+            only
+            <span className={styles.price}>{secondary.price}</span>
+            <span className={styles.interval}>/{secondary.interval}</span>
+
+            
+          </div>
+          </>
+        )}
+        
+        {!secondary &&
+        <div className={secondary ? styles.secondaryPrice : styles.priceContainer}>
+          <span className={styles.price}>{primary.price}</span>
+          <span className={styles.interval}>/{primary.interval}</span>
         </div>
+}
       </div>
 
       <button

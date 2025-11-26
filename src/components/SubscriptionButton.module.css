@@ -1,19 +1,10 @@
 .subscriptionCard {
-  background: rgba(20, 20, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  transition: all 0.3s ease;
 }
 
-.subscriptionCard:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
 
 .planHeader {
   text-align: center;
@@ -24,6 +15,27 @@
   font-weight: 600;
   margin: 0 0 1rem 0;
   color: #fff;
+}
+
+.secondaryPrice {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+}
+
+.strikethrough {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: line-through;
+}
+
+.intervalSmall {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .priceContainer {
@@ -72,9 +84,9 @@
   padding: 1rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  color: #0f0;
+  border: 1px solid #0f0;
+  background: transparent;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
