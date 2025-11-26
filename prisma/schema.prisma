@@ -49,6 +49,11 @@ model User {
   emailVerified DateTime?
   image         String?
   
+  // Referral system
+  referralCode  String?   @unique
+  referredBy    String?   // User ID who referred them
+  referralCount Int       @default(0)
+  
   accounts      Account[]
   sessions      Session[]
   preferences   UserPreferences?
