@@ -16,7 +16,14 @@ export function generateReferralCode(): string {
  * Get referral URL for a given code
  */
 export function getReferralUrl(code: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  // Auto-detect the base URL from window location if in browser
+  if (typeof window !== 'undefined') {
+    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    return `${baseUrl}/?ref=${code}`;
+  }
+  
+  // Fallback for server-side rendering
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://syns6.com';
   return `${baseUrl}/?ref=${code}`;
 }
 
