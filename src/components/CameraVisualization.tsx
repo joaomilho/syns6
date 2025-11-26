@@ -4,16 +4,11 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import { LyricLine } from "@/lib/lyrics";
-import Lyrics3D from "./Lyrics3D";
 import { OrbitControls } from "@react-three/drei";
 
 interface CameraVisualizationProps {
   videoElement?: HTMLVideoElement | null;
   micData?: MicrophoneData;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
-  isPlaying?: boolean;
 }
 
 interface ShaderControls {
@@ -294,9 +289,6 @@ function CameraParticles({ micData }: { micData?: MicrophoneData }) {
 export default function CameraVisualization({
   videoElement,
   micData,
-  lyrics,
-  currentTimeMs,
-  isPlaying,
 }: CameraVisualizationProps) {
   const [controls, setControls] = useState<ShaderControls>({
     rgbSplitAmount: 0.025,
@@ -339,20 +331,6 @@ export default function CameraVisualization({
 
         {/* Particles floating around */}
         <CameraParticles micData={micData} />
-
-        {/* 3D Lyrics - positioned in front of video */}
-        {lyrics && lyrics.length > 0 && (
-          <group position={[0, 0, -5]}>
-            <Lyrics3D
-              lyrics={lyrics}
-              currentTimeMs={currentTimeMs || 0}
-              isPlaying={isPlaying || false}
-              syncedData={null}
-              micData={micData}
-              color="#000000"
-            />
-          </group>
-        )}
       </Canvas>
 
       {/* Shader Controls Panel */}

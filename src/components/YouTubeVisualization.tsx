@@ -2,16 +2,12 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import Lyrics3D from "./Lyrics3D";
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface YouTubeVisualizationProps {
   trackName?: string;
   artistName?: string;
   spotifyId?: string;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
 }
 
@@ -19,8 +15,6 @@ export default function YouTubeVisualization({
   trackName,
   artistName,
   spotifyId: spotifyIdProp,
-  lyrics,
-  currentTimeMs,
   micData,
 }: YouTubeVisualizationProps) {
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -218,19 +212,6 @@ export default function YouTubeVisualization({
             background: "transparent",
           }}
         >
-          {lyrics && lyrics.length > 0 && (
-            <group position={[0, -2, -10]} scale={2}>
-              <Lyrics3D
-                lyrics={lyrics}
-                currentTimeMs={currentTimeMs || 0}
-                isPlaying={true}
-                syncedData={null}
-                micData={micData}
-                
-                
-              />
-            </group>
-          )}
         </Canvas>
       </div>
     </div>
