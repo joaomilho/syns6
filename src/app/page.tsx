@@ -175,7 +175,7 @@ export default function Home() {
               <div className={styles.featureText}>
                 <h3 className={styles.featureTitle}>Funmaxxing visualizations</h3>
                 <p className={styles.featureDescription}>
-                  Immerse yourself in mind-bending 3D visuals that react to your voice
+                  Immerse yourself in mind-bending 3D visuals that react to your voice and the music.
                 </p>
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function Home() {
               <div className={styles.featureText}>
                 <h3 className={styles.featureTitle}>Lyrics for all songs</h3>
                 <p className={styles.featureDescription}>
-                  Heavy metal fans rejoice - no more "mamma mia" guesswork. Real lyrics, real karaoke.
+                  Heavy metal fans rejoice - no more "mamma mia". Real lyrics, real karaoke.
                 </p>
               </div>
             </div>
@@ -215,9 +215,9 @@ export default function Home() {
                 className={styles.featureImage}
               />
               <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Viewer mode for all to sing</h3>
+                <h3 className={styles.featureTitle}>Viewer mode</h3>
                 <p className={styles.featureDescription}>
-                  Share your karaoke session - friends can join and sing along from anywhere
+                  Share your karaoke session - friends can join and sing along.
                 </p>
               </div>
             </div>
@@ -225,13 +225,13 @@ export default function Home() {
             <div className={styles.featureCard}>
               <img 
                 src="/viz-thumbnails/animated.webp" 
-                alt="Hue and + integration" 
+                alt="Hue integration" 
                 className={styles.featureImage}
               />
               <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Hue and + integration</h3>
+                <h3 className={styles.featureTitle}>Hue integration</h3>
                 <p className={styles.featureDescription}>
-                  Sync your smart lights to the beat - turn your room into a concert venue
+                  Sync your smart lights to the beat - turn your room into a concert venue with Hue integration and many other peripherals.
                 </p>
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2024 Syns6. All rights reserved.</p>
+          <p>© syns6. All rights reserved.</p>
         </footer>
       </main>
     </div>
