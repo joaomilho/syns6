@@ -462,6 +462,14 @@ button.secondary {
   
 }
 
+.mobileBreak {
+  display: none;
+}
+
+.desktopBreak {
+  display: inline;
+}
+
 .ctaButton {
   padding: 18px 48px;
   font-size: 20px;
@@ -925,6 +933,11 @@ button.secondary {
   justify-content: center;
   align-items: center;
   min-height: 400px;
+  max-width: 100%;
+}
+
+.instagramEmbed > div {
+  max-width: 100%;
 }
 
 .instagramEmbed blockquote {
@@ -1100,6 +1113,14 @@ button.secondary {
     font-size: 18px;
   }
 
+  .mobileBreak {
+    display: inline;
+  }
+
+  .desktopBreak {
+    display: none;
+  }
+
   .sectionTitle {
     font-size: 36px;
   }
@@ -1110,18 +1131,83 @@ button.secondary {
   }
 
   .landingMain {
-    gap: 60px;
+    gap: 32px;
+    padding: 40px 8px;
+  }
+
+  .hero {
+    gap: 16px;
+    padding: 60px 8px;
   }
 
   .ctaButton {
     width: 100%;
     max-width: 400px;
+    margin-top: 8px;
+  }
+
+  /* Features section - minimal margins */
+  .features {
+    padding: 40px 8px;
+    gap: 24px;
+  }
+
+  .featureGrid {
+    gap: 40px;
+    margin-top: 32px;
+  }
+
+  .vizMasonrySection {
+    padding: 0 4px;
+  }
+
+  /* Social links - keep on one line */
+  .socialLinks {
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .socialLink {
+    font-size: 14px;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  /* Instagram embeds - horizontal scroll on mobile */
+  .instagramSection {
+    padding: 40px 8px;
+    gap: 16px;
+  }
+
+  .instagramGrid {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 24px;
+    padding-bottom: 16px;
+  }
+
+  .instagramEmbed {
+    min-height: auto;
+    flex-shrink: 0;
+    scroll-snap-align: center;
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+
+  .instagramEmbed > div,
+  .instagramEmbed iframe {
+    max-width: 100% !important;
   }
 
   .featureCard,
   .featureCard:nth-child(even) {
     flex-direction: column;
     gap: 24px;
+    padding: 16px 8px;
   }
 
   .featureCard:hover,
@@ -1182,7 +1268,7 @@ button.secondary {
   /* Vertical cards responsive */
   .featureCardsGrid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 24px;
   }
 
   .featureTitleVertical {
@@ -1191,5 +1277,15 @@ button.secondary {
 
   .featureDescriptionVertical {
     font-size: 16px;
+  }
+
+  /* Pricing section - reduced gaps */
+  .pricing {
+    padding: 40px 8px;
+    gap: 24px;
+  }
+
+  .pricingGrid {
+    margin-top: 24px;
   }
 }

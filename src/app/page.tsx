@@ -325,7 +325,7 @@ export default function Home() {
         <section className={styles.hero}>
           <h1 className={styles.heroTitle}>Karaoke, redefined.</h1>
           <p className={styles.heroSubtitle}>
-          By day, your home. By night,<br/>the sickest club in the world. And <b>you</b> own it.
+          By day, your home. By night,<br className={styles.desktopBreak}/>the sickest club in the world.<br className={styles.mobileBreak}/> And <b>you</b> own it.
             {/* <br />
             A neon-soaked, bass-pounding private club. */}
           </p>

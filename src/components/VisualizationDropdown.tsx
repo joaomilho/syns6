@@ -40,7 +40,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/fftspectrum.png",
     assets: {
       static: "/viz-thumbnails/fftspectrum.png",
-      animated: "/viz-thumbnails/fftspectrum.webp",
+      animated: "/viz-thumbnails/fftspectrum.webm",
     },
   },
   {
@@ -50,7 +50,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/particles.png",
     assets: {
       static: "/viz-thumbnails/particles.png",
-      animated: "/viz-thumbnails/particles.webp",
+      animated: "/viz-thumbnails/particles.webm",
     },
   },
   {
@@ -60,7 +60,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/fractal.png",
     assets: {
       static: "/viz-thumbnails/fractal.png",
-      animated: "/viz-thumbnails/fractal.webp",
+      animated: "/viz-thumbnails/fractal.webm",
     },
   },
   {
@@ -70,7 +70,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/psychedelic.png",
     assets: {
       static: "/viz-thumbnails/psychedelic.png",
-      animated: "/viz-thumbnails/psychedelic.webp",
+      animated: "/viz-thumbnails/psychedelic.webm",
     },
   },
   {
@@ -80,7 +80,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/waves.png",
     assets: {
       static: "/viz-thumbnails/waves.png",
-      animated: "/viz-thumbnails/waves.webp",
+      animated: "/viz-thumbnails/waves.webm",
     },
   },
   {
@@ -90,7 +90,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/animated.png",
     assets: {
       static: "/viz-thumbnails/animated.png",
-      animated: "/viz-thumbnails/animated.webp",
+      animated: "/viz-thumbnails/animated.webm",
     },
   },
   {
@@ -100,7 +100,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/spectrum3d.png",
     assets: {
       static: "/viz-thumbnails/spectrum3d.png",
-      animated: "/viz-thumbnails/spectrum3d.webp",
+      animated: "/viz-thumbnails/spectrum3d.webm",
     },
   },
   {
@@ -110,7 +110,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/wavespectrum.png",
     assets: {
       static: "/viz-thumbnails/wavespectrum.png",
-      animated: "/viz-thumbnails/wavespectrum.webp",
+      animated: "/viz-thumbnails/wavespectrum.webm",
     },
   },
   {
@@ -120,7 +120,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/oscilloscope.png",
     assets: {
       static: "/viz-thumbnails/oscilloscope.png",
-      animated: "/viz-thumbnails/oscilloscope.webp",
+      animated: "/viz-thumbnails/oscilloscope.webm",
     },
   },
   {
@@ -130,7 +130,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/camera.png",
     assets: {
       static: "/viz-thumbnails/camera.png",
-      animated: "/viz-thumbnails/camera.webp",
+      animated: "/viz-thumbnails/camera.webm",
     },
   },
   {
@@ -140,7 +140,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/youtube.png",
     assets: {
       static: "/viz-thumbnails/youtube.png",
-      animated: "/viz-thumbnails/youtube.webp",
+      animated: "/viz-thumbnails/youtube.webm",
     },
   },
   {
@@ -150,7 +150,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/debug.png",
     assets: {
       static: "/viz-thumbnails/debug.png",
-      animated: "/viz-thumbnails/debug.webp",
+      animated: "/viz-thumbnails/debug.webm",
     },
   },
 ];
@@ -242,12 +242,17 @@ export default function VisualizationDropdown({
                       backgroundPosition: 'center'
                     }}
                   />
-                  <div
+                  <video
                     className={`${styles.thumbnail} ${styles.thumbnailAnimated}`}
-                    style={{ 
-                      backgroundImage: `url(${viz.assets.animated})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
+                    src={viz.assets.animated}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
                     }}
                   />
                 </div>
