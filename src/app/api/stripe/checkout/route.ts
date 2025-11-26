@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { priceId } = await req.json();
+    const { priceId, currency } = await req.json();
 
     if (!priceId) {
       return NextResponse.json(
@@ -23,6 +23,18 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate currency (optional but recommended)
+    const validCurrencies = [
+      'aed', 'ars', 'aud', 'brl', 'cad', 'chf', 'clp', 'cny', 'dkk', 'eur',
+      'gbp', 'hkd', 'idr', 'ils', 'inr', 'isk', 'jpy', 'krw', 'mxn', 'myr',
+      'ngn', 'nok', 'pkr', 'pln', 'rub', 'sek', 'sgd', 'thb', 'try', 'twd',
+      'uah', 'usd', 'uyu', 'zar'
+    ];
+    
+    const checkoutCurrency = currency && validCurrencies.includes(currency.toLowerCase()) 
+      ? currency.toLowerCase() 
+      : 'eur'; // Default fallback
 
     // Get or create Stripe customer
     const customerId = await getOrCreateStripeCustomer(
@@ -36,6 +48,7 @@ export async function POST(req: NextRequest) {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
+      currency: checkoutCurrency,
       line_items: [
         {
           price: priceId,
@@ -46,12 +59,14 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXTAUTH_URL}/player?canceled=true`,
       metadata: {
         userId: session.user.id,
+        currency: checkoutCurrency,
       },
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       subscription_data: {
         metadata: {
           userId: session.user.id,
+          currency: checkoutCurrency,
         },
       },
     });

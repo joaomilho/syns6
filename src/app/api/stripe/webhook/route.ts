@@ -89,14 +89,26 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Validate required fields
+  // If critical fields are missing, fetch the full subscription from Stripe
   if (!subscription.current_period_start || !subscription.current_period_end) {
-    console.error('Missing required period dates in subscription:', {
+    console.warn('⚠️ Incomplete subscription object received, fetching from Stripe API...');
+    console.warn('Missing fields:', {
       id: subscription.id,
       current_period_start: subscription.current_period_start,
       current_period_end: subscription.current_period_end,
     });
-    return;
+    
+    try {
+      // Fetch the complete subscription from Stripe
+      const fullSubscription = await stripe.subscriptions.retrieve(subscription.id);
+      console.log('✅ Retrieved full subscription from Stripe');
+      
+      // Recursively call this function with the complete data
+      return await handleSubscriptionUpdate(fullSubscription);
+    } catch (error) {
+      console.error('❌ Failed to retrieve subscription from Stripe:', error);
+      return;
+    }
   }
 
   if (!subscription.items?.data?.[0]?.price) {
