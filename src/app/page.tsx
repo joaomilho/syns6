@@ -329,12 +329,17 @@ export default function Home() {
             {/* <br />
             A neon-soaked, bass-pounding private club. */}
           </p>
-          <button 
-            onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
-            className={styles.ctaButton}
-          >
-            Join the waitlist
-          </button>
+          <div className={styles.ctaContainer}>
+            <button 
+              onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
+              className={styles.ctaButton}
+            >
+              Join the waitlist
+            </button>
+            <a href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" target="_blank" rel="noopener noreferrer">
+              <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1042868&theme=light&t=1764195048977" alt="syns6 - Karaoke&#0046;&#0032;Redefined&#0046; | Product Hunt" style={{width: '250px', height: '54px'}} width="250" height="54" />
+            </a>
+          </div>
         </section>
 
         {/* Social Links */}
