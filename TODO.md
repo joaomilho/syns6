@@ -32,3 +32,7 @@
 [ ] Verify why some lyrics are not loading, eg Texas BigXtahPlug
 [ ] 2 mics
     Figure how to have 2 ins on mac, so we can capture Spotify and then an external mic for proper karaoke.
+
+
+Bugs
+[ ] The LavaLamp seems to have a clipping problem (aka holes) that's related to limits set in the "MarchingSquares" compo. Hard to tweak to perfection.
