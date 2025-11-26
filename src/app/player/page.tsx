@@ -514,7 +514,7 @@ export default function PlayerPage() {
           // Only prefetch first 5 songs to avoid overwhelming the system
           if (index >= 5) return;
           
-          // Check if already cached
+          // Check if already cached (including null results)
           if (lyricsCache.current.has(track.id)) {
             console.log(`📦 Lyrics already cached for: ${track.name}`);
             return;
@@ -529,20 +529,18 @@ export default function PlayerPage() {
               track.id
             );
             
-            // Cache the result (even if null)
+            // Cache the result (even if null) to prevent repeated fetches
             lyricsCache.current.set(track.id, lyricsLines);
             
             if (lyricsLines && lyricsLines.length > 0) {
               console.log(`✅ Prefetched lyrics for: ${track.name} (${lyricsLines.length} lines)`);
             } else {
-              console.log(`⚠️ No lyrics found during prefetch for: ${track.name}`);
-              // Don't cache null results - allow retry when song actually plays
-              lyricsCache.current.delete(track.id);
+              console.log(`⚠️ No lyrics found during prefetch for: ${track.name} (cached as null)`);
             }
           } catch (err) {
             console.error(`❌ Failed to prefetch lyrics for: ${track.name}`, err);
-            // Don't cache errors
-            lyricsCache.current.delete(track.id);
+            // Cache null to prevent repeated failed attempts
+            lyricsCache.current.set(track.id, null);
           }
         });
       } else {
@@ -569,7 +567,7 @@ export default function PlayerPage() {
         clearInterval(queueInterval);
       };
     }
-  }, [session]);
+  }, [session?.accessToken]); // Only depend on access token, not entire session object
 
   // Update progress bar in real-time
   useEffect(() => {
@@ -1117,6 +1115,11 @@ export default function PlayerPage() {
                           alt={displayTrack.album.name}
                         />
                       )}
+                      {/* Lyrics Badge */}
+                      <div 
+                        className={`${styles.lyricsBadge} ${lyrics && lyrics.length > 0 ? styles.hasLyrics : styles.noLyrics}`}
+                        title={lyrics && lyrics.length > 0 ? "Has lyrics" : "No lyrics"}
+                      />
                     </div>
 
                     {/* Track Info & Controls */}
@@ -1168,6 +1171,11 @@ export default function PlayerPage() {
                                   alt={track.album.name}
                                 />
                               )}
+                              {/* Queue Lyrics Badge */}
+                              <div 
+                                className={`${styles.queueLyricsBadge} ${lyricsCache.current.has(track.id) && lyricsCache.current.get(track.id) ? styles.hasLyrics : styles.noLyrics}`}
+                                title={lyricsCache.current.has(track.id) && lyricsCache.current.get(track.id) ? "Has lyrics" : "No lyrics"}
+                              />
                             </div>
                             
                             {/* Track Info */}

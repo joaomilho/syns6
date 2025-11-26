@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
@@ -16,8 +17,9 @@ interface LyricsCanvasProps {
 /**
  * Standalone lyrics canvas that renders on top of any visualization
  * This allows lyrics to persist when switching visualizations
+ * Memoized to prevent unnecessary re-renders
  */
-export default function LyricsCanvas({
+const LyricsCanvas = memo(function LyricsCanvas({
   lyrics,
   currentTimeMs,
   isPlaying,
@@ -61,5 +63,7 @@ export default function LyricsCanvas({
       />
     </Canvas>
   );
-}
+});
+
+export default LyricsCanvas;
 
