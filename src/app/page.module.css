@@ -470,6 +470,15 @@ button.secondary {
   display: inline;
 }
 
+.ctaContainer {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .ctaButton {
   padding: 18px 48px;
   font-size: 20px;
@@ -483,13 +492,21 @@ button.secondary {
   font-family: inherit;
   text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
   backdrop-filter: blur(10px);
-  margin-top: 20px;
 }
 
 .ctaButton:hover {
   background: rgba(0, 255, 0, 0.1);
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
 }
+
+.ctaContainer a {
+  transition: transform 0.3s;
+}
+
+.ctaContainer a:hover {
+  transform: translateY(-2px);
+}
+
 
 /* Social Links */
 .socialLinks {
@@ -1119,6 +1136,16 @@ button.secondary {
 
   .desktopBreak {
     display: none;
+  }
+
+  .ctaContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ctaContainer img {
+    width: 220px !important;
+    height: 47px !important;
   }
 
   .sectionTitle {
