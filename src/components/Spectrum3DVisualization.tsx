@@ -4,15 +4,10 @@ import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import { LyricLine } from "@/lib/lyrics";
-import Lyrics3D from "./Lyrics3D";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 interface Spectrum3DVisualizationProps {
   micData?: MicrophoneData;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
-  isPlaying?: boolean;
 }
 
 function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
@@ -237,9 +232,6 @@ function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
 
 export default function Spectrum3DVisualization({
   micData,
-  lyrics,
-  currentTimeMs,
-  isPlaying,
 }: Spectrum3DVisualizationProps) {
   return (
     <div
@@ -276,17 +268,6 @@ export default function Spectrum3DVisualization({
             position={[0, -0.1, 0]}
           />
         </group>
-
-        {/* 3D Lyrics - stays in normal position */}
-        {lyrics && lyrics.length > 0 && (
-          <Lyrics3D
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs || 0}
-            isPlaying={isPlaying || false}
-            syncedData={null}
-            micData={micData}
-          />
-        )}
 
         {/* Bloom effect for glow */}
         <EffectComposer>

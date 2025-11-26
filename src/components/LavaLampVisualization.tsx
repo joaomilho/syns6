@@ -5,8 +5,6 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
-import Lyrics3D from "./Lyrics3D";
-import { LyricLine } from "@/lib/lyrics";
 import { MarchingCubes } from "@/lib/MarchingCubes";
 
 interface LavaLampVisualizationProps {
@@ -17,9 +15,6 @@ interface LavaLampVisualizationProps {
     treble: number;
     volume: number;
   } | null;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
-  isPlaying?: boolean;
 }
 
 // Physics-based particle system for blobs
@@ -292,9 +287,6 @@ function LavaLampLighting({
 
 export default function LavaLampVisualization({
   micData,
-  lyrics,
-  currentTimeMs,
-  isPlaying,
 }: LavaLampVisualizationProps) {
   // Calculate bloom intensity based on music - subtle glow
   const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
@@ -317,18 +309,6 @@ export default function LavaLampVisualization({
 
       {/* Morphing blobs using marching cubes - includes central sphere */}
       <LavaLampBlobs micData={micData} />
-
-      {/* 3D Lyrics - positioned forward */}
-      {lyrics && lyrics.length > 0 && (
-        <Lyrics3D
-          lyrics={lyrics}
-          currentTimeMs={currentTimeMs || 0}
-          isPlaying={isPlaying || false}
-          syncedData={null}
-          micData={undefined}
-          position={[0, 3, 8.2]}
-        />
-      )}
 
       {/* Post-processing for refined GLOW effect */}
       <EffectComposer multisampling={8}>
