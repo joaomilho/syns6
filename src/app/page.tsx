@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { InstagramEmbed } from "react-social-media-embed";
@@ -10,13 +10,10 @@ import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useFPS } from "@/hooks/useFPS";
 import Syns6Logo from "@/components/Syns6Logo";
 
-export default function Home() {
-  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
-  const { micData, enable: enableMic } = useMicrophoneAnalysis();
-  const fps = useFPS();
+// Component that uses searchParams - wrapped in Suspense
+function ReferralCapture() {
   const searchParams = useSearchParams();
 
-  // Capture referral code from URL and store in localStorage
   useEffect(() => {
     const refCode = searchParams.get('ref');
     if (refCode) {
@@ -24,6 +21,14 @@ export default function Home() {
       console.log('Referral code captured:', refCode);
     }
   }, [searchParams]);
+
+  return null;
+}
+
+export default function Home() {
+  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
+  const { micData, enable: enableMic } = useMicrophoneAnalysis();
+  const fps = useFPS();
 
   // Check WebGL availability
   useEffect(() => {
@@ -98,8 +103,13 @@ export default function Home() {
 
   return (
     <div className={styles.landingPage}>
-        {/* Background Visualization or Fallback Image */}
-        <div className={styles.backgroundViz}>
+      {/* Capture referral code from URL */}
+      <Suspense fallback={null}>
+        <ReferralCapture />
+      </Suspense>
+
+      {/* Background Visualization or Fallback Image */}
+      <div className={styles.backgroundViz}>
         {webglAvailable === null ? (
           // Still checking WebGL availability
           <div style={{ background: '#000' }} />
