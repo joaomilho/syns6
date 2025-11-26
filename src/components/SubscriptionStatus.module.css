@@ -53,6 +53,34 @@
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
+.badgeCanceling {
+  background: rgba(251, 146, 60, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+}
+
+.planInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* padding: 16px 20px; */
+  /* background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%); */
+  /* border: 1px solid rgba(102, 126, 234, 0.3); */
+  /* border-radius: 12px; */
+  margin-bottom: 1rem;
+}
+
+.planName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.planPrice {
+  font-size: 1.5rem;
+  
+}
+
 .details {
   margin-bottom: 1.5rem;
 }
@@ -68,9 +96,13 @@
   font-weight: 600;
 }
 
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .manageButton {
-  width: 100%;
-  padding: 0.875rem;
+  padding: 0.875rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
   color: #fff;

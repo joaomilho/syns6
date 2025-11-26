@@ -13,9 +13,11 @@ interface Subscription {
 
 interface SubscriptionStatusProps {
   onManageSubscription?: () => void;
+  planName?: string;
+  planPrice?: string;
 }
 
-export default function SubscriptionStatus({ onManageSubscription }: SubscriptionStatusProps) {
+export default function SubscriptionStatus({ onManageSubscription, planName, planPrice }: SubscriptionStatusProps) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,8 @@ export default function SubscriptionStatus({ onManageSubscription }: Subscriptio
       const data = await response.json();
 
       if (response.ok && data.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
+        setPortalLoading(false);
       } else {
         throw new Error(data.error || 'Failed to open billing portal');
       }
@@ -82,6 +85,11 @@ export default function SubscriptionStatus({ onManageSubscription }: Subscriptio
   });
 
   const getStatusBadge = () => {
+    // If set to cancel at period end, show Canceling status
+    if (subscription.cancelAtPeriodEnd && subscription.status === 'active') {
+      return <span className={`${styles.badge} ${styles.badgeCanceling}`}>Canceling</span>;
+    }
+    
     switch (subscription.status) {
       case 'active':
         return <span className={`${styles.badge} ${styles.badgeActive}`}>Active</span>;
@@ -99,9 +107,16 @@ export default function SubscriptionStatus({ onManageSubscription }: Subscriptio
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Subscription Status</h3>
+        <h3 className={styles.title}>Subscription</h3>
         {getStatusBadge()}
       </div>
+      
+      {planName && planPrice && (
+        <div className={styles.planInfo}>
+          <span className={styles.planName}>{planName}</span>
+          <span className={styles.planPrice}>{planPrice}</span>
+        </div>
+      )}
 
       <div className={styles.details}>
         {isActive ? (
@@ -109,29 +124,31 @@ export default function SubscriptionStatus({ onManageSubscription }: Subscriptio
             <p className={styles.detailText}>
               {subscription.cancelAtPeriodEnd ? (
                 <>
-                  Your subscription will expire on <strong>{formattedDate}</strong>
+                  Expires <strong>{formattedDate}</strong>
                 </>
               ) : (
                 <>
-                  Your subscription renews on <strong>{formattedDate}</strong>
+                  Renews <strong>{formattedDate}</strong>
                 </>
               )}
             </p>
           </>
         ) : (
           <p className={styles.detailText}>
-            Your subscription ended on <strong>{formattedDate}</strong>
+            Ended <strong>{formattedDate}</strong>
           </p>
         )}
       </div>
 
-      <button
-        onClick={onManageSubscription || handleManageSubscription}
-        disabled={portalLoading}
-        className={styles.manageButton}
-      >
-        {portalLoading ? 'Loading...' : 'Manage Subscription'}
-      </button>
+      <div className={styles.buttonContainer}>
+        <button
+          onClick={onManageSubscription || handleManageSubscription}
+          disabled={portalLoading}
+          className={styles.manageButton}
+        >
+          {portalLoading ? 'Loading...' : 'Manage'}
+        </button>
+      </div>
     </div>
   );
 }
