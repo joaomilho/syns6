@@ -422,12 +422,31 @@
    border-radius: 9px;
    overflow: hidden;
    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+   position: relative;
  }
 
  .albumArt img {
    width: 100%;
    height: 100%;
    object-fit: cover;
+ }
+
+ .lyricsBadge {
+   position: absolute;
+   top: 4px;
+   right: 4px;
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+ }
+
+ .lyricsBadge.hasLyrics {
+   background-color: #22c55e;
+ }
+
+ .lyricsBadge.noLyrics {
+   background-color: #ef4444;
  }
 
  .trackInfoContainer {
@@ -585,6 +604,7 @@
    overflow: hidden;
    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
    transition: all 0.2s ease;
+   position: relative;
  }
 
  .queueAlbumArt.smaller {
@@ -597,6 +617,24 @@
    width: 100%;
    height: 100%;
    object-fit: cover;
+ }
+
+ .queueLyricsBadge {
+   position: absolute;
+   top: 2px;
+   right: 2px;
+   width: 6px;
+   height: 6px;
+   border-radius: 50%;
+   box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+ }
+
+ .queueLyricsBadge.hasLyrics {
+   background-color: #22c55e;
+ }
+
+ .queueLyricsBadge.noLyrics {
+   background-color: #ef4444;
  }
 
  .queueTrackInfo {
@@ -622,6 +660,13 @@
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;
+ }
+
+ .queueLyricsIndicator {
+   font-size: 10px;
+   color: rgba(255, 255, 255, 0.25);
+   margin-left: 4px;
+   font-weight: 300;
  }
 
  .errorMessage {
