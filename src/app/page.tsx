@@ -1,20 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { InstagramEmbed } from "react-social-media-embed";
 import styles from "./page.module.css";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useFPS } from "@/hooks/useFPS";
-import { track } from "@vercel/analytics";
+import Syns6Logo from "@/components/Syns6Logo";
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [message, setMessage] = useState("");
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
   const { micData, enable: enableMic } = useMicrophoneAnalysis();
   const fps = useFPS();
+  const searchParams = useSearchParams();
+
+  // Capture referral code from URL and store in localStorage
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('referralCode', refCode);
+      console.log('Referral code captured:', refCode);
+    }
+  }, [searchParams]);
 
   // Check WebGL availability
   useEffect(() => {
@@ -75,66 +84,22 @@ export default function Home() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
-  // Force body to be black and prevent scrolling
+  // Force body to be black and allow scrolling
   useEffect(() => {
     document.body.style.backgroundColor = '#000000';
     document.documentElement.style.backgroundColor = '#000000';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    document.body.style.width = '100vw';
     return () => {
       document.body.style.backgroundColor = '';
       document.documentElement.style.backgroundColor = '';
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.body.style.height = '';
-      document.body.style.width = '';
     };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
-    setMessage("");
-
-    try {
-      const response = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setStatus("success");
-        setMessage("Thanks for subscribing! We'll keep you updated.");
-        setEmail("");
-        
-        // Track email signup event
-        track("email_signup", {
-          email: email,
-          timestamp: new Date().toISOString(),
-        });
-      } else {
-        setStatus("error");
-        setMessage(data.error || "Something went wrong. Please try again.");
-      }
-    } catch (error) {
-      setStatus("error");
-      setMessage("Network error. Please try again.");
-    }
-  };
-
   return (
     <div className={styles.landingPage}>
-      {/* Background Visualization or Fallback Image */}
-      <div className={styles.backgroundViz}>
+        {/* Background Visualization or Fallback Image */}
+        <div className={styles.backgroundViz}>
         {webglAvailable === null ? (
           // Still checking WebGL availability
           <div style={{ background: '#000' }} />
@@ -158,40 +123,240 @@ export default function Home() {
       </div>
 
       <main className={styles.landingMain}>
-        <div className={styles.landingContent}>
-          
-          
-          <form onSubmit={handleSubmit} className={styles.emailForm}>
-            <div className={styles.inputGroup}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                disabled={status === "loading"}
-                className={styles.emailInput}
-              />
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className={styles.submitButton}
-              >
-                {status === "loading" ? "..." : "FOMO"}
-              </button>
-            </div>
-            
-            {message && (
-              <p className={`${styles.statusMessage} ${
-                status === "success" ? styles.success : styles.error
-              }`}>
-                {message}
-              </p>
-            )}
-          </form>
+        {/* Header with Logo and Icon */}
+        <header className={styles.header}>
+          <div className={styles.logoWrapper}>
+            <img src="/icon" alt="Syns6 Icon" className={styles.favicon} />
+            {/* <Syns6Logo /> */}
+          </div>
+        </header>
 
+        {/* Hero Section - Title/Subtitle over visualization */}
+        <section className={styles.hero}>
+          <h1 className={styles.heroTitle}>Karaoke, redefined.</h1>
+          <p className={styles.heroSubtitle}>
+            Your home, neon-soaked, bass-pounding karaoke revolution.
+          </p>
+          <button 
+            onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
+            className={styles.ctaButton}
+          >
+            Join the waitlist
+          </button>
+        </section>
+
+        {/* Social Links */}
+        <section className={styles.socialLinks}>
+          <a href="#" className={styles.socialLink} aria-label="Instagram">
+            Instagram
+          </a>
+          <a href="#" className={styles.socialLink} aria-label="TikTok">
+            TikTok
+          </a>
+          <a href="#" className={styles.socialLink} aria-label="Twitter">
+            Twitter
+          </a>
+          <a href="#" className={styles.socialLink} aria-label="Mae">
+            Mae
+          </a>
+        </section>
+
+        {/* Features Section */}
+        <section className={styles.features}>
+          <h2 className={styles.sectionTitle}>Features that slap</h2>
           
-        </div>
+          <div className={styles.featureGrid}>
+            <div className={styles.featureCard}>
+              <img 
+                src="/viz-thumbnails/psychedelic.webp" 
+                alt="Funmaxxing visualizations" 
+                className={styles.featureImage}
+              />
+              <div className={styles.featureText}>
+                <h3 className={styles.featureTitle}>Funmaxxing visualizations</h3>
+                <p className={styles.featureDescription}>
+                  Immerse yourself in mind-bending 3D visuals that react to your voice
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.featureCard}>
+              <img 
+                src="/viz-thumbnails/fractal.webp" 
+                alt="Lyrics for all songs" 
+                className={styles.featureImage}
+              />
+              <div className={styles.featureText}>
+                <h3 className={styles.featureTitle}>Lyrics for all songs</h3>
+                <p className={styles.featureDescription}>
+                  Heavy metal fans rejoice - no more "mamma mia" guesswork. Real lyrics, real karaoke.
+                </p>
+              </div>
+            </div>
+
+            <div className={`${styles.featureCard} ${styles.aiGlow}`}>
+              <img 
+                src="/viz-thumbnails/particles.webp" 
+                alt="Create visualizations with AI" 
+                className={styles.featureImage}
+              />
+              <div className={styles.featureText}>
+                <h3 className={styles.featureTitle}>Create visualizations with AI</h3>
+                <p className={styles.featureDescription}>
+                  Generate custom visualizations with AI - your imagination is the only limit
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.featureCard}>
+              <img 
+                src="/viz-thumbnails/waves.webp" 
+                alt="Viewer mode for all to sing" 
+                className={styles.featureImage}
+              />
+              <div className={styles.featureText}>
+                <h3 className={styles.featureTitle}>Viewer mode for all to sing</h3>
+                <p className={styles.featureDescription}>
+                  Share your karaoke session - friends can join and sing along from anywhere
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.featureCard}>
+              <img 
+                src="/viz-thumbnails/animated.webp" 
+                alt="Hue and + integration" 
+                className={styles.featureImage}
+              />
+              <div className={styles.featureText}>
+                <h3 className={styles.featureTitle}>Hue and + integration</h3>
+                <p className={styles.featureDescription}>
+                  Sync your smart lights to the beat - turn your room into a concert venue
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Instagram Videos Section */}
+        <section className={styles.instagramSection}>
+          <h2 className={styles.sectionTitle}>See it in action</h2>
+          <p className={styles.sectionSubtitle}>
+            Follow us on Instagram for the latest updates
+          </p>
+          <a 
+            href="https://www.instagram.com/_syns6_/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={styles.instagramLink}
+          >
+            @_syns6_
+          </a>
+          <div className={styles.instagramGrid}>
+            {/* Instagram Embed - Replace the URLs with your actual Instagram post/reel URLs */}
+            <div className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                
+                url="https://www.instagram.com/reel/DRft3ZmCPE9/" 
+                width={328}
+              />
+            </div>
+            <div className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                url="https://www.instagram.com/reel/DRdhNlxiKuS/" 
+                width={328}
+              />
+            </div>
+            <div className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                url="https://www.instagram.com/reel/DRcfnrkCJFy/" 
+                width={328}
+              />
+            </div>
+          </div>
+          <p className={styles.instagramCTA}>
+            Visit our profile for more →
+          </p>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className={styles.testimonials}>
+          <h2 className={styles.sectionTitle}>What people are saying</h2>
+          
+          <div className={styles.testimonialGrid}>
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎤 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "Best karaoke experience ever! The visualizations are insane."
+              </p>
+              <p className={styles.testimonialAuthor}>- Alex</p>
+            </div>
+
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎵 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "Finally, I can sing metal without butchering the lyrics!"
+              </p>
+              <p className={styles.testimonialAuthor}>- Sam</p>
+            </div>
+
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎸 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "The AI visualization creator is a game changer."
+              </p>
+              <p className={styles.testimonialAuthor}>- Jordan</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className={styles.pricing}>
+          {/* <h2 className={styles.sectionTitle}>Simple Pricing</h2>
+          
+          <div className={styles.pricingGrid}>
+            <div className={styles.pricingCard}>
+              <h3 className={styles.pricingTier}>Free</h3>
+              <p className={styles.pricingPrice}>$0</p>
+              <ul className={styles.pricingFeatures}>
+                <li>✓ All visualizations</li>
+                <li>✓ Lyrics for all songs</li>
+                <li>✓ Basic features</li>
+              </ul>
+            </div>
+
+            <div className={`${styles.pricingCard} ${styles.featured}`}>
+              <div className={styles.popularBadge}>Popular</div>
+              <h3 className={styles.pricingTier}>Pro</h3>
+              <p className={styles.pricingPrice}>$9.99<span>/month</span></p>
+              <ul className={styles.pricingFeatures}>
+                <li>✓ Everything in Free</li>
+                <li>✓ AI visualization creator</li>
+                <li>✓ Hue integration</li>
+                <li>✓ Viewer mode</li>
+                <li>✓ Priority support</li>
+              </ul>
+            </div>
+          </div> */}
+
+          <button 
+            onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
+            className={styles.ctaButtonLarge}
+          >
+            Join the waitlist
+          </button>
+        </section>
+
+        {/* Footer */}
+        <footer className={styles.footer}>
+          <p>© 2024 Syns6. All rights reserved.</p>
+        </footer>
       </main>
     </div>
   );
