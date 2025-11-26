@@ -4,15 +4,11 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Canvas } from "@react-three/fiber";
-import Lyrics3D from "./Lyrics3D";
-import { LyricLine } from "@/lib/lyrics";
 
 interface CompiledVisualizationProps {
   compiledCode: string;
   micData?: any;
   isPlaying?: boolean;
-  lyrics?: LyricLine[];
-  currentTimeMs?: number;
 }
 
 /**
@@ -29,8 +25,6 @@ export default function CompiledVisualization({
   compiledCode,
   micData,
   isPlaying,
-  lyrics,
-  currentTimeMs,
 }: CompiledVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -300,38 +294,6 @@ export default function CompiledVisualization({
           zIndex: 0,
         }}
       />
-      {/* Lyrics Display - EXACT COPY from DSLVisualization */}
-      {lyrics && lyrics.length > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        >
-          <Canvas
-            camera={{ position: [0, 0, 30], fov: 75 }}
-            style={{
-              background: "transparent",
-            }}
-          >
-            <group position={[0, -2, -10]} scale={2}>
-              <Lyrics3D
-                lyrics={lyrics}
-                currentTimeMs={currentTimeMs || 0}
-                isPlaying={isPlaying || false}
-                syncedData={null}
-                micData={micData}
-              />
-            </group>
-          </Canvas>
-        </div>
-      )}
-      
       {/* Debug overlay */}
       {errorRef.current && (
         <div

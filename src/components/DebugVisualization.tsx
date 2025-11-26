@@ -1,13 +1,10 @@
 "use client";
 
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { HueConfig } from "@/hooks/useHueLights";
 
 interface VisualizationProps {
   isPlaying: boolean;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
   hueDebugData?: { bass: number; brightness: number } | null;
   hueIsActive?: boolean;

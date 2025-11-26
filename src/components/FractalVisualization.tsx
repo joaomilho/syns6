@@ -6,9 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
   energy: number;
@@ -22,8 +20,6 @@ interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
   fps?: number;
 }
@@ -331,8 +327,6 @@ export default function FractalVisualization({
   audioFeatures,
   isPlaying,
   syncedData,
-  lyrics,
-  currentTimeMs,
   micData,
   fps = 60,
 }: VisualizationProps) {
@@ -367,18 +361,6 @@ export default function FractalVisualization({
           micData={micData}
           fps={fps}
         />
-
-        {/* 3D Lyrics - always show, component handles "not found" */}
-        {currentTimeMs !== undefined && (
-          <Lyrics3D
-            lyrics={lyrics || null}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
-            syncedData={null}
-            color="#fff"
-            micData={micData}
-          />
-        )}
 
         <OrbitControls
           enableZoom={true}

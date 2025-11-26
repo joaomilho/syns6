@@ -4,14 +4,9 @@ import { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import { LyricLine } from "@/lib/lyrics";
-import Lyrics3D from "./Lyrics3D";
 
 interface OscilloscopeVisualizationProps {
   micData?: MicrophoneData;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
-  isPlaying?: boolean;
   fps?: number;
 }
 
@@ -110,9 +105,6 @@ void main() {
 
 export default function OscilloscopeVisualization({
   micData,
-  lyrics,
-  currentTimeMs,
-  isPlaying,
   fps = 60,
 }: OscilloscopeVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -472,34 +464,6 @@ export default function OscilloscopeVisualization({
         background: "#000000",
       }}
     >
-      {lyrics && lyrics.length > 0 && currentTimeMs !== undefined && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        >
-          <Canvas
-            camera={{ position: [0, 0, 15], fov: 75 }}
-            style={{ pointerEvents: "none" }}
-          >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-            <Lyrics3D
-              lyrics={lyrics}
-              currentTimeMs={currentTimeMs}
-              isPlaying={isPlaying || false}
-              color="#00ff00"
-              micData={micData}
-            />
-          </Canvas>
-        </div>
-      )}
     </div>
   );
 }

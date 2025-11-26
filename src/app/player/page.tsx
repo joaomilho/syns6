@@ -27,6 +27,7 @@ import DSLVisualization from "@/components/DSLVisualization";
 import CompiledVisualization from "@/components/CompiledVisualization";
 import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
+import LyricsCanvas from "@/components/LyricsCanvas";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
   VisualizationType,
@@ -882,8 +883,6 @@ export default function PlayerPage() {
         <MusicVisualization
             key="particles"
           isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
           fps={fps}
         />
@@ -893,8 +892,6 @@ export default function PlayerPage() {
         <FractalVisualization
             key="fractal"
           isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
           fps={fps}
         />
@@ -904,8 +901,6 @@ export default function PlayerPage() {
         <PsychedelicVisualization
             key="psychedelic"
           isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
         />
         );
@@ -914,8 +909,6 @@ export default function PlayerPage() {
         <WavyLinesVisualization
             key="waves"
           isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
         />
         );
@@ -924,9 +917,6 @@ export default function PlayerPage() {
         <LavaLampVisualization
             key="animated"
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
         />
         );
       case "spectrum3d":
@@ -934,9 +924,6 @@ export default function PlayerPage() {
         <Spectrum3DVisualization
             key="spectrum3d"
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
         />
         );
       case "wavespectrum":
@@ -944,9 +931,6 @@ export default function PlayerPage() {
         <WaveSpectrum3DVisualization
             key="wavespectrum"
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
         />
         );
       case "fftspectrum":
@@ -954,9 +938,6 @@ export default function PlayerPage() {
         <FFTSpectrumVisualization
             key="fftspectrum"
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
           fps={fps}
         />
         );
@@ -965,9 +946,6 @@ export default function PlayerPage() {
         <OscilloscopeVisualization
             key="oscilloscope"
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
           fps={fps}
         />
         );
@@ -977,9 +955,6 @@ export default function PlayerPage() {
             key="camera"
           videoElement={videoElement}
           micData={micData}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
-          isPlaying={playbackState?.is_playing || false}
         />
         );
       case "debug":
@@ -987,8 +962,6 @@ export default function PlayerPage() {
         <DebugVisualization
             key="debug"
           isPlaying={playbackState?.is_playing || false}
-          lyrics={lyrics || noTrackLyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
           hueDebugData={hue.debugData}
           hueIsActive={hue.isActive}
@@ -1002,8 +975,6 @@ export default function PlayerPage() {
           trackName={playbackState?.item?.name || lastKnownTrack?.item?.name}
           artistName={playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name}
           spotifyId={(playbackState?.item as any)?.id || (lastKnownTrack?.item as any)?.id}
-          lyrics={lyrics}
-          currentTimeMs={currentProgress}
           micData={micData}
         />
         );
@@ -1017,6 +988,14 @@ export default function PlayerPage() {
       {/* Background Visualization - Only render ONE at a time */}
       {renderVisualization()}
 
+      {/* Lyrics Layer - Persists across visualization changes */}
+      <LyricsCanvas
+        lyrics={lyrics}
+        currentTimeMs={currentProgress}
+        isPlaying={playbackState?.is_playing ?? false}
+        micData={micData}
+        color="#1ed760"
+      />
 
       {/* Top Controls */}
       <div className={styles.topBar}>

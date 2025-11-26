@@ -5,9 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { LyricLine } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import Lyrics3D from "./Lyrics3D";
 
 interface AudioFeatures {
   energy: number;
@@ -21,8 +19,6 @@ interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
-  lyrics?: LyricLine[] | null;
-  currentTimeMs?: number;
   micData?: MicrophoneData;
 }
 
@@ -246,8 +242,6 @@ export default function PsychedelicVisualization({
   audioFeatures,
   isPlaying,
   syncedData,
-  lyrics,
-  currentTimeMs,
   micData,
 }: VisualizationProps) {
   return (
@@ -273,17 +267,6 @@ export default function PsychedelicVisualization({
         <PsychedelicBlob audioFeatures={audioFeatures} isPlaying={isPlaying} />
         <KaleidoscopePlanes audioFeatures={audioFeatures} isPlaying={isPlaying} />
         <LiquidParticles audioFeatures={audioFeatures} isPlaying={isPlaying} />
-
-        {/* 3D Lyrics - always show, component handles "not found" */}
-        {currentTimeMs !== undefined && (
-          <Lyrics3D
-            lyrics={lyrics || null}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
-            syncedData={null}
-            micData={micData}
-          />
-        )}
 
         <OrbitControls
           enableZoom={true}

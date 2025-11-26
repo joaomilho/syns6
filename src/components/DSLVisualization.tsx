@@ -6,23 +6,17 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { VisualizationInterpreter } from "@/lib/visualizationDSL/interpreter";
 import { VisualizationDSL, validateDSL } from "@/lib/visualizationDSL/schema";
-import Lyrics3D from "./Lyrics3D";
-import { LyricLine } from "@/lib/lyrics";
 
 interface DSLVisualizationProps {
   config: VisualizationDSL;
   micData?: any;
   isPlaying?: boolean;
-  lyrics?: LyricLine[];
-  currentTimeMs?: number;
 }
 
 export default function DSLVisualization({
   config,
   micData,
   isPlaying,
-  lyrics,
-  currentTimeMs,
 }: DSLVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -46,7 +40,7 @@ export default function DSLVisualization({
       containerRef.current.removeChild(containerRef.current.firstChild);
     }
     
-    console.log(`🎨 DSL Init: ${config.name}, Lyrics: ${lyrics?.length || 0} lines`);
+    console.log(`🎨 DSL Init: ${config.name}`);
 
     // Validate config
     if (!validateDSL(config)) {
@@ -221,38 +215,6 @@ export default function DSLVisualization({
           backgroundColor: "#000000",
         }}
       />
-      
-      {/* Lyrics layer on top */}
-      {lyrics && lyrics.length > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        >
-          <Canvas
-            camera={{ position: [0, 0, 30], fov: 75 }}
-            style={{
-              background: "transparent",
-            }}
-          >
-            <group position={[0, -2, -10]} scale={2}>
-              <Lyrics3D
-                lyrics={lyrics}
-                currentTimeMs={currentTimeMs || 0}
-                isPlaying={isPlaying || false}
-                syncedData={null}
-                micData={micData}
-              />
-            </group>
-          </Canvas>
-        </div>
-      )}
     </>
   );
 }
