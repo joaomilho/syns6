@@ -23,8 +23,10 @@ const allVisualizations = [
 ];
 
 // Check if a specific visualization was requested via command line
-// Usage: npm run screenshots [vizId]
-const requestedViz = process.argv[2];
+// Usage: npm run screenshots [vizId] [--video]
+const args = process.argv.slice(2);
+const shouldGenerateVideo = args.includes('--video');
+const requestedViz = args.find(arg => !arg.startsWith('--'));
 const visualizations = requestedViz 
   ? (allVisualizations.includes(requestedViz) 
       ? [requestedViz] 
@@ -52,6 +54,10 @@ async function captureScreenshots() {
     console.log(`📸 Capturing single visualization: ${requestedViz}`);
   } else {
     console.log(`📸 Capturing all ${allVisualizations.length} visualizations`);
+  }
+  
+  if (shouldGenerateVideo) {
+    console.log(`🎥 Video mode enabled - will generate .webm videos`);
   }
   
   // Check if dev server is running
@@ -146,23 +152,48 @@ async function captureScreenshots() {
           }
         }
 
-        // Create animated WebP using ffmpeg
-        console.log(`  🎨 Creating animated WebP with ffmpeg...`);
-        const animatedPath = path.join(OUTPUT_DIR, `${vizId}.webp`);
-        
-        try {
-          // Check if ffmpeg is installed
-          await execAsync('ffmpeg -version').catch(() => {
-            throw new Error('ffmpeg not found. Install it with: brew install ffmpeg');
-          });
-
-          // Create animated WebP: ffmpeg -framerate 15 -i frame-%03d.png -c:v libwebp -loop 0 -quality 80 output.webp
-          const ffmpegCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -c:v libwebp -lossless 0 -compression_level 6 -q:v 75 -loop 0 -an -vsync 0 "${animatedPath}"`;
+        // Generate video if --video flag is present
+        if (shouldGenerateVideo) {
+          console.log(`  🎥 Creating WebM video with ffmpeg...`);
+          const videoPath = path.join(OUTPUT_DIR, `${vizId}.webm`);
           
-          await execAsync(ffmpegCmd);
-          console.log(`  ✅ Created animated WebP`);
-        } catch (error) {
-          console.error(`  ⚠️  Failed to create animated WebP (falling back to static):`, error instanceof Error ? error.message : error);
+          try {
+            // Check if ffmpeg is installed
+            await execAsync('ffmpeg -version').catch(() => {
+              throw new Error('ffmpeg not found. Install it with: brew install ffmpeg');
+            });
+
+            // Create WebM video with VP9 codec for scroll-based scrubbing
+            // -pix_fmt yuv420p ensures compatibility
+            // -crf 30 is quality (lower = better, range 0-63)
+            const videoCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -c:v libvpx-vp9 -pix_fmt yuv420p -crf 30 -b:v 0 -an "${videoPath}"`;
+            
+            await execAsync(videoCmd);
+            console.log(`  ✅ Created WebM video`);
+          } catch (error) {
+            console.error(`  ⚠️  Failed to create video:`, error instanceof Error ? error.message : error);
+          }
+        }
+        
+        // Create animated WebP using ffmpeg (always, unless --video-only)
+        if (!args.includes('--video-only')) {
+          console.log(`  🎨 Creating animated WebP with ffmpeg...`);
+          const animatedPath = path.join(OUTPUT_DIR, `${vizId}.webp`);
+          
+          try {
+            // Check if ffmpeg is installed
+            await execAsync('ffmpeg -version').catch(() => {
+              throw new Error('ffmpeg not found. Install it with: brew install ffmpeg');
+            });
+
+            // Create animated WebP: ffmpeg -framerate 15 -i frame-%03d.png -c:v libwebp -loop 0 -quality 80 output.webp
+            const ffmpegCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -c:v libwebp -lossless 0 -compression_level 6 -q:v 75 -loop 0 -an -vsync 0 "${animatedPath}"`;
+            
+            await execAsync(ffmpegCmd);
+            console.log(`  ✅ Created animated WebP`);
+          } catch (error) {
+            console.error(`  ⚠️  Failed to create animated WebP (falling back to static):`, error instanceof Error ? error.message : error);
+          }
         }
 
         // Clean up temp frames
@@ -175,7 +206,10 @@ async function captureScreenshots() {
           // Ignore cleanup errors
         }
 
-        console.log(`  ✅ Saved: ${vizId}.png & ${vizId}.webp`);
+        const outputs = [`${vizId}.png`];
+        if (shouldGenerateVideo) outputs.push(`${vizId}.webm`);
+        if (!args.includes('--video-only')) outputs.push(`${vizId}.webp`);
+        console.log(`  ✅ Saved: ${outputs.join(' & ')}`);
       } catch (error) {
         console.error(`  ❌ Failed to capture ${vizId}:`, error);
       }
