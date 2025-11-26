@@ -2,13 +2,26 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSubscription } from "@/hooks/useSubscription";
+import SubscriptionStatus from "@/components/SubscriptionStatus";
+import { getPlanFromPriceId, getPriceForPlan, formatPrice, getCurrencySymbol } from "@/lib/prices";
+import { CurrencyCode } from "@/components/CurrencyDropdown";
+import Syns6Logo from "@/components/Syns6Logo";
 import styles from "./profile.module.css";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { subscription, isActive, loading: subLoading } = useSubscription();
+  const [detectedCurrency, setDetectedCurrency] = useState<CurrencyCode>('EUR');
+
+  // Get subscription plan details
+  const planInfo = subscription?.stripePriceId 
+    ? getPlanFromPriceId(subscription.stripePriceId)
+    : null;
 
   if (status === "loading") {
     return (
@@ -27,14 +40,34 @@ export default function ProfilePage() {
 
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
-        <div className={styles.header}>
-          <Link href="/" className={styles.backButton}>
-            ← Back
-          </Link>
-          <h1>Profile</h1>
+      {/* Top Bar */}
+      <div className={styles.topBar}>
+        <Link href="/player">
+          <Syns6Logo />
+        </Link>
+        
+        <div className={styles.controlGroups}>
+          {session?.user && (
+            <div className={styles.userProfile}>
+              {session.user.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "User"}
+                  width={36}
+                  height={36}
+                  className={styles.userAvatar}
+                />
+              ) : (
+                <div className={styles.userAvatarPlaceholder}>
+                  {session.user.name?.charAt(0) || "U"}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
+      <main className={styles.main}>
         <div className={styles.profileCard}>
           <div className={styles.avatarSection}>
             {session.user.image ? (
@@ -63,33 +96,27 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className={styles.sessionInfo}>
-          <h3>Session Information</h3>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoItem}>
-              <span className={styles.label}>Access Token:</span>
-              <span className={styles.value}>
-                {session.accessToken
-                  ? `${session.accessToken.substring(0, 30)}...`
-                  : "Not available"}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.label}>Refresh Token:</span>
-              <span className={styles.value}>
-                {session.refreshToken ? "✓ Available" : "Not available"}
-              </span>
-            </div>
-            {session.expiresAt && (
-              <div className={styles.infoItem}>
-                <span className={styles.label}>Token Expires:</span>
-                <span className={styles.value}>
-                  {new Date(session.expiresAt * 1000).toLocaleString()}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+         
+           {subLoading ? (
+             <div className={styles.loadingText}>Loading subscription...</div>
+           ) : isActive && subscription && planInfo ? (
+             <SubscriptionStatus 
+               planName={`${planInfo.name} Plan`}
+               planPrice={`${formatPrice(
+                 getPriceForPlan(planInfo.type, detectedCurrency),
+                 detectedCurrency
+               )}/${planInfo.interval}`}
+             />
+           ) : (
+             <div className={styles.noSubscription}>
+               <p>You don't have an active subscription.</p>
+               <Link href="/pricing" className={styles.subscribeLinkButton}>
+                 View Plans
+               </Link>
+             </div>
+           )}
+         
+
 
         <div className={styles.actions}>
           <Link href="/player" className={styles.primaryButton}>
