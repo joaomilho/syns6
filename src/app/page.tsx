@@ -9,6 +9,7 @@ import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useFPS } from "@/hooks/useFPS";
 import Syns6Logo from "@/components/Syns6Logo";
+import ScrollVideo from "@/components/ScrollVideo";
 
 // Component that uses searchParams - wrapped in Suspense
 function ReferralCapture() {
@@ -29,6 +30,185 @@ export default function Home() {
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
   const { micData, enable: enableMic } = useMicrophoneAnalysis();
   const fps = useFPS();
+  
+  // Cycle through visualization images
+  const vizImages = [
+    'psychedelic.webp',
+    
+    'fractal.webp',
+    
+    
+    
+    'fftspectrum.webp',
+    'animated.webp',
+    'particles.webp',
+    'waves.webp',
+    
+    'spectrum3d.webp',
+    
+    'wavespectrum.webp',
+  ];
+  const [currentVizIndex, setCurrentVizIndex] = useState(0);
+  const [vizFading, setVizFading] = useState(false);
+
+  // Cycle through lyrics screenshots
+  const lyricsImages = [
+    'behemoth.webp',
+    'kraftwerk.webp',
+    'mooki.webp',
+    'sai-abhyankkar.webp',
+  ];
+  const [currentLyricsIndex, setCurrentLyricsIndex] = useState(0);
+
+  // Translations of "Lyrics for all!" in 50+ languages
+  const lyricsTranslations = [
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fr', text: 'Paroles pour tous !' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'zh', text: '歌词为所有人！' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ta', text: 'அனைவருக்கும் பாடல் வரிகள்!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'he', text: '!מילים לכולם' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ar', text: '!كلمات لكل' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ru', text: 'Тексты для всех!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hi', text: 'सभी के लिए गीत!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ja', text: 'みんなのための歌詞！' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ko', text: '모두를 위한 가사!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'tr', text: 'Herkes için şarkı sözleri!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'yi', text: '!ליריקס פאר אלעמען' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'th', text: 'เนื้อเพลงสำหรับทุกคน!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'bn', text: 'সবার জন্য গানের কথা!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fa', text: '!ترانه برای همه' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ur', text: '!سب کے لیے گانے' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'el', text: 'Στίχοι για όλους!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'am', text: 'ለሁሉም ግጥሞች!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ms', text: 'Lirik untuk semua!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'de', text: 'Texte für alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'es', text: '¡Letras para todos!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'pt', text: 'Letras para todos!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'it', text: 'Testi per tutti!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'pl', text: 'Teksty dla wszystkich!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'uk', text: 'Тексти для всіх!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'vi', text: 'Lời bài hát cho tất cả!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'id', text: 'Lirik untuk semua!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sw', text: 'Maneno ya nyimbo kwa wote!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ro', text: 'Versuri pentru toți!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'nl', text: 'Teksten voor iedereen!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hu', text: 'Dalszövegek mindenkinek!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'cs', text: 'Texty pro všechny!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sv', text: 'Texter för alla!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fi', text: 'Sanat kaikille!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'no', text: 'Tekster for alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'da', text: 'Tekster til alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sr', text: 'Текстови за све!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'bg', text: 'Текстове за всички!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ka', text: 'ტექსტები ყველასთვის!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hy', text: 'Տեքստեր բոլորի համար!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'kk', text: 'Барлығына мәтіндер!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'az', text: 'Hamı üçün mahnı sözləri!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'kn', text: 'ಎಲ್ಲರಿಗೂ ಸಾಹಿತ್ಯ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'te', text: 'అందరికీ సాహిత్యం!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ml', text: 'എല്ലാവർക്കും വരികൾ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'si', text: 'සියලු දෙනාට ගී පද!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'my', text: 'အားလုံးအတွက် စာသားများ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'km', text: 'អត្ថបទសម្រាប់ទាំងអស់!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'lo', text: 'ເນື້ອເພງສໍາລັບທຸກຄົນ!' },
+  ];
+  const [currentTranslationIndex, setCurrentTranslationIndex] = useState(0);
+  const [translationFading, setTranslationFading] = useState(false);
+
+  // AI images to cycle through
+  const aiImages = ['prompt.webp', 'result.webp'];
+  const [currentAiIndex, setCurrentAiIndex] = useState(0);
+
+  // Cycle through viz images every 6 seconds (slower) with fade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVizFading(true);
+      setTimeout(() => {
+        setCurrentVizIndex((prev) => (prev + 1) % vizImages.length);
+        setVizFading(false);
+      }, 1000); // Half of the 2s transition
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [vizImages.length]);
+
+  // Cycle through lyrics images every 6 seconds with crossfade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLyricsIndex((prev) => (prev + 1) % lyricsImages.length);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [lyricsImages.length]);
+
+  // Cycle through translations every 3 seconds with fade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTranslationFading(true);
+      setTimeout(() => {
+        setCurrentTranslationIndex((prev) => (prev + 1) % lyricsTranslations.length);
+        setTranslationFading(false);
+      }, 500); // Half of the 1s transition
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [lyricsTranslations.length]);
+
+  // Cycle through AI images every 4 seconds with crossfade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentAiIndex((prev) => (prev + 1) % aiImages.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [aiImages.length]);
 
   // Check WebGL availability
   useEffect(() => {
@@ -145,7 +325,9 @@ export default function Home() {
         <section className={styles.hero}>
           <h1 className={styles.heroTitle}>Karaoke, redefined.</h1>
           <p className={styles.heroSubtitle}>
-            Your home, neon-soaked, bass-pounding karaoke revolution.
+          By day, your home. By night,<br/>the sickest club in the world. And <b>you</b> own it.
+            {/* <br />
+            A neon-soaked, bass-pounding private club. */}
           </p>
           <button 
             onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
@@ -157,18 +339,16 @@ export default function Home() {
 
         {/* Social Links */}
         <section className={styles.socialLinks}>
-          <a href="#" className={styles.socialLink} aria-label="Instagram">
+          <a href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Instagram">
             Instagram
           </a>
-          <a href="#" className={styles.socialLink} aria-label="TikTok">
+          <a href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="TikTok">
             TikTok
           </a>
-          <a href="#" className={styles.socialLink} aria-label="Twitter">
+          <a href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Twitter">
             Twitter
           </a>
-          <a href="#" className={styles.socialLink} aria-label="Mae">
-            Mae
-          </a>
+          
         </section>
 
         {/* Features Section */}
@@ -176,73 +356,129 @@ export default function Home() {
           <h2 className={styles.sectionTitle}>Features that slap</h2>
           
           <div className={styles.featureGrid}>
-            <div className={styles.featureCard}>
-              <img 
-                src="/viz-thumbnails/psychedelic.webp" 
-                alt="Funmaxxing visualizations" 
-                className={styles.featureImage}
-              />
-              <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Funmaxxing visualizations</h3>
-                <p className={styles.featureDescription}>
-                  Immerse yourself in mind-bending 3D visuals that react to your voice and the music.
-                </p>
+            <div className={styles.vizMasonrySection}>
+              <div className={styles.masonryGrid}>
+                {vizImages.slice(0, 4).map((img, index) => {
+                  const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
+                  return (
+                    <div key={index} className={styles.masonryItem}>
+                      <ScrollVideo 
+                        src={videoSrc}
+                        alt={`Visualization ${index + 1}`}
+                        className={styles.masonryImage}
+                      />
+                    </div>
+                  );
+                })}
+                <div className={styles.masonryTextItem}>
+                  <h3 className={styles.featureTitle}>Funmaxxing visualizations</h3>
+                  <p className={styles.featureDescription}>
+                    Your voice <i style={{fontFamily: 'Baskerville, Georgia, serif', fontStyle: 'italic'}}>&</i> the beat: live 3D visuals that go so stupid they need a passport.
+                  </p>
+                </div>
+                {vizImages.slice(4).map((img, index) => {
+                  const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
+                  return (
+                    <div key={index + 4} className={styles.masonryItem}>
+                      <ScrollVideo 
+                        src={videoSrc}
+                        alt={`Visualization ${index + 5}`}
+                        className={styles.masonryImage}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className={styles.featureCard}>
-              <img 
-                src="/viz-thumbnails/fractal.webp" 
-                alt="Lyrics for all songs" 
-                className={styles.featureImage}
-              />
+              <div className={styles.featureImageContainer}>
+                <div className={styles.imageStack}>
+                  {lyricsImages.map((img, index) => (
+                    <img 
+                      key={index}
+                      src={`/lyrics/${img}`}
+                      alt="Lyrics for all!" 
+                      className={`${styles.featureImage} ${styles.lyrics} ${styles.stackedImage}`}
+                      style={{ opacity: currentLyricsIndex === index ? 1 : 0 }}
+                    />
+                  ))}
+                </div>
+                <div className={styles.imageDots}>
+                  {lyricsImages.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`${styles.imageDot} ${currentLyricsIndex === index ? styles.active : ''}`}
+                      onClick={() => setCurrentLyricsIndex(index)}
+                      aria-label={`View lyrics example ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
               <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Lyrics for all songs</h3>
+                <div className={styles.titleContainer}>
+                  <h3 
+                    className={styles.featureTitle}
+                    style={{ 
+                      opacity: translationFading ? 0 : 1,
+                      transition: 'opacity 1s ease-in-out'
+                    }}
+                  >
+                    {lyricsTranslations[currentTranslationIndex].text}
+                  </h3>
+                </div>
                 <p className={styles.featureDescription}>
-                  Heavy metal fans rejoice - no more "mamma mia". Real lyrics, real karaoke.
+                  True Norwegian Black Metal?<br />
+                  Memphis Hip Hop circa '95? Onkyokei Japanoise?
+                  <br />
+                  Yes, we can.
+                  <br /><br />
+                  No more <i>Mamma Mia</i>. Real lyrics, real karaoke. 
                 </p>
               </div>
             </div>
 
-            <div className={`${styles.featureCard} ${styles.aiGlow}`}>
-              <img 
-                src="/viz-thumbnails/particles.webp" 
-                alt="Create visualizations with AI" 
-                className={styles.featureImage}
-              />
+            <div className={`${styles.featureCard}`}>
+              <div className={styles.imageStack}>
+                {aiImages.map((img, index) => (
+                  <img 
+                    key={index}
+                    src={`/ai/${img}`}
+                    alt="Create with AI" 
+                    className={`${styles.featureImage} ${styles.ai} ${styles.stackedImage}`}
+                    style={{ opacity: currentAiIndex === index ? 1 : 0 }}
+                  />
+                ))}
+              </div>
               <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Create visualizations with AI</h3>
+                <h3 className={styles.featureTitle}>
+                  Create with <span className={styles.aiBadge}><span className={styles.sparkles}>✦</span>AI</span>
+                </h3>
                 <p className={styles.featureDescription}>
-                  Generate custom visualizations with AI - your imagination is the only limit
+                Your club, your vibe.<br />Create your own visualizations, powered by AI. 
                 </p>
               </div>
             </div>
 
-            <div className={styles.featureCard}>
-              <img 
-                src="/viz-thumbnails/waves.webp" 
-                alt="Viewer mode for all to sing" 
-                className={styles.featureImage}
-              />
-              <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Viewer mode</h3>
-                <p className={styles.featureDescription}>
-                  Share your karaoke session - friends can join and sing along.
-                </p>
+            <div className={styles.featureCardsGrid}>
+              <div className={styles.featureCardVertical}>
+                
+                <div className={styles.featureTextVertical}>
+                  <h3 className={styles.featureTitleVertical}>Viewer mode</h3>
+                  <p className={styles.featureDescriptionVertical}>
+                    Choose your VIPs. Share your karaoke session - friends can join and sing along.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.featureCard}>
-              <img 
-                src="/viz-thumbnails/animated.webp" 
-                alt="Hue integration" 
-                className={styles.featureImage}
-              />
-              <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>Hue integration</h3>
-                <p className={styles.featureDescription}>
-                  Sync your smart lights to the beat - turn your room into a concert venue with Hue integration and many other peripherals.
-                </p>
+              <div className={styles.featureCardVertical}>
+                
+                <div className={styles.featureTextVertical}>
+                  <h3 className={styles.featureTitleVertical}>Hue integration</h3>
+                  <p className={styles.featureDescriptionVertical}>
+                    Sync your smart lights to the beat - turn your room into a concert venue with Hue integration and many other peripherals.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -284,13 +520,10 @@ export default function Home() {
               />
             </div>
           </div>
-          <p className={styles.instagramCTA}>
-            Visit our profile for more →
-          </p>
         </section>
 
         {/* Testimonials Section */}
-        <section className={styles.testimonials}>
+        {/* <section className={styles.testimonials}>
           <h2 className={styles.sectionTitle}>What people are saying</h2>
           
           <div className={styles.testimonialGrid}>
@@ -313,7 +546,7 @@ export default function Home() {
               </p>
               <p className={styles.testimonialAuthor}>- Sam</p>
             </div>
-
+            
             <div className={styles.testimonialCard}>
               <div className={styles.testimonialVideo}>
                 <div className={styles.videoPlaceholder}>🎸 Video</div>
@@ -324,7 +557,7 @@ export default function Home() {
               <p className={styles.testimonialAuthor}>- Jordan</p>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Pricing Section */}
         <section className={styles.pricing}>
@@ -352,12 +585,12 @@ export default function Home() {
                 <li>✓ Viewer mode</li>
                 <li>✓ Priority support</li>
               </ul>
-            </div>
+        </div>
           </div> */}
 
           <button 
             onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
-            className={styles.ctaButtonLarge}
+            className={styles.ctaButton}
           >
             Join the waitlist
           </button>

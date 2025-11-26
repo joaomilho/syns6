@@ -265,7 +265,7 @@ button.secondary {
 
 .landingMain {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1800px;
   text-align: center;
   position: relative;
   z-index: 2;
@@ -331,68 +331,6 @@ button.secondary {
 
 .featureIcon {
   font-size: 20px;
-}
-
-.emailForm {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 32px;
-
-}
-
-.inputGroup {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-}
-
-.emailInput {
-  flex: 1;
-  padding: 14px 20px;
-  font-size: 16px;
-  border: 2px solid white;
-  background: none;
-
-  color: #ffffff;
-  border-radius: 12px;
-  outline: none;
-  transition: all 0.3s;
-  font-family: inherit;
-  backdrop-filter: blur(10px);
-}
-
-.emailInput:focus {
-  /* border-color: rgba(0, 255, 0, 0.5); */
-  background: rgba(255, 255, 255, 0.02);
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-}
-
-.emailInput:disabled {
-  cursor: not-allowed;
-}
-
-.submitButton {
-  padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
-  background: none;
-  color: #00ff00;
-  border: 2px solid #00ff00;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  white-space: nowrap;
-  font-family: inherit;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-  backdrop-filter: blur(10px);
-}
-
-
-.submitButton:disabled {
-  cursor: not-allowed;
 }
 
 .statusMessage {
@@ -461,9 +399,7 @@ button.secondary {
     gap: 12px;
   }
   
-  .emailForm {
-    padding: 20px;
-  }
+ 
 
   .fallbackImage {
     width: calc(100% - 32px);
@@ -517,10 +453,13 @@ button.secondary {
 .heroSubtitle {
   font-size: 24px;
   font-weight: 400;
-  color: #d0d0d0;
+  color: #eee;
   margin: 0;
-  max-width: 600px;
+  max-width: 666px;
   line-height: 1.5;
+  text-shadow: 0 0 4px #000;
+  /* , 0 0 -2px rgba(0,0,0, 1); */
+  
 }
 
 .ctaButton {
@@ -530,7 +469,7 @@ button.secondary {
   background: none;
   color: #00ff00;
   border: 2px solid #00ff00;
-  border-radius: 12px;
+  border-radius: 36px;
   cursor: pointer;
   transition: all 0.3s;
   font-family: inherit;
@@ -575,8 +514,10 @@ button.secondary {
 .features {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 40px;
   padding: 60px 20px;
+  text-align: center;
 }
 
 .sectionTitle {
@@ -585,6 +526,7 @@ button.secondary {
   color: #ffffff;
   margin: 0 0 20px 0;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  width: 100%;
 }
 
 .sectionSubtitle {
@@ -596,48 +538,322 @@ button.secondary {
 .featureGrid {
   display: flex;
   flex-direction: column;
-  gap: 60px;
+  align-items: center;
+  gap: 80px;
   margin-top: 60px;
+  width: 100%;
+}
+
+/* Masonry layout for visualizations */
+.vizMasonrySection {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.masonryGrid {
+  columns: 3;
+  column-gap: 20px;
+  width: 100%;
+}
+
+.masonryItem {
+  break-inside: avoid;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  /* border-radius: 12px; */
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+
+.masonryTextItem {
+  break-inside: avoid;
+  margin-bottom: 20px;
+  background: none;
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 300px;
+}
+
+
+.masonryImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* border-radius: 12px; */
+  object-fit: cover;
+}
+
+.masonryTextItem .featureTitle {
+  font-size: 48px;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+
+.masonryTextItem .featureDescription {
+  font-size: 20px;
+  color: #a0a0a0;
+  line-height: 1.8;
+  max-width: 100%;
 }
 
 .featureCard {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 48px;
+  /* gap: 48px; */
   background: none;
   border: none;
   padding: 0;
-  transition: all 0.3s;
 }
 
 .featureCard:nth-child(even) {
   flex-direction: row-reverse;
 }
 
-.featureCard:hover {
-  transform: translateX(8px);
+
+
+
+
+
+
+.featureImageContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
-.featureCard:nth-child(even):hover {
-  transform: translateX(-8px);
+.imageStack {
+  position: relative;
+  width: fit-content;
+  display: grid;
 }
 
-.featureCard.aiGlow .featureTitle {
-  text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+.stackedImage {
+  grid-area: 1 / 1;
+  transition: opacity 1.5s ease-in-out;
+  width: 100%;
+  height: auto;
 }
 
-.featureCard.aiGlow .featureImage {
-  box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+.imageDots {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.imageDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+
+.imageDot:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.imageDot.active {
+  background: #00ff00;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+/* Side-by-side vertical cards for last two features */
+.featureCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.featureCardVertical {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  
+  border-radius: 16px;
+  padding: 24px;
+  
+}
+
+
+.featureImageVertical {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.featureTextVertical {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.featureTitleVertical {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  font-family: var(--font-geist-sans), sans-serif;
+  letter-spacing: -1px;
+}
+
+.featureDescriptionVertical {
+  font-size: 18px;
+  color: #a0a0a0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.aiBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 2px solid transparent;
+  border-radius: 50px;
+  font-size: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  position: relative;
+  vertical-align: baseline;
+  line-height: 1;
+}
+
+.aiBadge::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #10b981 50%, #9333ea 100%);
+  border-radius: 50px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+}
+
+.sparkles {
+  font-size: 0.8em;
+  animation: sparkle 2s ease-in-out infinite;
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(102, 126, 234, 0.6));
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+.featureImage.lyrics {
+  width: 1800px;
+  box-shadow: 0px 0px 8px #00ff00, 0px 0px 180px rgba(0, 255, 0, 0.3);
+  transform: perspective(1000px) rotateY(-18deg);
+  margin-left: 0;
+  margin-right: -720px;
+}
+
+.featureImage.ai {
+  width: 1800px;
+  box-shadow: 0px 0px 8px #ff00ff, 0px 0px 180px rgba(255, 0, 255, 0.3);
+  transform: perspective(1000px) rotateY(18deg);
+  margin-right: 0;
+  margin-left: -720px;
+}
+
+@media (max-width: 1600px) {
+  .featureImage.lyrics {
+    transform: perspective(800px) rotateY(-9deg);
+    width: 1400px;
+    margin-right: -620px;
+  }
+
+  .featureImage.ai {
+    transform: perspective(800px) rotateY(9deg);
+    width: 900px;
+    margin-left: -320px;
+  }
+}
+
+@media (max-width: 1200px) {
+  /* Make lyrics and AI features look like vertical cards */
+  .featureCard {
+    flex-direction: column !important;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .featureImage.lyrics, 
+  .featureImage.ai {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 !important;
+    transform: none !important;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  .featureText {
+    text-align: center;
+    max-width: 100%;
+  }
+
+  .featureCard:nth-child(even) .featureImage {
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  .featureCard:nth-child(odd) .featureImage {
+    transform: none !important;
+    margin: 0 !important;
+  }
 }
 
 .featureImage {
-  width: 400px;
-  height: 250px;
+  width: 1200px;
+  /* height: 380px; */
   object-fit: cover;
   border-radius: 16px;
   flex-shrink: 0;
-  opacity: 0.9;
+
+  transition: opacity 2s ease-in-out;
+  position: relative;
+  margin-right: -100px; /* Bleed through right edge */
 }
 
 .featureText {
@@ -647,6 +863,14 @@ button.secondary {
   max-width: 600px;
 }
 
+.titleContainer {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .featureTitle {
   font-size: 42px;
   font-weight: 700;
@@ -654,6 +878,9 @@ button.secondary {
   margin: 0;
   font-family: var(--font-geist-sans), sans-serif;
   letter-spacing: -1px;
+  line-height: 1.2;
+  max-width: 600px;
+  text-align: center;
 }
 
 .featureDescription {
@@ -855,27 +1082,6 @@ button.secondary {
   position: relative;
 }
 
-.ctaButtonLarge {
-  padding: 20px 60px;
-  font-size: 22px;
-  font-weight: 600;
-  background: none;
-  color: #00ff00;
-  border: 2px solid #00ff00;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-family: inherit;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-  backdrop-filter: blur(10px);
-  margin-top: 20px;
-}
-
-.ctaButtonLarge:hover {
-  background: rgba(0, 255, 0, 0.1);
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
-}
-
 /* Footer */
 .footer {
   padding: 40px 20px;
@@ -907,8 +1113,7 @@ button.secondary {
     gap: 60px;
   }
 
-  .ctaButton,
-  .ctaButtonLarge {
+  .ctaButton {
     width: 100%;
     max-width: 400px;
   }
@@ -926,12 +1131,24 @@ button.secondary {
 
   .featureImage {
     width: 100%;
-    max-width: 400px;
-    height: 200px;
+    max-width: 500px;
+    height: 300px;
+    transform: none;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .featureCard:nth-child(even) .featureImage {
+    transform: none;
+    margin-left: 0;
   }
 
   .featureText {
     text-align: center;
+  }
+
+  .titleContainer {
+    min-height: 80px;
   }
 
   .featureTitle {
@@ -940,5 +1157,39 @@ button.secondary {
 
   .featureDescription {
     font-size: 18px;
+  }
+
+  /* Masonry responsive */
+  .masonryGrid {
+    columns: 2;
+    column-gap: 16px;
+  }
+
+  .masonryTextItem {
+    min-height: 200px;
+    column-span: all;
+    width: 100%;
+  }
+
+  .masonryTextItem .featureTitle {
+    font-size: 36px;
+  }
+
+  .masonryTextItem .featureDescription {
+    font-size: 18px;
+  }
+
+  /* Vertical cards responsive */
+  .featureCardsGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .featureTitleVertical {
+    font-size: 28px;
+  }
+
+  .featureDescriptionVertical {
+    font-size: 16px;
   }
 }
