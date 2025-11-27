@@ -46,6 +46,7 @@ interface UseShareManagerReturn {
   startHosting: () => void;
   stopHosting: () => void;
   broadcastState: (state: SharedState) => void;
+  isShareActive: boolean; // Track if user has intentionally started sharing
   
   // Viewer mode
   isViewer: boolean;
@@ -62,6 +63,13 @@ export function useShareManager(): UseShareManagerReturn {
   const [isViewer, setIsViewer] = useState(false);
   const [viewerState, setViewerState] = useState<SharedState | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isShareActive, setIsShareActive] = useState<boolean>(() => {
+    // Check if sharing was previously active
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('syns-share-active') === 'true';
+    }
+    return false;
+  });
   
   const peerRef = useRef<Peer | null>(null);
   const connectionsRef = useRef<DataConnection[]>([]);
@@ -76,6 +84,12 @@ export function useShareManager(): UseShareManagerReturn {
     if (peerRef.current) {
       return;
     }
+    
+    // Mark sharing as active in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('syns-share-active', 'true');
+    }
+    setIsShareActive(true);
     
     // Try to reuse existing peer ID from localStorage
     let customPeerId: string;
@@ -238,6 +252,12 @@ export function useShareManager(): UseShareManagerReturn {
 
     setPeerId(null);
     setIsHosting(false);
+    
+    // Mark sharing as inactive
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('syns-share-active', 'false');
+    }
+    setIsShareActive(false);
   }, []);
 
   // Broadcast state to all connected viewers
@@ -447,6 +467,7 @@ export function useShareManager(): UseShareManagerReturn {
     startHosting,
     stopHosting,
     broadcastState,
+    isShareActive,
     
     // Viewer mode
     isViewer,

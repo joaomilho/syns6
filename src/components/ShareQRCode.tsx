@@ -7,12 +7,13 @@ import styles from "./ShareQRCode.module.css";
 interface ShareQRCodeProps {
   peerId: string;
   connectedViewers: number;
+  autoExpand?: boolean; // Auto-expand on first connect
 }
 
-export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodeProps) {
+export default function ShareQRCode({ peerId, connectedViewers, autoExpand = false }: ShareQRCodeProps) {
   const [shareUrl, setShareUrl] = useState<string>("");
   const [shareCode, setShareCode] = useState<string>("");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(autoExpand);
 
   useEffect(() => {
     // Extract 6-digit code from peer ID (format: syns-123456)
@@ -22,7 +23,12 @@ export default function ShareQRCode({ peerId, connectedViewers }: ShareQRCodePro
     // Full URL for QR code
     const url = `${window.location.origin}/share?host=${peerId}`;
     setShareUrl(url);
-  }, [peerId]);
+    
+    // Auto-expand if requested
+    if (autoExpand) {
+      setIsExpanded(true);
+    }
+  }, [peerId, autoExpand]);
 
   if (!shareUrl) return null;
 
