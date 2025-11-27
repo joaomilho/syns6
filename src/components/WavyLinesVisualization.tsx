@@ -51,7 +51,6 @@ function WavyLine({
   yPosition,
   zPosition,
   audioFeatures,
-  isPlaying,
   syncedData,
   offset,
   micData,
@@ -60,7 +59,6 @@ function WavyLine({
   yPosition: number;
   zPosition: number;
   audioFeatures: AudioFeatures | null;
-  isPlaying: boolean;
   syncedData: SyncedAudioData | null;
   offset: number;
   micData?: MicrophoneData;
@@ -264,7 +262,6 @@ function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProp
           yPosition={line.yPosition}
           zPosition={line.zPosition}
           audioFeatures={audioFeatures || null}
-          isPlaying={isPlaying}
           syncedData={syncedData || null}
           offset={line.offset}
           micData={micData}
