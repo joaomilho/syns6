@@ -46,7 +46,8 @@ import styles from "./player.module.css";
 import Link from "next/link";
 import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
-import Syns6Logo from "@/components/Syns6Logo";
+import ShareButton from "@/components/ShareButton";
+import { Logo } from "@/components/ds";
 import ToolsMenu from "@/components/ToolsMenu";
 
 interface Track {
@@ -112,9 +113,21 @@ export default function PlayerPage() {
   const hasStartedHosting = useRef(false); // Track if we've already called startHosting
   const [webglAvailable, setWebglAvailable] = useState(true);
   const [micAvailable, setMicAvailable] = useState(true);
+  const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
+  
+  // Reset auto-expand flag after QR code is shown
+  useEffect(() => {
+    if (shareManager.peerId && showQRCodeOnConnect) {
+      // Reset the flag after a short delay to allow the component to render
+      const timer = setTimeout(() => {
+        setShowQRCodeOnConnect(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shareManager.peerId, showQRCodeOnConnect]);
   
   // Check subscription and redirect to pricing if not active
   useEffect(() => {
@@ -130,18 +143,20 @@ export default function PlayerPage() {
     }
   }, [status, subscriptionLoading, isActive, router]);
   
-  // Start hosting when component mounts
+  // Start hosting when component mounts (only if sharing was previously active)
   useEffect(() => {
-    if (!hasStartedHosting.current) {
-      console.log("🎭 [PLAYER] Initializing screen sharing...");
+    if (!hasStartedHosting.current && shareManager.isShareActive) {
+      console.log("🎭 [PLAYER] Auto-reconnecting to screen sharing (was previously active)...");
       shareManager.startHosting();
       hasStartedHosting.current = true;
     }
     
     return () => {
-      console.log("🛑 [PLAYER] Stopping screen sharing");
-      shareManager.stopHosting();
-      hasStartedHosting.current = false;
+      if (hasStartedHosting.current) {
+        console.log("🛑 [PLAYER] Stopping screen sharing");
+        shareManager.stopHosting();
+        hasStartedHosting.current = false;
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
@@ -751,7 +766,7 @@ export default function PlayerPage() {
     return (
       <div className={styles.fullscreenPage}>
         <div className={styles.centerMessage}>
-          <h1>Loading...</h1>
+          <Logo loading={true} size={48} />
         </div>
       </div>
     );
@@ -981,16 +996,27 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <Syns6Logo />
+        <Logo loading={status === "loading" || subscriptionLoading} size={20} />
 
         <div className={styles.controlGroups}>
-        {/* Share QR Code (leftmost) */}
-        {shareManager.peerId ? (
+        {/* Share Controls (leftmost) */}
+        {!shareManager.isShareActive ? (
+          // Not sharing yet - show Share button
+          <ShareButton onStartSharing={() => {
+            console.log("🎭 [PLAYER] User initiated screen sharing");
+            shareManager.startHosting();
+            hasStartedHosting.current = true;
+            setShowQRCodeOnConnect(true); // Auto-expand QR on connect
+          }} />
+        ) : shareManager.peerId ? (
+          // Sharing and connected - show QR code
           <ShareQRCode 
             peerId={shareManager.peerId}
             connectedViewers={shareManager.connectedViewers}
+            autoExpand={showQRCodeOnConnect}
           />
         ) : (
+          // Sharing but connecting - show connecting badge
           <div 
             className={styles.connectingBadge}
             title="Waiting for peer connection to initialize"

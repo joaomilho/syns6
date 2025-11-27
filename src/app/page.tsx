@@ -8,7 +8,7 @@ import styles from "./page.module.css";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useFPS } from "@/hooks/useFPS";
-import Syns6Logo from "@/components/Syns6Logo";
+import { Logo } from "@/components/ds";
 import ScrollVideo from "@/components/ScrollVideo";
 
 // Component that uses searchParams - wrapped in Suspense
@@ -312,8 +312,7 @@ export default function Home() {
         {/* Header with Logo and Icon */}
         <header className={styles.header}>
           <div className={styles.logoWrapper}>
-            <img src="/icon" alt="Syns6 Icon" className={styles.favicon} />
-            {/* <Syns6Logo /> */}
+            <Logo size={20} />
           </div>
         </header>
 
