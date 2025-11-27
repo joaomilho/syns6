@@ -3,7 +3,7 @@
 import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
-import * as THREE from "three";
+import { Group } from "three";
 import { LyricLine, getCurrentLyricIndex, getVisibleLines } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
@@ -82,7 +82,7 @@ function LyricText3D({
   countdownSeconds?: number;
   micData?: MicrophoneData;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
   const targetScaleRef = useRef(1);
 
   useFrame((state) => {
@@ -206,7 +206,7 @@ export default function Lyrics3D({
   micData,
   position = [0, 5, 0],
 }: Lyrics3DProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
   const targetYRef = useRef(0);
 
   const currentIndex = useMemo(() => {

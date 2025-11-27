@@ -12,7 +12,7 @@
  */
 
 import { VisualizationDSL, VisualizationObject, Animation, ColorExpression } from './schema';
-import * as THREE from 'three';
+// Note: Generated code expects THREE to be passed in as a parameter
 
 /**
  * Compile DSL configuration to executable JavaScript code

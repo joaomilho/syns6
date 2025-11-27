@@ -3,7 +3,7 @@
 import React, { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
-import * as THREE from "three";
+import { Color, CylinderGeometry, Group, InstancedMesh, Mesh, MeshStandardMaterial, Object3D, PointLight, Vector3 } from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface VisualizationProps {
@@ -14,7 +14,7 @@ interface VisualizationProps {
 // Camera shake component
 function CameraShake({ micData }: { micData?: MicrophoneData }) {
   const { camera } = useThree();
-  const originalPosition = useRef(new THREE.Vector3(0, 0, 30));
+  const originalPosition = useRef(new Vector3(0, 0, 30));
   const shakeIntensity = useRef(0);
 
   useFrame(() => {
@@ -51,7 +51,7 @@ function FrequencyCircle({
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   useDistortion?: boolean;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<any>(null);
 
   // Get the frequency band for this circle
@@ -175,8 +175,8 @@ function FrequencyCircles({
 
 // Center core that reacts to overall energy
 function CenterCore({ micData }: { micData?: MicrophoneData }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const pointLightRef = useRef<THREE.PointLight>(null);
+  const meshRef = useRef<Mesh>(null);
+  const pointLightRef = useRef<PointLight>(null);
 
   useFrame((state) => {
     if (!meshRef.current) return;
@@ -194,7 +194,7 @@ function CenterCore({ micData }: { micData?: MicrophoneData }) {
     meshRef.current.rotation.y = time * 0.3;
 
     // Change color with energy
-    const material = meshRef.current.material as THREE.MeshStandardMaterial;
+    const material = meshRef.current.material as MeshStandardMaterial;
     const hue = (time * 0.1 + energy * 0.5) % 1;
     material.color.setHSL(hue, 0.8, 0.5);
     material.emissive.setHSL(hue, 0.8, 0.3);
@@ -261,22 +261,22 @@ function OrbitalRing({
   
   // Create instanced mesh for cylinders
   const instancedMesh = useMemo(() => {
-    const geometry = new THREE.CylinderGeometry(0.08, 0.08, 1, 8); // Thicker cylinders
+    const geometry = new CylinderGeometry(0.08, 0.08, 1, 8); // Thicker cylinders
     const hue = index / total;
-    const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
-    const material = new THREE.MeshStandardMaterial({
+    const color = new Color().setHSL(hue, 0.8, 0.5);
+    const material = new MeshStandardMaterial({
       color,
       emissive: color,
       emissiveIntensity: 0.5,
       roughness: 0.3,
       metalness: 0.7,
     });
-    const mesh = new THREE.InstancedMesh(geometry, material, segments);
+    const mesh = new InstancedMesh(geometry, material, segments);
     return mesh;
   }, [index, total, segments]);
 
-  const dummy = useRef(new THREE.Object3D());
-  const tempColor = useRef(new THREE.Color());
+  const dummy = useRef(new Object3D());
+  const tempColor = useRef(new Color());
 
   useFrame(() => {
     if (!micData?.frequencyData) return;
@@ -302,7 +302,7 @@ function OrbitalRing({
     const dummyObj = dummy.current;
     const tempColorObj = tempColor.current;
     const hue = index / total;
-    const baseColor = new THREE.Color().setHSL(hue, 0.8, 0.5);
+    const baseColor = new Color().setHSL(hue, 0.8, 0.5);
     
     for (let i = 0; i < segments - 1; i++) {
       const idx1 = i * 3;
@@ -400,7 +400,7 @@ function OrbitalPaths({
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   fps?: number;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
   const circleCount = 16; // Number of frequency bands
   
   // Dynamic segments based on FPS

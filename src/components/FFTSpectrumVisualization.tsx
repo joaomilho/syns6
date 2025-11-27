@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import * as THREE from "three";
+import { Group, Object3D, Color, InstancedMesh, Material, CylinderGeometry, MeshBasicMaterial } from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -24,11 +24,11 @@ export function FFTSpectrumPlanes({
   bassIntensity?: number;
   rows: number;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
   
   // Reuse objects outside useFrame to avoid allocations every frame
-  const dummy = useRef(new THREE.Object3D());
-  const tempColor = useRef(new THREE.Color());
+  const dummy = useRef(new Object3D());
+  const tempColor = useRef(new Color());
   const silentFrequencyData = useRef(new Uint8Array(512).fill(0)); // Reuse silent data
   const currentFrequencies = useRef<number[]>(new Array(64).fill(0)); // Reuse frequency array
 
@@ -39,11 +39,11 @@ export function FFTSpectrumPlanes({
 
   // Store previous meshes for cleanup
   const prevInstancedMeshes = useRef<{
-    mesh: THREE.InstancedMesh;
-    baseColor: THREE.Color;
+    mesh: InstancedMesh;
+    baseColor: Color;
     col: number;
   }[]>([]);
-  const prevGeometry = useRef<THREE.CylinderGeometry | null>(null);
+  const prevGeometry = useRef<CylinderGeometry | null>(null);
 
   // Create instanced mesh for thick lines using cylinders
   const instancedMeshes = useMemo(() => {
@@ -51,7 +51,7 @@ export function FFTSpectrumPlanes({
     if (prevInstancedMeshes.current.length > 0) {
       console.log(`[perf] 🧹 Disposing ${prevInstancedMeshes.current.length} old instanced meshes`);
       prevInstancedMeshes.current.forEach(({ mesh }) => {
-        if (mesh.material instanceof THREE.Material) {
+        if (mesh.material instanceof Material) {
           mesh.material.dispose();
         }
         // Note: geometry is shared and disposed separately
@@ -69,13 +69,13 @@ export function FFTSpectrumPlanes({
     const binsPerBar = 1024 / cols;
 
     // Create a cylinder geometry for line segments (rotated to be vertical)
-    const cylGeo = new THREE.CylinderGeometry(0.03, 0.03, 1, 8);
+    const cylGeo = new CylinderGeometry(0.03, 0.03, 1, 8);
     prevGeometry.current = cylGeo;
 
     // Create one instanced mesh per column
     const meshes: {
-      mesh: THREE.InstancedMesh;
-      baseColor: THREE.Color;
+      mesh: InstancedMesh;
+      baseColor: Color;
       col: number;
     }[] = [];
 
@@ -103,14 +103,14 @@ export function FFTSpectrumPlanes({
       }
 
       // Reuse single Color object instead of creating two
-      const baseColor = new THREE.Color(r, g, b);
+      const baseColor = new Color(r, g, b);
       
-      const material = new THREE.MeshBasicMaterial({
+      const material = new MeshBasicMaterial({
         color: baseColor,
         transparent: true,
       });
 
-      const instancedMesh = new THREE.InstancedMesh(
+      const instancedMesh = new InstancedMesh(
         cylGeo,
         material,
         rows - 1 // One cylinder per segment (rows - 1 segments)
@@ -135,7 +135,7 @@ export function FFTSpectrumPlanes({
       console.log('[perf] 🧹 FFTSpectrumPlanes unmounting, disposing resources');
       if (prevInstancedMeshes.current.length > 0) {
         prevInstancedMeshes.current.forEach(({ mesh }) => {
-          if (mesh.material instanceof THREE.Material) {
+          if (mesh.material instanceof Material) {
             mesh.material.dispose();
           }
         });
