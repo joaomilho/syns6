@@ -50,13 +50,14 @@
 .dropdownMenu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0;
   background: rgba(10, 10, 10, 0.98);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   padding: 16px;
   min-width: 320px;
+  max-width: 90vw;
   max-height: 500px;
   z-index: 1000;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ds';
 import styles from './SubscriptionButton.module.css';
 
 
@@ -94,15 +95,20 @@ export default function SubscriptionButton({
           <span className={styles.interval}>/{primary.interval}</span>
         </div>
 }
+        
+        <p className={styles.trialNote}>
+          After 3-day free trial, only if you choose to continue
+        </p>
       </div>
 
-      <button
+      <Button
         onClick={handleCheckout}
         disabled={disabled || loading}
-        className={styles.subscribeButton}
+        size="medium"
+        color="green"
       >
-        {loading ? 'Processing...' : disabled ? 'Current Plan' : 'Subscribe'}
-      </button>
+        {loading ? 'Processing...' : disabled ? 'Current Plan' : 'Start trial'}
+      </Button>
 
       {error && (
         <div className={styles.error}>

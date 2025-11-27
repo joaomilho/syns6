@@ -9,6 +9,8 @@ interface Subscription {
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
   stripePriceId: string;
+  trialStart?: string | null;
+  trialEnd?: string | null;
 }
 
 interface SubscriptionStatusProps {
@@ -122,7 +124,15 @@ export default function SubscriptionStatus({ onManageSubscription, planName, pla
         {isActive ? (
           <>
             <p className={styles.detailText}>
-              {subscription.cancelAtPeriodEnd ? (
+              {subscription.status === 'trialing' && subscription.trialEnd ? (
+                <>
+                  Trial ends <strong>{new Date(subscription.trialEnd).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}</strong>
+                </>
+              ) : subscription.cancelAtPeriodEnd ? (
                 <>
                   Expires <strong>{formattedDate}</strong>
                 </>
