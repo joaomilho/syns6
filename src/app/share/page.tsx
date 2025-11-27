@@ -334,7 +334,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                 key={`compiled-${vizType}`}
                 compiledCode={customViz.compiledCode}
                 micData={micData}
-                isPlaying={isPlaying}
               />
             );
           }
@@ -345,7 +344,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
               key={`dsl-${vizType}`}
               config={config}
               micData={micData}
-              isPlaying={isPlaying}
             />
           );
         } catch (error) {
@@ -358,8 +356,7 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <CustomVisualization
             key={`custom-${vizType}`}
             code={customViz.code}
-            micData={micData}
-            isPlaying={isPlaying}
+            micData={micData} 
           />
         );
       }
@@ -371,7 +368,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <MusicVisualization
             key="particles"
-            isPlaying={isPlaying}
             micData={micData}
           />
         );
@@ -379,7 +375,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <FractalVisualization
             key="fractal"
-            isPlaying={isPlaying}
             micData={micData}
           />
         );
@@ -387,7 +382,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <PsychedelicVisualization
             key="psychedelic"
-            isPlaying={isPlaying}
             micData={micData}
           />
         );
@@ -395,7 +389,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <WavyLinesVisualization
             key="waves"
-            isPlaying={isPlaying}
             micData={micData}
           />
         );

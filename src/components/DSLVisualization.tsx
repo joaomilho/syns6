@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { VisualizationInterpreter } from "@/lib/visualizationDSL/interpreter";
 import { VisualizationDSL, validateDSL } from "@/lib/visualizationDSL/schema";
@@ -10,13 +9,11 @@ import { VisualizationDSL, validateDSL } from "@/lib/visualizationDSL/schema";
 interface DSLVisualizationProps {
   config: VisualizationDSL;
   micData?: any;
-  isPlaying?: boolean;
 }
 
 export default function DSLVisualization({
   config,
   micData,
-  isPlaying,
 }: DSLVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);

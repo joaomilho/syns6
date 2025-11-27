@@ -506,12 +506,6 @@ export default function DebugVisualization({
             }}
           >
             <div>
-              <strong>Playing:</strong>{" "}
-              <span style={{ color: isPlaying ? "#00ff88" : "#ff4444" }}>
-                {isPlaying ? "YES" : "NO"}
-              </span>
-            </div>
-            <div>
               <strong>Mic Enabled:</strong>{" "}
               <span style={{ color: micData ? "#00ff88" : "#ff4444" }}>
                 {micData ? "YES" : "NO"}
