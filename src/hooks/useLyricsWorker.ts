@@ -88,8 +88,8 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
       };
     } catch (error) {
       console.error('❌ Failed to create lyrics worker:', error);
-      if (onError) {
-        onError('Failed to initialize worker');
+      if (onErrorRef.current) {
+        onErrorRef.current('Failed to initialize worker');
       }
     }
   }, []); // Empty deps - worker should only init once!
