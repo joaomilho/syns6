@@ -113,19 +113,13 @@ export default function PlayerPage() {
   // Lyrics worker for background fetching (keeps main thread smooth)
   const lyricsWorker = useLyricsWorker({
     onLyricsReceived: useCallback((spotifyId: string, receivedLyrics: LyricLine[] | null) => {
-      console.log(`📥 Main thread: Received lyrics from worker for track ${spotifyId}`);
-      console.log(`   Lines received: ${receivedLyrics?.length || 0}`);
-      
       // Cache the result
       lyricsCache.current.set(spotifyId, receivedLyrics);
       
       // Only update UI if this is the currently playing track
       if (playbackState?.item?.id === spotifyId) {
-        console.log(`   ✅ This is the current track, updating UI`);
         setLyrics(receivedLyrics);
         setLastFetchedTrackId(spotifyId);
-      } else {
-        console.log(`   ℹ️  Cached but not current track, not updating UI`);
       }
     }, [playbackState?.item?.id]),
     
@@ -134,13 +128,10 @@ export default function PlayerPage() {
       results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
         lyricsCache.current.set(trackId, prefetchedLyrics);
       });
-      
-      const successCount = results.filter(r => r.success).length;
-      console.log(`✅ Prefetched ${successCount}/${results.length} lyrics from queue`);
     }, []),
     
     onError: useCallback((error: string) => {
-      console.error('❌ Lyrics worker error:', error);
+      console.error('Lyrics worker error:', error);
     }, []),
   });
   const [visualizationType, setVisualizationType] =
@@ -534,18 +525,15 @@ export default function PlayerPage() {
           } else {
             // Use worker to fetch lyrics (off main thread for smooth UI)
             if (lyricsWorker.isWorkerReady) {
-              console.log(`🔄 Main thread: Sending lyrics request to worker for: ${data.item.name}`);
               lyricsWorker.fetchLyrics(
                 data.item.name,
                 data.item.artists[0].name,
                 data.item.duration_ms,
                 data.item.id
               );
-              console.log(`📤 Main thread: Message sent to worker, waiting for response...`);
               // Worker will call onLyricsReceived callback when done
             } else {
               // Fallback to main thread if worker not ready
-              console.warn('⚠️ Worker not ready, falling back to main thread');
               try {
                 const lyricsLines = await fetchSyncedLyrics(
                   data.item.name,
@@ -557,7 +545,7 @@ export default function PlayerPage() {
                 setLyrics(lyricsLines);
                 setLastFetchedTrackId(data.item.id);
               } catch (err) {
-                console.error("❌ Error fetching lyrics:", err);
+                console.error("Error fetching lyrics:", err);
                 lyricsCache.current.set(data.item.id, null);
                 setLyrics(null);
                 setLastFetchedTrackId(data.item.id);
@@ -616,12 +604,10 @@ export default function PlayerPage() {
         if (uncachedTracks.length > 0) {
           if (lyricsWorker.isWorkerReady) {
             // Use worker to prefetch lyrics (off main thread)
-            console.log(`🔄 Prefetching ${Math.min(uncachedTracks.length, 5)} lyrics via worker...`);
             lyricsWorker.prefetchQueue(uncachedTracks, 5);
             // Worker will call onQueuePrefetched callback when done
           } else {
             // Fallback to main thread if worker not ready
-            console.warn('⚠️ Worker not ready for prefetch, falling back to main thread');
             uncachedTracks.forEach(async (track, index) => {
               if (index >= 5) return;
               
