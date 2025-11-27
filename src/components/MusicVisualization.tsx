@@ -12,7 +12,7 @@ interface VisualizationProps {
 }
 
 // Camera shake component
-export function CameraShake({ micData }: { micData?: MicrophoneData }) {
+function CameraShake({ micData }: { micData?: MicrophoneData }) {
   const { camera } = useThree();
   const originalPosition = useRef(new THREE.Vector3(0, 0, 30));
   const shakeIntensity = useRef(0);
@@ -143,7 +143,7 @@ function FrequencyCircle({
 }
 
 // Multiple frequency circles
-export function FrequencyCircles({ 
+function FrequencyCircles({ 
   micData,
   ringPositions,
   fps = 60
@@ -174,7 +174,7 @@ export function FrequencyCircles({
 }
 
 // Center core that reacts to overall energy
-export function CenterCore({ micData }: { micData?: MicrophoneData }) {
+function CenterCore({ micData }: { micData?: MicrophoneData }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const pointLightRef = useRef<THREE.PointLight>(null);
 
@@ -391,7 +391,7 @@ function OrbitalRing({
 }
 
 // Orbital paths visualization - shows frequency band history in circles
-export function OrbitalPaths({ 
+function OrbitalPaths({ 
   micData,
   ringPositions,
   fps = 60
@@ -553,7 +553,7 @@ function SceneContent({
   );
 }
 
-export default function OrbitalVisualization({
+export default function MusicVisualization({
   micData,
   fps = 60,
 }: VisualizationProps) {

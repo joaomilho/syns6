@@ -43,8 +43,6 @@ export default function Home() {
     'waves.webp',
     
     'spectrum3d.webp',
-    
-    'wavespectrum.webp',
   ];
   const [currentVizIndex, setCurrentVizIndex] = useState(0);
   const [vizFading, setVizFading] = useState(false);

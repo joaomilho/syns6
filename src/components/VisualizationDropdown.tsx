@@ -13,7 +13,6 @@ export type VisualizationType =
   | "blackmetal"
   | "animated"
   | "spectrum3d"
-  | "wavespectrum"
   | "fftspectrum"
   | "lyricsonly"
   | "oscilloscope"
@@ -112,16 +111,6 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/spectrum3d.png",
       animated: "/viz-thumbnails/spectrum3d.webm",
-    },
-  },
-  {
-    id: "wavespectrum",
-    name: "Wave Spectrum",
-    icon: "▬",
-    thumbnail: "/viz-thumbnails/wavespectrum.png",
-    assets: {
-      static: "/viz-thumbnails/wavespectrum.png",
-      animated: "/viz-thumbnails/wavespectrum.webm",
     },
   },
   {
