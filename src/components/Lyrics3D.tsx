@@ -213,8 +213,8 @@ export default function Lyrics3D({
 
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
-    // Show MORE lines: 2 before, current, 5 after for smooth scrolling effect
-    return getVisibleLines(lyrics, currentIndex, 2, 5);
+    // Show fewer lines for better performance: 1 before, current, 3 after = 5 total
+    return getVisibleLines(lyrics, currentIndex, 1, 3);
   }, [lyrics, currentIndex]);
 
   // Update target position when current line changes

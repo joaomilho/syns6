@@ -105,25 +105,27 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 ```
 
-### 6. **Disable Antialiasing on One Canvas**
+### 6. **Disable Antialiasing on Lyrics Canvas** ✅ **COMPLETED**
 **Problem**: Both canvases have `antialias: true`
 **Fix**:
 ```typescript
-// LyricsCanvas.tsx line 46-51:
+// player/page.tsx - Persistent lyrics canvas:
 gl={{ 
-  antialias: false,  // Disable on lyrics (less noticeable on text)
+  antialias: false,  // Disabled for performance - less noticeable on text
   alpha: true,
   powerPreference: "high-performance",
 }}
 ```
+**Status**: Antialiasing disabled on the persistent lyrics canvas (line 1086)
 
-### 7. **Reduce Visible Lyrics Lines**
-**Problem**: Showing 2 + 1 + 5 = **8 lines** (line 247)
+### 7. **Reduce Visible Lyrics Lines** ✅ **COMPLETED**
+**Problem**: Showing 2 + 1 + 5 = **8 lines** (line 217)
 **Fix**:
 ```typescript
-// Lyrics3D.tsx line 247:
+// Lyrics3D.tsx line 217:
 return getVisibleLines(lyrics, currentIndex, 1, 3); // 5 lines instead of 8
 ```
+**Status**: Reduced from 8 visible lines to 5 lines (1 before, current, 3 after)
 
 ### 8. **Text Character Pre-caching**
 **Problem**: `characters` prop regenerates on every render
@@ -380,7 +382,7 @@ stats.end();
 
 ## **🎯 PRIORITY ORDER (Best ROI)**
 
-1. **Remove duplicate canvas** (#1) - **Instant 50% boost**
+[x] 1. **Remove duplicate canvas** (#1) - **Instant 50% boost**
 [x] 2. **Remove double text rendering** (#2) - **30% boost**  
 [x] 3. **Switch to meshBasicMaterial** (#3) - **20% boost**
 [x] 4. **Reduce DPR to 1** (#5) - **40% boost on retina**
