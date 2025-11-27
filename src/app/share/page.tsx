@@ -11,7 +11,7 @@ import NowPlayingFooter from "@/components/NowPlayingFooter";
 import Syns6Logo from "@/components/Syns6Logo";
 import ToolsMenu from "@/components/ToolsMenu";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
-import MusicVisualization from "@/components/MusicVisualization";
+import OrbitalVisualization from "@/components/OrbitalVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
@@ -366,7 +366,7 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
     switch (vizType) {
       case "particles":
         return (
-          <MusicVisualization
+          <OrbitalVisualization
             key="particles"
             micData={micData}
           />

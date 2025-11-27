@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import MusicVisualization from "@/components/MusicVisualization";
+import OrbitalVisualization from "@/components/OrbitalVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
@@ -174,7 +174,7 @@ export default function ScreenshotPage() {
     switch (vizId) {
       case "particles":
         return (
-          <MusicVisualization
+          <OrbitalVisualization
             micData={micData}
           />
         );
