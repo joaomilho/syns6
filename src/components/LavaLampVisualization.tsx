@@ -292,7 +292,7 @@ export default function LavaLampVisualization({
   const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
 
   return (
-    <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }}>
+    <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }} dpr={1}>
       <OrbitControls
         target={[0, -5, -20]}
         enablePan={false}

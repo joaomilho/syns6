@@ -69,7 +69,7 @@ export default function DSLVisualization({
       preserveDrawingBuffer: true, // Required for screenshots
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(1); // Fixed 1x for performance (was Math.min(devicePixelRatio, 2))
     renderer.setClearColor(0x000000, 1); // Explicitly set clear color to black
     
     // Make canvas visible and on top for debugging

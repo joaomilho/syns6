@@ -48,7 +48,7 @@ export default function CustomVisualization({
       alpha: true,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(1); // Fixed 1x for performance (was Math.min(devicePixelRatio, 2))
     renderer.domElement.style.backgroundColor = '#000';
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;

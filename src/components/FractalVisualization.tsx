@@ -231,6 +231,7 @@ export default function FractalVisualization({
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
         style={{ background: "black" }}
+        dpr={1}
       >
         <ambientLight intensity={0.2} />
         <pointLight position={[10, 10, 10]} intensity={0.5} color="#ff00ff" />
