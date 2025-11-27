@@ -425,11 +425,6 @@ button.secondary {
   gap: 16px;
 }
 
-.favicon {
-  width: 32px;
-  height: 32px;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-}
 
 /* Hero Section */
 .hero {
