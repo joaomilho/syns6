@@ -15,7 +15,6 @@ interface Lyrics3DProps {
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
-  reducedEmissive?: boolean; // Reduce emissive intensity to avoid excessive bloom
   position?: [number, number, number]; // Optional position override, defaults to [0, 3, 0]
 }
 
@@ -68,7 +67,6 @@ function LyricText3D({
   showCountdown,
   countdownSeconds,
   micData,
-  reducedEmissive,
 }: {
   text: string;
   position: [number, number, number];
@@ -80,7 +78,6 @@ function LyricText3D({
   showCountdown?: boolean;
   countdownSeconds?: number;
   micData?: MicrophoneData;
-  reducedEmissive?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const targetScaleRef = useRef(1);
@@ -102,13 +99,13 @@ function LyricText3D({
     if (isCurrent) {
       const voiceStrength = micData?.voiceStrength || 0;
       const voiceScale = 1 + voiceStrength/2;
-      targetScale = 1.6 * voiceScale; // Reduced from 2.0 to 1.7
+      targetScale = 2.2 * voiceScale; // Reduced from 2.0 to 1.7
       groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
       targetScale = 1.0;
       groupRef.current.position.y = position[1];
     } else if (offset === 1) {
-      targetScale = 1.6;
+      targetScale = 1.8;
       groupRef.current.position.y = position[1];
     } else if (offset === 2) {
       targetScale = 1.0;
@@ -140,36 +137,58 @@ function LyricText3D({
   const textElement = (
     <group ref={groupRef} position={position}>
       {textLines.map((line, lineIndex) => (
-        <Text
-          key={lineIndex}
-          position={[0, -lineIndex * lineSpacing, 0]}
-          fontSize={1}
-          color={color === "#000000" ? "#000000" : color}
-          anchorX="center"
-          anchorY="middle"
-          font={font}
-          fontWeight={color === "#000000" ? 900 : undefined}
-          outlineWidth={color === "#000000" ? 0.03 : isCurrent ? 0.04 : 0}
-          letterSpacing={isCurrent ? 0.04 : 0}
-          outlineColor={color === "#000000" ? "#ffffff" : color}
-          fillOpacity={color === "#000000" ? 1.0 : undefined}
-          characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
-        >
-          {line}
-          <meshStandardMaterial
-            toneMapped={false}
-            color={color === "#000000" ? "#000000" : color}
-            emissive={color === "#000000" ? "#000000" : color}
-            emissiveIntensity={
-              color === "#000000" ? 0 : reducedEmissive 
-                ? (isCurrent ? 0.6 : isPast ? 0.3 : 0.2)
-                : (isCurrent ? 1.9 : isPast ? 0.9 : 0.7)
-            }
-            transparent
-            opacity={isCurrent ? 1.0 : isPast ? 0.5 : 0.8}
-            side={THREE.DoubleSide}
-          />
-        </Text>
+        <group key={lineIndex} position={[0, -lineIndex * lineSpacing, 0]}>
+          {/* Black outline/shadow layer behind */}
+          {color !== "#000000" && (
+            <Text
+              fontSize={1}
+              color="#000000"
+              anchorX="center"
+              anchorY="middle"
+              font={font}
+              outlineWidth={0.05}
+              letterSpacing={0}
+              characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
+              fontWeight={600}
+
+            >
+              {line}
+              <meshBasicMaterial
+                color="#000000"
+                transparent
+                opacity={isCurrent ? 0.8 : isPast ? 0.4 : 0.6}
+                side={THREE.DoubleSide}
+              />
+            </Text>
+          )}
+          
+          {/* Main glowing text */}
+          <Text
+            fontSize={1}
+            color={color}
+            anchorX="center"
+            anchorY="middle"
+            font={font}
+            fontWeight={600}
+            outlineWidth={0}
+            letterSpacing={0}
+            // fillOpacity={color === "#000000" ? 1.0 : undefined}
+            characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
+          >
+            {line}
+            <meshStandardMaterial
+              toneMapped={false}
+              color={color}
+              emissive={color}
+              emissiveIntensity={
+                color === "#000000" ? 0 : (isCurrent ? 1.9 : isPast ? 0.9 : 0.7)
+              }
+              transparent
+              opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
+              side={THREE.DoubleSide}
+            />
+          </Text>
+        </group>
       ))}
     </group>
   );
@@ -191,7 +210,7 @@ function LyricText3D({
           <meshStandardMaterial
             color="#ffffff"
             emissive="#ffffff"
-            emissiveIntensity={reducedEmissive ? 0.5 : 1.5}
+            emissiveIntensity={1.5}
             transparent
             opacity={1.0}
             side={THREE.DoubleSide}
@@ -212,8 +231,7 @@ export default function Lyrics3D({
   font,
   color = "#1ed760",
   micData,
-  reducedEmissive = false,
-  position = [0, 3, 0],
+  position = [0, 5, 0],
 }: Lyrics3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const targetYRef = useRef(0);
@@ -266,7 +284,7 @@ export default function Lyrics3D({
           <meshStandardMaterial
             color="#ff3333"
             emissive="#ff3333"
-            emissiveIntensity={reducedEmissive ? 0.4 : 0.8}
+            emissiveIntensity={0.8}
             transparent
             opacity={0.9}
           />
@@ -329,7 +347,6 @@ export default function Lyrics3D({
             showCountdown={showCountdown}
             countdownSeconds={countdownSeconds}
             micData={micData}
-            reducedEmissive={reducedEmissive}
           />
         );
       })}

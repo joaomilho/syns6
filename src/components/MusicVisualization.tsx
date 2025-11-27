@@ -7,7 +7,6 @@ import * as THREE from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface VisualizationProps {
-  isPlaying: boolean;
   micData?: MicrophoneData;
   fps?: number;
 }
@@ -514,7 +513,6 @@ function OrbitalPaths({
 }
 
 function SceneContent({
-  isPlaying,
   micData,
   fps = 60,
 }: VisualizationProps) {
@@ -556,7 +554,6 @@ function SceneContent({
 }
 
 export default function MusicVisualization({
-  isPlaying,
   micData,
   fps = 60,
 }: VisualizationProps) {
@@ -578,7 +575,6 @@ export default function MusicVisualization({
         }}
       >
         <SceneContent
-          isPlaying={isPlaying}
           micData={micData}
           fps={fps}
         />

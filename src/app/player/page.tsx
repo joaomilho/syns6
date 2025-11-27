@@ -19,6 +19,7 @@ import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
 import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
+import LyricsOnlyVisualization from "@/components/LyricsOnlyVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
@@ -296,6 +297,7 @@ export default function PlayerPage() {
     ) {
       const visualizations: VisualizationType[] = [
         "fftspectrum",
+        "lyricsonly",
         "particles",
         "fractal",
         "psychedelic",
@@ -804,8 +806,7 @@ export default function PlayerPage() {
             compiledCode={previewCompiledCode}
             micData={micData}
             isPlaying={playbackState?.is_playing || false}
-            lyrics={(lyrics || noTrackLyrics) ?? undefined}
-            currentTimeMs={currentProgress}
+
           />
         );
       } else if (isDSL && !previewConfig) {
@@ -842,8 +843,6 @@ export default function PlayerPage() {
               compiledCode={customViz.compiledCode}
               micData={micData}
               isPlaying={playbackState?.is_playing || false}
-              lyrics={(lyrics || noTrackLyrics) ?? undefined}
-              currentTimeMs={playbackState?.progress_ms || 0}
             />
           );
         }
@@ -855,8 +854,6 @@ export default function PlayerPage() {
             config={customVizConfig}
             micData={micData}
             isPlaying={playbackState?.is_playing || false}
-            lyrics={(lyrics || noTrackLyrics) ?? undefined}
-            currentTimeMs={currentProgress}
           />
         );
       } else if (isDSL && !customVizConfig) {
@@ -880,7 +877,6 @@ export default function PlayerPage() {
         return (
         <MusicVisualization
             key="particles"
-          isPlaying={playbackState?.is_playing || false}
           micData={micData}
           fps={fps}
         />
@@ -898,7 +894,6 @@ export default function PlayerPage() {
         return (
         <PsychedelicVisualization
             key="psychedelic"
-          isPlaying={playbackState?.is_playing || false}
           micData={micData}
         />
         );
@@ -906,7 +901,6 @@ export default function PlayerPage() {
         return (
         <WavyLinesVisualization
             key="waves"
-          isPlaying={playbackState?.is_playing || false}
           micData={micData}
         />
         );
@@ -936,8 +930,11 @@ export default function PlayerPage() {
         <FFTSpectrumVisualization
             key="fftspectrum"
           micData={micData}
-          fps={fps}
         />
+        );
+      case "lyricsonly":
+        return (
+        <LyricsOnlyVisualization key="lyricsonly" />
         );
       case "oscilloscope":
         return (
@@ -959,7 +956,6 @@ export default function PlayerPage() {
         return (
         <DebugVisualization
             key="debug"
-          isPlaying={playbackState?.is_playing || false}
           micData={micData}
           hueDebugData={hue.debugData}
           hueIsActive={hue.isActive}

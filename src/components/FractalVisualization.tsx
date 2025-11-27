@@ -18,7 +18,6 @@ interface AudioFeatures {
 
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
-  isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
   micData?: MicrophoneData;
   fps?: number;
@@ -109,10 +108,8 @@ const mandelbrotFragmentShader = `
 
 function MandelbrotPlane({
   audioFeatures,
-  isPlaying,
   syncedData,
   micData,
-  fps = 60,
 }: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -181,7 +178,7 @@ function MandelbrotPlane({
     materialRef.current.uniforms.micEnergy.value = micData?.energy || 0;
     materialRef.current.uniforms.micBass.value = micData?.bass || 0;
 
-    if (isPlaying && audioFeatures) {
+    if (audioFeatures) {
       const energy = audioFeatures.energy || 0.5;
 
       // Animate energy
@@ -214,118 +211,8 @@ function MandelbrotPlane({
   );
 }
 
-// Additional floating mandelbrot spheres for depth
-function MandelbrotSphere({
-  position,
-  audioFeatures,
-  isPlaying,
-  offset = 0,
-}: VisualizationProps & {
-  position: [number, number, number];
-  offset?: number;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-
-  const uniforms = useMemo(
-    () => ({
-      time: { value: 0 },
-      energy: { value: 0.5 },
-      zoom: { value: 3.0 },
-      center: { value: new THREE.Vector2(-0.5, 0.0) },
-    }),
-    []
-  );
-
-  useFrame((state) => {
-    if (!materialRef.current || !meshRef.current) return;
-
-    const time = state.clock.getElapsedTime();
-    materialRef.current.uniforms.time.value = time + offset;
-
-    if (isPlaying && audioFeatures) {
-      const energy = audioFeatures.energy || 0.5;
-      materialRef.current.uniforms.energy.value = energy;
-
-      // Rotate
-      meshRef.current.rotation.x = time * 0.3 + offset;
-      meshRef.current.rotation.y = time * 0.2 + offset;
-
-      // Float up and down
-      meshRef.current.position.y = position[1] + Math.sin(time + offset) * 2;
-
-      // Pulse with music
-      const scale = 1 + energy * 0.3;
-      meshRef.current.scale.set(scale, scale, scale);
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} position={position}>
-      <sphereGeometry args={[3, 64, 64]} />
-      <shaderMaterial
-        ref={materialRef}
-        vertexShader={mandelbrotVertexShader}
-        fragmentShader={mandelbrotFragmentShader}
-        uniforms={uniforms}
-      />
-    </mesh>
-  );
-}
-
-function SpiralParticles({ audioFeatures, isPlaying }: VisualizationProps) {
-  const pointsRef = useRef<THREE.Points>(null);
-  const particleCount = 1000;
-
-  const positions = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3;
-      const t = (i / particleCount) * Math.PI * 8;
-      const radius = 15 * (i / particleCount);
-
-      positions[i3] = radius * Math.cos(t);
-      positions[i3 + 1] = (i / particleCount) * 30 - 15;
-      positions[i3 + 2] = radius * Math.sin(t);
-    }
-    return positions;
-  }, []);
-
-  useFrame((state) => {
-    if (!pointsRef.current) return;
-
-    const time = state.clock.getElapsedTime();
-    const tempo = audioFeatures?.tempo || 120;
-
-    pointsRef.current.rotation.y = time * (tempo / 120) * 0.3;
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particleCount}
-          array={positions}
-          itemSize={3}
-          args={[positions, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.2}
-        color="#00ffff"
-        transparent
-        opacity={0.6}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
-
 export default function FractalVisualization({
   audioFeatures,
-  isPlaying,
   syncedData,
   micData,
   fps = 60,
@@ -356,7 +243,6 @@ export default function FractalVisualization({
         {/* Main large Mandelbrot plane */}
         <MandelbrotPlane
           audioFeatures={audioFeatures || null}
-          isPlaying={isPlaying}
           syncedData={syncedData || null}
           micData={micData}
           fps={fps}
