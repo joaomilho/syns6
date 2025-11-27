@@ -573,6 +573,7 @@ export default function MusicVisualization({
         style={{
           background: "radial-gradient(circle, #0a0a0a 0%, #000000 100%)",
         }}
+        dpr={1}
       >
         <SceneContent
           micData={micData}
