@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { AmbientLight, Color, DirectionalLight, Fog, GridHelper, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Canvas } from "@react-three/fiber";
 
@@ -25,17 +25,17 @@ export default function CompiledVisualization({
   micData,
 }: CompiledVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const errorRef = useRef<string | null>(null);
   const micDataRef = useRef<any>(micData); // EXACT COPY from DSLVisualization - use ref for current value
   const updateFunctionRef = useRef<((
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera,
-    renderer: THREE.WebGLRenderer,
+    scene: Scene,
+    camera: PerspectiveCamera,
+    renderer: WebGLRenderer,
     micData: any,
     time: number,
     THREE: any
@@ -52,14 +52,14 @@ export default function CompiledVisualization({
     console.log('🚀 Initializing CompiledVisualization');
     
     // EXACT COPY from DSLVisualization - Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 10, 50);
+    const scene = new Scene();
+    scene.background = new Color(0x000000);
+    scene.fog = new Fog(0x000000, 10, 50);
     scene.userData = { compiledObjects: [] };
     sceneRef.current = scene;
 
     // EXACT COPY from DSLVisualization - Camera
-    const camera = new THREE.PerspectiveCamera(
+    const camera = new PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -70,7 +70,7 @@ export default function CompiledVisualization({
     cameraRef.current = camera;
 
     // EXACT COPY from DSLVisualization - Renderer
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new WebGLRenderer({
       antialias: true,
       alpha: false,
       preserveDrawingBuffer: true, // Required for screenshots
@@ -95,18 +95,18 @@ export default function CompiledVisualization({
     controlsRef.current = controls;
 
     // EXACT COPY from DSLVisualization - Grid
-    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    const gridHelper = new GridHelper(20, 20, 0x444444, 0x222222);
     scene.add(gridHelper);
 
     // EXACT COPY from DSLVisualization - Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const directionalLight = new DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const backLight = new DirectionalLight(0xffffff, 0.5);
     backLight.position.set(-5, 5, -5);
     scene.add(backLight);
     
@@ -134,7 +134,7 @@ export default function CompiledVisualization({
       
       // Force scene update
       scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
+        if (object instanceof Mesh) {
           object.material.needsUpdate = true;
         }
       });
@@ -221,7 +221,7 @@ export default function CompiledVisualization({
       // Dispose of scene objects (geometries and materials)
       if (sceneRef.current) {
         sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
+          if (object instanceof Mesh) {
             if (object.geometry) {
               object.geometry.dispose();
             }

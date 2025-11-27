@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { AmbientLight, Color, DirectionalLight, Fog, GridHelper, Light, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 interface CustomVisualizationProps {
@@ -14,9 +14,9 @@ export default function CustomVisualization({
   micData,
 }: CustomVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const errorRef = useRef<string | null>(null);
@@ -25,14 +25,14 @@ export default function CustomVisualization({
     if (!containerRef.current) return;
 
     // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 10, 50);
+    const scene = new Scene();
+    scene.background = new Color(0x000000);
+    scene.fog = new Fog(0x000000, 10, 50);
     scene.userData = {}; // Initialize userData for custom code to store objects
     sceneRef.current = scene;
 
     // Camera setup
-    const camera = new THREE.PerspectiveCamera(
+    const camera = new PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -43,7 +43,7 @@ export default function CustomVisualization({
     cameraRef.current = camera;
 
     // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new WebGLRenderer({
       antialias: true,
       alpha: true,
     });
@@ -62,20 +62,20 @@ export default function CustomVisualization({
     controlsRef.current = controls;
 
     // Grid helper
-    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    const gridHelper = new GridHelper(20, 20, 0x444444, 0x222222);
     scene.add(gridHelper);
 
     // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
     // Directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const directionalLight = new DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
     // Add another light from opposite side for better visibility
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const backLight = new DirectionalLight(0xffffff, 0.5);
     backLight.position.set(-5, 5, -5);
     scene.add(backLight);
 
@@ -87,9 +87,9 @@ export default function CustomVisualization({
 
     // Compile user code into a function
     let userAnimateFunction: ((
-      scene: THREE.Scene,
-      camera: THREE.PerspectiveCamera,
-      renderer: THREE.WebGLRenderer,
+      scene: Scene,
+      camera: PerspectiveCamera,
+      renderer: WebGLRenderer,
       micData: any,
       time: number,
       THREE: any
@@ -139,7 +139,7 @@ export default function CustomVisualization({
       console.log('📊 Scene setup:', {
         sceneChildren: scene.children.length,
         cameraPosition: camera.position,
-        hasLights: scene.children.some(c => c instanceof THREE.Light)
+        hasLights: scene.children.some(c => c instanceof Light)
       });
     } catch (error) {
       console.error('❌ Error compiling visualization code:', error);
@@ -232,7 +232,7 @@ export default function CustomVisualization({
       // Dispose of scene objects (geometries and materials)
       if (sceneRef.current) {
         sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
+          if (object instanceof Mesh) {
             if (object.geometry) {
               object.geometry.dispose();
             }

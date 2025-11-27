@@ -23,10 +23,12 @@
     Dropdown bleads to the right of the screen
 [ ] AI creation
     Show "COMING SOON"
-[ ] Share session
+[X] Share session
     Don't enable it automatically, wait for user to start a session.
-[ ] Logo
+[X] Logo
     Try logo with just circle instead of "syns6" on the left
+[ ] Synthwave viz
+    https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
 
 Question:
     - Should I allow customization of views?

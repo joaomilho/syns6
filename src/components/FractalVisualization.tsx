@@ -4,7 +4,7 @@ import React, { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import * as THREE from "three";
+import { DoubleSide, Mesh, ShaderMaterial, Vector2 } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
@@ -111,8 +111,8 @@ export function MandelbrotPlane({
   syncedData,
   micData,
 }: VisualizationProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const meshRef = useRef<Mesh>(null);
+  const materialRef = useRef<ShaderMaterial>(null);
   
   // Dynamic iterations based on FPS
   
@@ -136,7 +136,7 @@ export function MandelbrotPlane({
       time: { value: 0 },
       energy: { value: 0.5 },
       zoom: { value: 4.0 },
-      center: { value: new THREE.Vector2(-0.7463, 0.1102) },
+      center: { value: new Vector2(-0.7463, 0.1102) },
       micEnergy: { value: 0 },
       micBass: { value: 0 },
       maxIterations: { value: 36 },
@@ -204,7 +204,7 @@ export function MandelbrotPlane({
         vertexShader={mandelbrotVertexShader}
         fragmentShader={mandelbrotFragmentShader}
         uniforms={uniforms}
-        side={THREE.DoubleSide}
+        side={DoubleSide}
         toneMapped={false}
       />
     </mesh>

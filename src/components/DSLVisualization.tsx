@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { AmbientLight, Color, DirectionalLight, GridHelper, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { VisualizationInterpreter } from "@/lib/visualizationDSL/interpreter";
 import { VisualizationDSL, validateDSL } from "@/lib/visualizationDSL/schema";
@@ -16,9 +16,9 @@ export default function DSLVisualization({
   micData,
 }: DSLVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const interpreterRef = useRef<VisualizationInterpreter | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -46,12 +46,12 @@ export default function DSLVisualization({
     }
 
     // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0a);
+    const scene = new Scene();
+    scene.background = new Color(0x0a0a0a);
     sceneRef.current = scene;
 
     // Camera setup
-    const camera = new THREE.PerspectiveCamera(
+    const camera = new PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -63,7 +63,7 @@ export default function DSLVisualization({
     cameraRef.current = camera;
 
     // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new WebGLRenderer({
       antialias: true,
       alpha: false, // Changed to false to ensure opaque background
       preserveDrawingBuffer: true, // Required for screenshots
@@ -89,18 +89,18 @@ export default function DSLVisualization({
     controlsRef.current = controls;
 
     // Grid helper
-    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    const gridHelper = new GridHelper(20, 20, 0x444444, 0x222222);
     scene.add(gridHelper);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const directionalLight = new DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const backLight = new DirectionalLight(0xffffff, 0.5);
     backLight.position.set(-5, 5, -5);
     scene.add(backLight);
 
