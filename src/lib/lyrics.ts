@@ -31,10 +31,7 @@ export async function fetchSyncedLyrics(
     if (spotifyId) {
       const cached = await getLyrics(spotifyId, trackName, artistName);
       if (cached) {
-        console.log(`💾 IndexedDB cache HIT for: ${trackName} (${cached.lyrics.length} lines)`);
         return cached.lyrics.map(line => ({ time: line.timeMs, text: line.text }));
-      } else {
-        console.log(`❌ IndexedDB cache MISS for: ${trackName}, fetching from API...`);
       }
     }
 
@@ -63,18 +60,15 @@ export async function fetchSyncedLyrics(
     }
     
     const url = `${baseUrl}/api/lyrics?${params.toString()}`;
-    console.log(`📡 Making API request to:`, url);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
     try {
-      console.log(`🌐 Fetching...`);
       const response = await fetch(url, {
         signal: controller.signal,
       });
 
-      console.log(`✅ Fetch response received:`, response.status, response.statusText);
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -106,16 +100,11 @@ export async function fetchSyncedLyrics(
       return null;
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
-      console.error(`❌ Fetch error:`, fetchError.name, fetchError.message);
-      if (fetchError.name === 'AbortError') {
-        console.error("⏱️ Lyrics request timed out after 20 seconds");
-      } else {
-        console.error("Network error fetching lyrics:", fetchError);
-      }
+      // Silent failure - lyrics are optional
       return null;
     }
   } catch (error) {
-    console.error("❌ Outer error fetching synced lyrics:", error);
+    // Silent failure - lyrics are optional
     return null;
   }
 }

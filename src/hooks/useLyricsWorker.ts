@@ -77,16 +77,13 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
       };
 
       worker.onerror = (error) => {
-        console.error('❌ Worker error:', error);
+        console.error('Worker error:', error);
         if (onErrorRef.current) {
           onErrorRef.current(error.message);
         }
       };
 
-      console.log('✅ Lyrics worker initialized');
-
       return () => {
-        console.log('🛑 Lyrics worker terminated (component unmounting or deps changed)');
         worker.terminate();
       };
     } catch (error) {
