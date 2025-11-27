@@ -94,11 +94,144 @@
   line-height: 1.6;
 }
 
-.pricingGrid {
+.pricingContainer {
+  max-width: 800px;
+  margin: 0 auto 3rem auto;
+}
+
+.planOptions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.planWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.planOption {
+  position: relative;
+  display: block;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  flex: 1;
+  min-height: 120px;
+}
+
+.planOption:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.planOption.selected {
+  background: rgba(0, 255, 0, 0.05);
+  border-color: #00ff00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.radioInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.planContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.planName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.planPrice {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.planPriceStrikethrough {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  text-decoration: line-through;
+}
+
+.freePromo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #00ff00;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.planInterval {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.yearlyPricing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.monthlyEquivalent {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.planMessage {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  text-align: center;
+  padding: 0 0.5rem;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.startTrialSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
 }
 
 .footer {
@@ -169,9 +302,29 @@
     font-size: 1rem;
   }
 
-  .pricingGrid {
+  .pricingContainer {
+    max-width: 100%;
+  }
+
+  .planOptions {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .planOption {
+    padding: 1rem;
+  }
+
+  .planName {
+    font-size: 1rem;
+  }
+
+  .planPrice {
+    font-size: 1rem;
+  }
+
+  .planMessage {
+    font-size: 0.7rem;
   }
 }
 

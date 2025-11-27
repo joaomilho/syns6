@@ -106,18 +106,15 @@ export async function getLyrics(
   // Try by Spotify ID first
   let cached = await getLyricsBySpotifyId(spotifyId);
   if (cached) {
-    console.log(`✅ Lyrics found in local DB (by ID): ${title} - ${artist}`);
     return cached;
   }
 
   // Try by title+artist (for cross-platform)
   cached = await getLyricsByTitleArtist(title, artist);
   if (cached) {
-    console.log(`✅ Lyrics found in local DB (by title+artist): ${title} - ${artist}`);
     return cached;
   }
 
-  console.log(`❌ Lyrics not in local DB: ${title} - ${artist}`);
   return null;
 }
 

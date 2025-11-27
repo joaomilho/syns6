@@ -23,7 +23,7 @@ export async function fetchSyncedLyrics(
   spotifyId?: string
 ): Promise<LyricLine[] | null> {
   try {
-    console.log(`🔍 Fetching lyrics for: ${trackName} by ${artistName}`);
+    // console.log(`🔍 Fetching lyrics for: ${trackName} by ${artistName}`);
 
     // 1. Check IndexedDB first (fastest, offline-capable)
     const { getLyrics, saveLyrics } = await import('./lyricsStorage');
@@ -31,12 +31,11 @@ export async function fetchSyncedLyrics(
     if (spotifyId) {
       const cached = await getLyrics(spotifyId, trackName, artistName);
       if (cached) {
-        console.log(`✅ Lyrics from local DB (${cached.source}): ${cached.lyrics.length} lines`);
         return cached.lyrics.map(line => ({ time: line.timeMs, text: line.text }));
       }
     }
 
-    console.log("📡 Not in local DB, checking backend...");
+    // console.log("📡 Not in local DB, checking backend...");
 
     // 2. Fetch from backend (checks PostgreSQL DB → Remote APIs)
     const params = new URLSearchParams({
@@ -61,17 +60,17 @@ export async function fetchSyncedLyrics(
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log("❌ No synced lyrics found from any source");
+          // console.log("❌ No synced lyrics found from any source");
           return null;
         }
-        console.error(`API error: ${response.status} ${response.statusText}`);
+        // console.error(`API error: ${response.status} ${response.statusText}`);
         return null;
       }
 
       const data = await response.json();
       
       if (data.lines && data.lines.length > 0) {
-        console.log(`✅ Lyrics from backend (${data.source}): ${data.lines.length} lines`);
+        // console.log(`✅ Lyrics from backend (${data.source}): ${data.lines.length} lines`);
         
         // 3. Save to local IndexedDB for next time
         if (spotifyId) {
@@ -88,15 +87,15 @@ export async function fetchSyncedLyrics(
       return null;
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
-        console.error("⏱️ Lyrics request timed out after 20 seconds");
-      } else {
-        console.error("Network error fetching lyrics:", fetchError.message);
-      }
+      // if (fetchError.name === 'AbortError') {
+      //   console.error("⏱️ Lyrics request timed out after 20 seconds");
+      // } else {
+      //   console.error("Network error fetching lyrics:", fetchError.message);
+      // }
       return null;
     }
   } catch (error) {
-    console.error("Error fetching synced lyrics:", error);
+    // console.error("Error fetching synced lyrics:", error);
     return null;
   }
 }

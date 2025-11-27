@@ -2,6 +2,7 @@
 
 import { useSession, signIn } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -10,6 +11,7 @@ import { useCamera } from "@/hooks/useCamera";
 import { useFPS } from "@/hooks/useFPS";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
+import { useSubscription } from "@/hooks/useSubscription";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -66,6 +68,8 @@ interface PlaybackState {
 
 export default function PlayerPage() {
   const { data: session, status, update } = useSession();
+  const router = useRouter();
+  const { subscription, isActive, loading: subscriptionLoading } = useSubscription();
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(
     null
   );
@@ -111,6 +115,20 @@ export default function PlayerPage() {
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
+  
+  // Check subscription and redirect to pricing if not active
+  useEffect(() => {
+    // Wait for authentication and subscription data to load
+    if (status === 'loading' || subscriptionLoading) {
+      return;
+    }
+
+    // If authenticated but no active subscription, redirect to pricing
+    if (status === 'authenticated' && !isActive) {
+      console.log('⚠️ No active subscription detected, redirecting to pricing...');
+      router.push('/pricing');
+    }
+  }, [status, subscriptionLoading, isActive, router]);
   
   // Start hosting when component mounts
   useEffect(() => {
@@ -429,11 +447,6 @@ export default function PlayerPage() {
             const cachedLyrics = lyricsCache.current.get(data.item.id);
             setLyrics(cachedLyrics || null);
             setLastFetchedTrackId(data.item.id);
-            if (cachedLyrics && cachedLyrics.length > 0) {
-              console.log(`📦 Using cached lyrics for: ${data.item.name} (${cachedLyrics.length} lines)`);
-            } else {
-              console.log(`📦 Cached lyrics for: ${data.item.name} is null/empty`);
-            }
           } else {
             // Fetch from backend API (checks IndexedDB → PostgreSQL → Remote APIs)
             try {
@@ -448,16 +461,6 @@ export default function PlayerPage() {
               lyricsCache.current.set(data.item.id, lyricsLines);
               setLyrics(lyricsLines);
               setLastFetchedTrackId(data.item.id);
-
-              if (lyricsLines) {
-                console.log(
-                  "✅ Synced lyrics loaded:",
-                  lyricsLines.length,
-                  "lines"
-                );
-              } else {
-                console.log("⚠️ No synced lyrics found");
-              }
             } catch (err) {
               console.error("❌ Error fetching lyrics:", err);
               lyricsCache.current.set(data.item.id, null);
@@ -518,12 +521,10 @@ export default function PlayerPage() {
           
           // Check if already cached (including null results)
           if (lyricsCache.current.has(track.id)) {
-            console.log(`📦 Lyrics already cached for: ${track.name}`);
             return;
           }
           
           try {
-            console.log(`🔄 Prefetching lyrics for: ${track.name}`);
             const lyricsLines = await fetchSyncedLyrics(
               track.name,
               track.artists[0].name,
@@ -533,14 +534,7 @@ export default function PlayerPage() {
             
             // Cache the result (even if null) to prevent repeated fetches
             lyricsCache.current.set(track.id, lyricsLines);
-            
-            if (lyricsLines && lyricsLines.length > 0) {
-              console.log(`✅ Prefetched lyrics for: ${track.name} (${lyricsLines.length} lines)`);
-            } else {
-              console.log(`⚠️ No lyrics found during prefetch for: ${track.name} (cached as null)`);
-            }
           } catch (err) {
-            console.error(`❌ Failed to prefetch lyrics for: ${track.name}`, err);
             // Cache null to prevent repeated failed attempts
             lyricsCache.current.set(track.id, null);
           }
