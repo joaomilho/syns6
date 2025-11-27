@@ -1083,7 +1083,7 @@ export default function PlayerPage() {
             pointerEvents: 'none', // Allow clicks to pass through
           }}
           gl={{
-            antialias: true,
+            antialias: false, // Disabled for performance - less noticeable on text
             alpha: true, // Transparent background
             powerPreference: "high-performance",
           }}
