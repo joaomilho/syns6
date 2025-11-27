@@ -123,7 +123,7 @@ export default function PlayerPage() {
       }
     }, [playbackState?.item?.id]),
     
-    onQueuePrefetched: useCallback((results) => {
+    onQueuePrefetched: useCallback((results: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>) => {
       // Cache all prefetched lyrics
       results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
         lyricsCache.current.set(trackId, prefetchedLyrics);
