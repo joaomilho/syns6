@@ -68,3 +68,5 @@ Question:
     can sing together. Could even capture the mic and send to the main view.
 [ ] 2 mics
     Figure how to have 2 ins on mac, so we can capture Spotify and then an external mic for proper karaoke.
+[ ] DPR
+    I've set DPR to 1, but let's consider 2 for really good machines
