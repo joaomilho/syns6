@@ -805,8 +805,6 @@ export default function PlayerPage() {
             key="preview-compiled"
             compiledCode={previewCompiledCode}
             micData={micData}
-            isPlaying={playbackState?.is_playing || false}
-
           />
         );
       } else if (isDSL && !previewConfig) {
@@ -818,7 +816,6 @@ export default function PlayerPage() {
             key="preview"
             code={generatedCode}
             micData={micData}
-            isPlaying={playbackState?.is_playing || false}
           />
         );
       }
@@ -842,7 +839,6 @@ export default function PlayerPage() {
               key={`compiled-${visualizationType}`}
               compiledCode={customViz.compiledCode}
               micData={micData}
-              isPlaying={playbackState?.is_playing || false}
             />
           );
         }
@@ -853,7 +849,6 @@ export default function PlayerPage() {
             key={`dsl-${visualizationType}`}
             config={customVizConfig}
             micData={micData}
-            isPlaying={playbackState?.is_playing || false}
           />
         );
       } else if (isDSL && !customVizConfig) {
@@ -865,7 +860,6 @@ export default function PlayerPage() {
             key={`custom-${visualizationType}`}
             code={customViz.code}
             micData={micData}
-            isPlaying={playbackState?.is_playing || false}
           />
         );
       }
@@ -885,7 +879,7 @@ export default function PlayerPage() {
         return (
         <FractalVisualization
             key="fractal"
-          isPlaying={playbackState?.is_playing || false}
+
           micData={micData}
           fps={fps}
         />

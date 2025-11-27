@@ -7,13 +7,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 interface CustomVisualizationProps {
   code: string;
   micData?: any;
-  isPlaying?: boolean;
 }
 
 export default function CustomVisualization({
   code,
   micData,
-  isPlaying,
 }: CustomVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
