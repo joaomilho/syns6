@@ -7,6 +7,9 @@ import * as THREE from "three";
 import { LyricLine, getCurrentLyricIndex, getVisibleLines } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
+// Pre-cache common characters for Text component performance
+export const COMMON_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ ";
+
 interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
   currentTimeMs: number;
@@ -149,7 +152,7 @@ function LyricText3D({
             outlineWidth={color !== "#000000" ? 0.02 : 0}
             outlineColor="#000000"
             letterSpacing={0}
-            characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
+            characters={COMMON_CHARS}
           >
             {line}
             <meshBasicMaterial
