@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { AmbientLight, AxesHelper, Color, DirectionalLight, GridHelper, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 interface BlankGridVisualizationProps {
@@ -12,9 +12,9 @@ export default function BlankGridVisualization({
   micData,
 }: BlankGridVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
 
   useEffect(() => {
@@ -26,12 +26,12 @@ export default function BlankGridVisualization({
     }
 
     // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0a);
+    const scene = new Scene();
+    scene.background = new Color(0x0a0a0a);
     sceneRef.current = scene;
 
     // Camera setup
-    const camera = new THREE.PerspectiveCamera(
+    const camera = new PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -42,7 +42,7 @@ export default function BlankGridVisualization({
     cameraRef.current = camera;
 
     // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new WebGLRenderer({
       antialias: true,
       alpha: false,
     });
@@ -67,19 +67,19 @@ export default function BlankGridVisualization({
     controlsRef.current = controls;
 
     // Grid helper
-    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    const gridHelper = new GridHelper(20, 20, 0x444444, 0x222222);
     scene.add(gridHelper);
 
     // Axes helper (optional, for reference)
-    const axesHelper = new THREE.AxesHelper(5);
+    const axesHelper = new AxesHelper(5);
     scene.add(axesHelper);
 
     // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
     // Directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
@@ -116,7 +116,7 @@ export default function BlankGridVisualization({
       // Dispose of scene objects
       if (sceneRef.current) {
         sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
+          if (object instanceof Mesh) {
             object.geometry?.dispose();
             if (Array.isArray(object.material)) {
               object.material.forEach((material) => material.dispose());

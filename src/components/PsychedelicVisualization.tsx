@@ -3,7 +3,7 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
+import { AdditiveBlending, DoubleSide, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Points, PointsMaterial } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
@@ -23,8 +23,8 @@ interface VisualizationProps {
 
 // Morphing blob with shader-like color effects
 export function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const meshRef = useRef<Mesh>(null);
+  const materialRef = useRef<MeshStandardMaterial>(null);
 
   useFrame((state) => {
     if (!meshRef.current || !materialRef.current) return;
@@ -74,7 +74,7 @@ export function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
 
 // Kaleidoscope effect with rotating planes
 export function KaleidoscopePlanes({ audioFeatures }: VisualizationProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -122,8 +122,8 @@ function AnimatedPlane({
   audioFeatures: AudioFeatures | null;
   index: number;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const meshRef = useRef<Mesh>(null);
+  const materialRef = useRef<MeshBasicMaterial>(null);
 
   useFrame((state) => {
     if (!meshRef.current || !materialRef.current) return;
@@ -148,7 +148,7 @@ function AnimatedPlane({
       <meshBasicMaterial
         ref={materialRef}
         color="#ff00ff"
-        side={THREE.DoubleSide}
+        side={DoubleSide}
         transparent
         opacity={0.3}
         wireframe
@@ -159,7 +159,7 @@ function AnimatedPlane({
 
 // Spiraling liquid-like particles
 export function LiquidParticles({ audioFeatures }: VisualizationProps) {
-  const pointsRef = useRef<THREE.Points>(null);
+  const pointsRef = useRef<Points>(null);
   const particleCount = 3000;
 
   const positions = useMemo(() => {
@@ -206,7 +206,7 @@ export function LiquidParticles({ audioFeatures }: VisualizationProps) {
     positionAttribute.needsUpdate = true;
 
     // Color shift
-    const material = pointsRef.current.material as THREE.PointsMaterial;
+    const material = pointsRef.current.material as PointsMaterial;
     const hue = (time * 0.15) % 1;
     material.color.setHSL(hue, 1, 0.6);
   });
@@ -228,7 +228,7 @@ export function LiquidParticles({ audioFeatures }: VisualizationProps) {
         transparent
         opacity={0.8}
         sizeAttenuation
-        blending={THREE.AdditiveBlending}
+        blending={AdditiveBlending}
       />
     </points>
   );

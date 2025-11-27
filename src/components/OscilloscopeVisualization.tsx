@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import * as THREE from "three";
+import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, DoubleSide, Mesh, OrthographicCamera, Scene, ShaderMaterial, Vector4, WebGLRenderer } from "three";
 import { Canvas } from "@react-three/fiber";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
@@ -108,11 +108,11 @@ export default function OscilloscopeVisualization({
   fps = 60,
 }: OscilloscopeVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
-  const meshRef = useRef<THREE.Mesh | null>(null);
-  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<OrthographicCamera | null>(null);
+  const meshRef = useRef<Mesh | null>(null);
+  const materialRef = useRef<ShaderMaterial | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const updateWaveformRef = useRef(0);
   const micDataRef = useRef(micData); // Keep current micData in a ref
@@ -139,7 +139,7 @@ export default function OscilloscopeVisualization({
     const height = window.innerHeight;
 
     // Create renderer
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new WebGLRenderer({
       antialias: false,
       alpha: false,
       powerPreference: "high-performance",
@@ -161,16 +161,16 @@ export default function OscilloscopeVisualization({
 
     // Create orthographic camera for 2D
     const aspect = width / height;
-    const camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 10);
+    const camera = new OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 10);
     camera.position.z = 1;
     cameraRef.current = camera;
 
     // Create scene
-    const scene = new THREE.Scene();
+    const scene = new Scene();
     sceneRef.current = scene;
 
     // Create geometry - WOSCOPE STYLE with 4 vertices per segment
-    const geometry = new THREE.BufferGeometry();
+    const geometry = new BufferGeometry();
     
     const numSegments = nSamples - 1;
     const numVertices = numSegments * 4; // 4 vertices per quad
@@ -226,10 +226,10 @@ export default function OscilloscopeVisualization({
     }
     
     // Set attributes
-    geometry.setAttribute('aIdx', new THREE.BufferAttribute(idxArray, 1));
-    geometry.setAttribute('aStart', new THREE.BufferAttribute(startArray, 2));
-    geometry.setAttribute('aEnd', new THREE.BufferAttribute(endArray, 2));
-    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    geometry.setAttribute('aIdx', new BufferAttribute(idxArray, 1));
+    geometry.setAttribute('aStart', new BufferAttribute(startArray, 2));
+    geometry.setAttribute('aEnd', new BufferAttribute(endArray, 2));
+    geometry.setIndex(new BufferAttribute(indices, 1));
     
     // Three.js requires a 'position' attribute even if we don't use it in the shader
     // Create dummy position from startArray (convert vec2 to vec3)
@@ -239,32 +239,32 @@ export default function OscilloscopeVisualization({
       dummyPositions[i * 3 + 1] = startArray[i * 2 + 1];
       dummyPositions[i * 3 + 2] = 0;
     }
-    geometry.setAttribute('position', new THREE.BufferAttribute(dummyPositions, 3));
+    geometry.setAttribute('position', new BufferAttribute(dummyPositions, 3));
     
     // Compute bounding box/sphere so Three.js doesn't cull it
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
 
     // Create shader material
-    const material = new THREE.ShaderMaterial({
+    const material = new ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
         uInvert: { value: 1.0 },
         uSize: { value: baseLineSize },
         uIntensity: { value: 1.0 },
-        uColor: { value: new THREE.Vector4(0.1, 1.0, 0.1, 1.0) },
+        uColor: { value: new Vector4(0.1, 1.0, 0.1, 1.0) },
       },
       transparent: true,
-      blending: THREE.AdditiveBlending,
+      blending: AdditiveBlending,
       depthTest: false,
       depthWrite: false,
-      side: THREE.DoubleSide, // Render both sides
+      side: DoubleSide, // Render both sides
     });
     materialRef.current = material;
 
     // Create oscilloscope mesh
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new Mesh(geometry, material);
     mesh.frustumCulled = false; // CRITICAL: Always render, don't cull based on bounding box
     scene.add(mesh);
     meshRef.current = mesh;
@@ -345,9 +345,9 @@ export default function OscilloscopeVisualization({
       return;
     }
 
-      const geometry = meshRef.current.geometry as THREE.BufferGeometry;
-      const startAttr = geometry.getAttribute('aStart') as THREE.BufferAttribute;
-      const endAttr = geometry.getAttribute('aEnd') as THREE.BufferAttribute;
+      const geometry = meshRef.current.geometry as BufferGeometry;
+      const startAttr = geometry.getAttribute('aStart') as BufferAttribute;
+      const endAttr = geometry.getAttribute('aEnd') as BufferAttribute;
       
       if (!startAttr || !endAttr) {
         console.error('❌ Missing attributes!');
@@ -439,7 +439,7 @@ export default function OscilloscopeVisualization({
     const saturation = 0.9 + energy * 0.1;
     const lightness = 0.4 + energy * 0.4 + bass * 0.3; // Much brighter with music
     
-    const color = new THREE.Color().setHSL(hue, saturation, lightness);
+    const color = new Color().setHSL(hue, saturation, lightness);
     materialRef.current.uniforms.uColor.value.set(color.r, color.g, color.b, 1.0);
     
     // Dramatic intensity changes

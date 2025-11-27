@@ -3,17 +3,17 @@
  * Creates and animates Three.js objects based on DSL configuration
  */
 
-import * as THREE from 'three';
+import { Scene, Camera, Object3D, Mesh, BoxGeometry, SphereGeometry, CylinderGeometry, TorusGeometry, PlaneGeometry, ConeGeometry, DodecahedronGeometry, IcosahedronGeometry, BufferGeometry, Material, MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, MeshStandardMaterial, Color } from 'three';
 import { VisualizationDSL, VisualizationObject, GeometryConfig, MaterialConfig, EvalContext, ColorExpression, Animation } from './schema';
 import { safeEval } from './evaluator';
 
 export class VisualizationInterpreter {
-  private scene: THREE.Scene;
-  private camera: THREE.Camera;
+  private scene: Scene;
+  private camera: Camera;
   private config: VisualizationDSL;
-  private objects: Map<string, THREE.Object3D[]>;
+  private objects: Map<string, Object3D[]>;
   
-  constructor(scene: THREE.Scene, camera: THREE.Camera, config: VisualizationDSL) {
+  constructor(scene: Scene, camera: Camera, config: VisualizationDSL) {
     this.scene = scene;
     this.camera = camera;
     this.config = config;
@@ -90,14 +90,14 @@ export class VisualizationInterpreter {
     }
   }
   
-  private createObjects(config: VisualizationObject): THREE.Object3D[] {
+  private createObjects(config: VisualizationObject): Object3D[] {
     const count = config.type === 'group' ? (config.count || 1) : 1;
-    const objects: THREE.Object3D[] = [];
+    const objects: Object3D[] = [];
     
     for (let i = 0; i < count; i++) {
       const geometry = this.createGeometry(config.geometry);
       const material = this.createMaterial(config.material, i, count);
-      const mesh = new THREE.Mesh(geometry, material);
+      const mesh = new Mesh(geometry, material);
       
       // Set initial position
       if (config.position) {
@@ -163,55 +163,55 @@ export class VisualizationInterpreter {
     return objects;
   }
   
-  private createGeometry(config: GeometryConfig): THREE.BufferGeometry {
+  private createGeometry(config: GeometryConfig): BufferGeometry {
     switch (config.type) {
       case 'box':
-        return new THREE.BoxGeometry(
+        return new BoxGeometry(
           config.width ?? 1,
           config.height ?? 1,
           config.depth ?? 1
         );
       case 'sphere':
-        return new THREE.SphereGeometry(
+        return new SphereGeometry(
           config.radius ?? 0.5,
           config.widthSegments ?? 32,
           config.heightSegments ?? 32
         );
       case 'cylinder':
-        return new THREE.CylinderGeometry(
+        return new CylinderGeometry(
           config.radiusTop ?? 0.5,
           config.radiusBottom ?? 0.5,
           config.height ?? 1,
           config.widthSegments ?? 32
         );
       case 'torus':
-        return new THREE.TorusGeometry(
+        return new TorusGeometry(
           config.radius ?? 0.5,
           config.tubeRadius ?? 0.2,
           config.widthSegments ?? 16,
           config.heightSegments ?? 100
         );
       case 'plane':
-        return new THREE.PlaneGeometry(
+        return new PlaneGeometry(
           config.width ?? 1,
           config.height ?? 1
         );
       case 'cone':
-        return new THREE.ConeGeometry(
+        return new ConeGeometry(
           config.radius ?? 0.5,
           config.height ?? 1,
           config.widthSegments ?? 32
         );
       case 'dodecahedron':
-        return new THREE.DodecahedronGeometry(config.radius ?? 0.5);
+        return new DodecahedronGeometry(config.radius ?? 0.5);
       case 'icosahedron':
-        return new THREE.IcosahedronGeometry(config.radius ?? 0.5);
+        return new IcosahedronGeometry(config.radius ?? 0.5);
       default:
-        return new THREE.BoxGeometry(1, 1, 1);
+        return new BoxGeometry(1, 1, 1);
     }
   }
   
-  private createMaterial(config: MaterialConfig, index: number, count: number): THREE.Material {
+  private createMaterial(config: MaterialConfig, index: number, count: number): Material {
     // Resolve color
     let color = 0xffffff;
     if (typeof config.color === 'number') {
@@ -226,7 +226,7 @@ export class VisualizationInterpreter {
       const h = safeEval((config.color as ColorExpression).h, context);
       const s = safeEval((config.color as ColorExpression).s, context);
       const l = safeEval((config.color as ColorExpression).l, context);
-      const threeColor = new THREE.Color();
+      const threeColor = new Color();
       threeColor.setHSL(h, s, l);
       color = threeColor.getHex();
     }
@@ -245,7 +245,7 @@ export class VisualizationInterpreter {
       const h = safeEval((config.emissive as ColorExpression).h, context);
       const s = safeEval((config.emissive as ColorExpression).s, context);
       const l = safeEval((config.emissive as ColorExpression).l, context);
-      const threeColor = new THREE.Color();
+      const threeColor = new Color();
       threeColor.setHSL(h, s, l);
       emissive = threeColor.getHex();
     }
@@ -258,22 +258,22 @@ export class VisualizationInterpreter {
     
     switch (config.type) {
       case 'basic':
-        return new THREE.MeshBasicMaterial(params);
+        return new MeshBasicMaterial(params);
       case 'lambert':
-        return new THREE.MeshLambertMaterial(params);
+        return new MeshLambertMaterial(params);
       case 'phong':
         params.emissiveIntensity = typeof config.emissiveIntensity === 'number' ? config.emissiveIntensity : 0.5;
-        return new THREE.MeshPhongMaterial(params);
+        return new MeshPhongMaterial(params);
       case 'standard':
         params.metalness = typeof config.metalness === 'number' ? config.metalness : 0.5;
         params.roughness = typeof config.roughness === 'number' ? config.roughness : 0.5;
-        return new THREE.MeshStandardMaterial(params);
+        return new MeshStandardMaterial(params);
       default:
-        return new THREE.MeshPhongMaterial(params);
+        return new MeshPhongMaterial(params);
     }
   }
   
-  private applyAnimation(obj: THREE.Object3D, property: string, value: number) {
+  private applyAnimation(obj: Object3D, property: string, value: number) {
     const parts = property.split('.');
     
     if (parts[0] === 'position' && parts[1] && parts[1] in obj.position) {
@@ -286,7 +286,7 @@ export class VisualizationInterpreter {
       } else {
         obj.scale.setScalar(value);
       }
-    } else if (parts[0] === 'material' && obj instanceof THREE.Mesh) {
+    } else if (parts[0] === 'material' && obj instanceof Mesh) {
       if (parts[1] === 'color' && parts[2] === 'h') {
         const hsl = { h: 0, s: 0, l: 0 };
         obj.material.color.getHSL(hsl as any);
@@ -318,7 +318,7 @@ export class VisualizationInterpreter {
   dispose() {
     this.objects.forEach((objects, id) => {
       objects.forEach(obj => {
-        if (obj instanceof THREE.Mesh) {
+        if (obj instanceof Mesh) {
           obj.geometry.dispose();
           if (Array.isArray(obj.material)) {
             obj.material.forEach(m => m.dispose());

@@ -2,7 +2,7 @@
 
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import * as THREE from "three";
+import { Color, Group, MathUtils, Mesh, MeshStandardMaterial } from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
@@ -11,8 +11,8 @@ interface Spectrum3DVisualizationProps {
 }
 
 function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const meshRefs = useRef<THREE.Mesh[]>([]);
+  const groupRef = useRef<Group>(null);
+  const meshRefs = useRef<Mesh[]>([]);
 
   // Number of bars to display
   const numBars = 128;
@@ -60,28 +60,28 @@ function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
 
       // Smooth transition
       const currentHeight = mesh.scale.y;
-      mesh.scale.y = THREE.MathUtils.lerp(currentHeight, targetHeight, 0.3);
+      mesh.scale.y = MathUtils.lerp(currentHeight, targetHeight, 0.3);
 
       // Update position (bars grow from bottom)
       mesh.position.y = mesh.scale.y / 2;
 
       // Color based on frequency range
       const centerFreq = (startBin + binsPerBar / 2) * freqPerBin;
-      const material = mesh.material as THREE.MeshStandardMaterial;
+      const material = mesh.material as MeshStandardMaterial;
 
-      let color: THREE.Color;
+      let color: Color;
       if (centerFreq <= 250) {
         // Bass - Red
-        color = new THREE.Color(1, 0.2, 0.2);
+        color = new Color(1, 0.2, 0.2);
       } else if (centerFreq <= 2000) {
         // Mid - Orange/Yellow
-        color = new THREE.Color(1, 0.6, 0);
+        color = new Color(1, 0.6, 0);
       } else if (centerFreq <= 8000) {
         // Treble - Green/Cyan
-        color = new THREE.Color(0, 1, 0.5);
+        color = new Color(0, 1, 0.5);
       } else {
         // High - Blue/Purple
-        color = new THREE.Color(0.5, 0.5, 1);
+        color = new Color(0.5, 0.5, 1);
       }
 
       material.color = color;
@@ -118,8 +118,8 @@ function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
 }
 
 export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const meshRefs = useRef<THREE.Mesh[]>([]);
+  const groupRef = useRef<Group>(null);
+  const meshRefs = useRef<Mesh[]>([]);
 
   const numBars = 128;
   const radius = 8;
@@ -169,7 +169,7 @@ export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
 
       const targetHeight = Math.max(0.1, normalizedValue * 24);
       const currentHeight = mesh.scale.y;
-      mesh.scale.y = THREE.MathUtils.lerp(currentHeight, targetHeight, 0.3);
+      mesh.scale.y = MathUtils.lerp(currentHeight, targetHeight, 0.3);
 
       // Bars grow outward from center
       const angle = bars[i].angle;
@@ -180,21 +180,21 @@ export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
 
       // Color based on frequency - use pre-calculated frequency from bars array
       const centerFreq = bars[i].frequency;
-      const material = mesh.material as THREE.MeshStandardMaterial;
+      const material = mesh.material as MeshStandardMaterial;
 
-      let color: THREE.Color;
+      let color: Color;
       if (centerFreq <= 250) {
         // Bass - Red
-        color = new THREE.Color(1, 0.2, 0.2);
+        color = new Color(1, 0.2, 0.2);
       } else if (centerFreq <= 2000) {
         // Mid - Orange/Yellow
-        color = new THREE.Color(1, 0.6, 0);
+        color = new Color(1, 0.6, 0);
       } else if (centerFreq <= 8000) {
         // Treble - Green/Cyan
-        color = new THREE.Color(0, 1, 0.5);
+        color = new Color(0, 1, 0.5);
       } else {
         // High - Blue/Purple
-        color = new THREE.Color(0.5, 0.5, 1);
+        color = new Color(0.5, 0.5, 1);
       }
 
       material.color = color;

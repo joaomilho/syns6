@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import { BufferAttribute, BufferGeometry, LinearFilter, Mesh, Points, RGBFormat, ShaderMaterial, VideoTexture } from "three";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 
@@ -29,9 +29,9 @@ function CameraPlane({
   micData?: MicrophoneData;
   controls: ShaderControls;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const [videoTexture, setVideoTexture] = useState<THREE.VideoTexture | null>(
+  const meshRef = useRef<Mesh>(null);
+  const materialRef = useRef<ShaderMaterial>(null);
+  const [videoTexture, setVideoTexture] = useState<VideoTexture | null>(
     null
   );
 
@@ -43,10 +43,10 @@ function CameraPlane({
     }
 
     const createTexture = () => {
-      const texture = new THREE.VideoTexture(videoElement);
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.format = THREE.RGBFormat;
+      const texture = new VideoTexture(videoElement);
+      texture.minFilter = LinearFilter;
+      texture.magFilter = LinearFilter;
+      texture.format = RGBFormat;
       setVideoTexture(texture);
     };
 
@@ -231,12 +231,12 @@ function CameraPlane({
 
 // Particle system that reacts to camera and audio
 function CameraParticles({ micData }: { micData?: MicrophoneData }) {
-  const particlesRef = useRef<THREE.Points>(null);
+  const particlesRef = useRef<Points>(null);
   const particleCount = 1000;
 
   const geometry = useRef(
     (() => {
-      const geo = new THREE.BufferGeometry();
+      const geo = new BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
       const colors = new Float32Array(particleCount * 3);
 
@@ -250,8 +250,8 @@ function CameraParticles({ micData }: { micData?: MicrophoneData }) {
         colors[i * 3 + 2] = Math.random();
       }
 
-      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-      geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute("position", new BufferAttribute(positions, 3));
+      geo.setAttribute("color", new BufferAttribute(colors, 3));
 
       return geo;
     })()
