@@ -49,7 +49,7 @@ const LyricsCanvas = memo(function LyricsCanvas({
         powerPreference: "high-performance",
         failIfMajorPerformanceCaveat: false,
       }}
-      dpr={[1, 2]}
+      dpr={1} // Fixed 1x for performance (was [1, 2])
     >
       {/* 3D Lyrics - crisp, no bloom */}
       <Lyrics3D

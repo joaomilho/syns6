@@ -371,6 +371,7 @@ export default function WavyLinesVisualization({
       <Canvas
         camera={{ position: [0, 0, 25], fov: 75 }}
         style={{ background: "linear-gradient(to bottom, #0a0015 0%, #000000 100%)" }}
+        dpr={1}
       >
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />

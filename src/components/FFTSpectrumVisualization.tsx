@@ -334,7 +334,7 @@ export default function FFTSpectrumVisualization({
         powerPreference: "high-performance",
         failIfMajorPerformanceCaveat: false,
       }}
-      dpr={[1, 2]}
+      dpr={1} // Fixed 1x for performance (was [1, 2])
     >
       {/* Orbit Controls */}
       <OrbitControls

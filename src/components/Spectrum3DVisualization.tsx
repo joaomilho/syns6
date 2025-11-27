@@ -249,6 +249,7 @@ export default function Spectrum3DVisualization({
         style={{
           background: "linear-gradient(to bottom, #000000 0%, #1a0033 100%)",
         }}
+        dpr={1}
       >
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 10, 0]} intensity={1} color="#ffffff" />

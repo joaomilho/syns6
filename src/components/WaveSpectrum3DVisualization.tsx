@@ -135,6 +135,7 @@ export default function WaveSpectrum3DVisualization({
     >
       <Canvas
         camera={{ position: [0, 8, 25], fov: 75 }}
+        dpr={1}
         style={{
           background: "linear-gradient(to bottom, #000000 0%, #0a0a1a 100%)",
         }}
