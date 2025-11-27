@@ -58,10 +58,10 @@ function FrequencyCircle({
   const getFrequencyIntensity = () => {
     if (!micData?.frequencyData) return 0;
     
-    const fftSize = micData.frequencyData.length;
-    const bandSize = Math.floor(fftSize / total);
+    const numBins = micData.frequencyData.length;
+    const bandSize = Math.floor(numBins / total);
     const startIdx = index * bandSize;
-    const endIdx = Math.min(startIdx + bandSize, fftSize);
+    const endIdx = Math.min(startIdx + bandSize, numBins);
     
     // Average the frequency band
     let sum = 0;
@@ -465,10 +465,10 @@ function OrbitalPaths({
       const currentBands: number[] = [];
       
       for (let i = 0; i < circleCount; i++) {
-        const fftSize = frequencyData.length;
-        const bandSize = Math.floor(fftSize / circleCount);
+        const numBins = frequencyData.length;
+        const bandSize = Math.floor(numBins / circleCount);
         const startIdx = i * bandSize;
-        const endIdx = Math.min(startIdx + bandSize, fftSize);
+        const endIdx = Math.min(startIdx + bandSize, numBins);
         
         // Average the frequency band
         let sum = 0;
@@ -553,7 +553,7 @@ function SceneContent({
   );
 }
 
-export default function MusicVisualization({
+export default function OrbitalVisualization({
   micData,
   fps = 60,
 }: VisualizationProps) {

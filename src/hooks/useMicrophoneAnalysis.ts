@@ -138,7 +138,7 @@ export function useMicrophoneAnalysis() {
         const source = audioContext.createMediaStreamSource(stream);
         
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 4096;
+        analyser.fftSize = 1024;
         analyser.smoothingTimeConstant = 0.3;
         source.connect(analyser);
 
@@ -147,7 +147,10 @@ export function useMicrophoneAnalysis() {
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
         timeDataArrayRef.current = new Float32Array(analyser.fftSize);
 
-        // Start analysis loop
+        // Start analysis loop with throttling for performance
+        let lastAnalysisTime = 0;
+        const ANALYSIS_INTERVAL = 33; // ~30fps instead of 60fps (saves 50% CPU)
+        
         const analyze = () => {
           if (
             !analyserRef.current ||
@@ -155,6 +158,18 @@ export function useMicrophoneAnalysis() {
             !timeDataArrayRef.current
           )
             return;
+
+          // Throttle analysis to ~30fps for better performance
+          const now = performance.now();
+          const timeSinceLastAnalysis = now - lastAnalysisTime;
+          
+          if (timeSinceLastAnalysis < ANALYSIS_INTERVAL) {
+            // Skip this frame, schedule next
+            animationFrameRef.current = requestAnimationFrame(analyze);
+            return;
+          }
+          
+          lastAnalysisTime = now;
 
           // Get both frequency and time domain data
           analyserRef.current.getByteFrequencyData(dataArrayRef.current);

@@ -11,7 +11,7 @@ import { useCamera } from "@/hooks/useCamera";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
-import MusicVisualization from "@/components/MusicVisualization";
+import OrbitalVisualization from "@/components/OrbitalVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
@@ -898,7 +898,7 @@ export default function PlayerPage() {
     switch (visualizationType) {
       case "particles":
         return (
-        <MusicVisualization
+        <OrbitalVisualization
             key="particles"
           micData={micData}
         />
