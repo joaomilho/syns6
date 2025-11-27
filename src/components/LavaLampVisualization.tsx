@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -28,7 +28,7 @@ interface Particle {
 }
 
 // Morphing blobs using Marching Cubes algorithm with physics
-function LavaLampBlobs({
+export function LavaLampBlobs({
   micData,
 }: {
   micData: LavaLampVisualizationProps["micData"];
@@ -57,6 +57,19 @@ function LavaLampBlobs({
     });
     mat.shadowSide = THREE.DoubleSide;
     return mat;
+  }, []);
+
+  // Cleanup marching cubes when component unmounts
+  useEffect(() => {
+    return () => {
+      if (effectRef.current) {
+        // Remove from scene
+        effectRef.current.parent?.remove(effectRef.current);
+        // Dispose geometry and material
+        effectRef.current.geometry?.dispose();
+        effectRef.current = null;
+      }
+    };
   }, []);
 
   useFrame((state, delta) => {
@@ -226,7 +239,7 @@ function LavaLampBlobs({
 }
 
 // Lighting that reacts to music - optimized
-function LavaLampLighting({
+export function LavaLampLighting({
   micData,
 }: {
   micData: LavaLampVisualizationProps["micData"];

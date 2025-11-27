@@ -383,7 +383,7 @@ stats.end();
 1. **Remove duplicate canvas** (#1) - **Instant 50% boost**
 [x] 2. **Remove double text rendering** (#2) - **30% boost**  
 [x] 3. **Switch to meshBasicMaterial** (#3) - **20% boost**
-4. **Reduce DPR to 1** (#5) - **40% boost on retina**
+[x] 4. **Reduce DPR to 1** (#5) - **40% boost on retina**
 5. **Disable one antialias** (#6) - **10% boost**
 6. **Reduce visible lines to 5** (#7) - **15% boost**
 7. **Throttle audio analysis** (#10) - **10% boost**

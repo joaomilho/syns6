@@ -1,0 +1,30 @@
+"use client";
+
+/**
+ * Wavy Lines Scene - Extracted from WavyLinesVisualization
+ * Scene content only (no Canvas wrapper) for unified canvas
+ */
+
+import { OrbitControls } from "@react-three/drei";
+import { WavyLineField, FlowingParticles } from "./WavyLinesVisualization";
+
+export default function WavyLinesScene({ micData }: { micData?: any }) {
+  return (
+    <>
+      <ambientLight intensity={0.2} />
+      <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
+
+      <WavyLineField audioFeatures={null} syncedData={null} micData={micData} />
+      <FlowingParticles audioFeatures={null} syncedData={null} />
+
+      <OrbitControls
+        enableZoom={true}
+        enablePan={false}
+        minDistance={10}
+        maxDistance={50}
+        autoRotate={false}
+      />
+    </>
+  );
+}
+
