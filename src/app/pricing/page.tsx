@@ -4,10 +4,10 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
-import SubscriptionButton from '@/components/SubscriptionButton';
 import SubscriptionStatus from '@/components/SubscriptionStatus';
 import CurrencyDropdown, { CurrencyCode } from '@/components/CurrencyDropdown';
 import Syns6Logo from '@/components/Syns6Logo';
+import { H1, Button } from '@/components/ds';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prices, formatPrice, getCurrencySymbol } from '@/lib/prices';
@@ -132,6 +132,9 @@ export default function PricingPage() {
   const { subscription, isActive, loading: subLoading } = useSubscription();
   const [currency, setCurrency] = useState<CurrencyCode>(() => getInitialCurrencySync());
   const [isDetecting, setIsDetecting] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Try IP geolocation on mount (only if user hasn't manually selected)
   useEffect(() => {
@@ -210,6 +213,49 @@ export default function PricingPage() {
 
   const currentPrices = prices[currency];
 
+  const getPriceId = () => {
+    switch (selectedPlan) {
+      case 'weekly': return weeklyPriceId;
+      case 'monthly': return monthlyPriceId;
+      case 'yearly': return yearlyPriceId;
+    }
+  };
+
+  const handleStartTrial = async () => {
+    if (isActive) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          priceId: getPriceId(),
+          currency: currency.toLowerCase(),
+          promoCode: process.env.NEXT_PUBLIC_STRIPE_PROMO_SYNS6HUNT, // Product Hunt promo code
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       {/* Top Bar */}
@@ -241,9 +287,9 @@ export default function PricingPage() {
 
         <div className={styles.content}>
         <header className={styles.header}>
-          <h1 className={styles.title}>Subscribe</h1>
+          <H1>Start your free trial</H1>
           <p className={styles.subtitle}>
-            Unlock premium features and take your music visualization to the next level
+            Start your 3 day free trial, no Credit Card needed
           </p>
         </header>
 
@@ -251,51 +297,106 @@ export default function PricingPage() {
           <SubscriptionStatus />
         )}
 
-<div className={styles.pricingGrid}>
-          <SubscriptionButton
-            priceId={weeklyPriceId}
-            planName="Weekly"
-            primary={{
-              price: formatPrice(currentPrices.weekly, currency),
-              interval: "week",
-              currency: currency,
-            }}
-            disabled={currentPriceId === weeklyPriceId}
-          />
+<div className={styles.pricingContainer}>
+          <div className={styles.planOptions}>
+            {/* Weekly Option */}
+            <div className={styles.planWrapper}>
+              <label className={`${styles.planOption} ${selectedPlan === 'weekly' ? styles.selected : ''}`}>
+                <input
+                  type="radio"
+                  name="plan"
+                  value="weekly"
+                  checked={selectedPlan === 'weekly'}
+                  onChange={() => setSelectedPlan('weekly')}
+                  className={styles.radioInput}
+                />
+                <div className={styles.planContent}>
+                  <span className={styles.planName}>Weekly</span>
+                  <span className={styles.planPriceStrikethrough}>
+                    {formatPrice(currentPrices.weekly, currency)}
+                    <span className={styles.planInterval}>/week</span>
+                  </span>
+                  <span className={styles.freePromo}>FREE</span>
+                </div>
+              </label>
+              <p className={styles.planMessage}>
+                Free first week for Product Hunt users. <br />Don't worry, after that your subscription cancels automatically, only pay if you choose to continue.
+              </p>
+            </div>
 
-          <SubscriptionButton
-            priceId={monthlyPriceId}
-            planName="Monthly"
-            primary={{
-              price: formatPrice(currentPrices.monthly, currency),
-              interval: "month",
-              currency: currency,
-            }}
-            disabled={currentPriceId === monthlyPriceId}
-          />
+            {/* Monthly Option */}
+            <div className={styles.planWrapper}>
+              <label className={`${styles.planOption} ${selectedPlan === 'monthly' ? styles.selected : ''}`}>
+                <input
+                  type="radio"
+                  name="plan"
+                  value="monthly"
+                  checked={selectedPlan === 'monthly'}
+                  onChange={() => setSelectedPlan('monthly')}
+                  className={styles.radioInput}
+                />
+                <div className={styles.planContent}>
+                  <span className={styles.planName}>Monthly</span>
+                  <span className={styles.planPrice}>
+                    {formatPrice(currentPrices.monthly, currency)}
+                    <span className={styles.planInterval}>/month</span>
+                  </span>
+                </div>
+              </label>
+              <p className={styles.planMessage}>
+                Don't worry, after that your subscription cancels automatically, only pay if you choose to continue.
+              </p>
+            </div>
 
-          <SubscriptionButton
-            priceId={yearlyPriceId}
-            planName="Yearly"
-            primary={{
-              price: formatPrice(currentPrices.yearly, currency),
-              interval: "year",
-              currency: currency,
-            }}
-            secondary={{
-              price: formatPrice(currentPrices.yearly/12, currency),
-              interval: "month",
-              currency: currency,
-            }}
-            disabled={currentPriceId === yearlyPriceId}
-          />
+            {/* Yearly Option */}
+            <div className={styles.planWrapper}>
+              <label className={`${styles.planOption} ${selectedPlan === 'yearly' ? styles.selected : ''}`}>
+                <input
+                  type="radio"
+                  name="plan"
+                  value="yearly"
+                  checked={selectedPlan === 'yearly'}
+                  onChange={() => setSelectedPlan('yearly')}
+                  className={styles.radioInput}
+                />
+                <div className={styles.planContent}>
+                  <span className={styles.planName}>Yearly</span>
+                  <div className={styles.yearlyPricing}>
+                    <span className={styles.planPrice}>
+                      {formatPrice(currentPrices.yearly, currency)}
+                      <span className={styles.planInterval}>/year</span>
+                    </span>
+                    <span className={styles.monthlyEquivalent}>
+                      only {formatPrice(currentPrices.yearly/12, currency)}/mo
+                    </span>
+                  </div>
+                </div>
+              </label>
+              <p className={styles.planMessage}>
+                Don't worry, after that your subscription cancels automatically, only pay if you choose to continue.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.startTrialSection}>
+            <Button
+              size="cta"
+              color="green"
+              onClick={handleStartTrial}
+              disabled={isActive || loading}
+            >
+              {loading ? 'Processing...' : isActive ? 'Already Subscribed' : 'Start trial'}
+            </Button>
+            
+            {error && (
+              <div className={styles.error}>
+                {error}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            All plans include a 3-day free trial. Cancel anytime.
-          </p>
-        </div>
+        
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { priceId, currency } = await req.json();
+    const { priceId, currency, promoCode } = await req.json();
 
     if (!priceId) {
       return NextResponse.json(
@@ -43,11 +43,12 @@ export async function POST(req: NextRequest) {
       session.user.name
     );
 
-    // Create Stripe checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    // Create Stripe checkout session with 3-day free trial (no credit card required)
+    const checkoutSessionConfig: any = {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
+      payment_method_collection: 'if_required', // Skip payment method during trial
       currency: checkoutCurrency,
       line_items: [
         {
@@ -61,15 +62,33 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
         currency: checkoutCurrency,
       },
-      allow_promotion_codes: true,
       billing_address_collection: 'auto',
       subscription_data: {
+        trial_period_days: 3, // 3-day free trial
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel', // Cancel subscription if no payment method is added by trial end
+          },
+        },
         metadata: {
           userId: session.user.id,
           currency: checkoutCurrency,
         },
       },
-    });
+    };
+
+    // If a promo code is provided, pre-apply it (requires Stripe Promotion Code ID)
+    // Note: Can't use both 'discounts' and 'allow_promotion_codes' together
+    if (promoCode) {
+      checkoutSessionConfig.discounts = [{
+        promotion_code: promoCode, // Stripe Promotion Code ID (e.g., 'promo_xxxxx')
+      }];
+    } else {
+      // Only allow manual promotion code entry if we're not pre-applying one
+      checkoutSessionConfig.allow_promotion_codes = true;
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionConfig);
 
     return NextResponse.json({ sessionId: checkoutSession.id, url: checkoutSession.url });
   } catch (error) {

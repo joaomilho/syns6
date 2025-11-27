@@ -1,0 +1,17 @@
+/* H1 - Large heading, white, Geist font */
+.h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-family: var(--font-geist-sans), sans-serif;
+  line-height: 1.2;
+}
+
+/* Responsive sizing */
+@media (max-width: 768px) {
+  .h1 {
+    font-size: 2rem;
+  }
+}
+
