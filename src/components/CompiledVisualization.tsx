@@ -8,7 +8,6 @@ import { Canvas } from "@react-three/fiber";
 interface CompiledVisualizationProps {
   compiledCode: string;
   micData?: any;
-  isPlaying?: boolean;
 }
 
 /**
@@ -24,7 +23,6 @@ interface CompiledVisualizationProps {
 export default function CompiledVisualization({
   compiledCode,
   micData,
-  isPlaying,
 }: CompiledVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
