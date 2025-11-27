@@ -7,7 +7,6 @@ import { InstagramEmbed } from "react-social-media-embed";
 import styles from "./page.module.css";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
-import { useFPS } from "@/hooks/useFPS";
 import { Logo } from "@/components/ds";
 import ScrollVideo from "@/components/ScrollVideo";
 
@@ -29,7 +28,6 @@ function ReferralCapture() {
 export default function Home() {
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
   const { micData, enable: enableMic } = useMicrophoneAnalysis();
-  const fps = useFPS();
   
   // Cycle through visualization images
   const vizImages = [

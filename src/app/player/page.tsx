@@ -8,7 +8,6 @@ import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
 import { useCamera } from "@/hooks/useCamera";
-import { useFPS } from "@/hooks/useFPS";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -31,6 +30,7 @@ import CompiledVisualization from "@/components/CompiledVisualization";
 import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
 import LyricsCanvas from "@/components/LyricsCanvas";
+import PerformanceStats from "@/components/PerformanceStats";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
   VisualizationType,
@@ -108,12 +108,12 @@ export default function PlayerPage() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [useCompiledMode, setUseCompiledMode] = useState(true); // Performance mode toggle
-  const fps = useFPS();
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
   const hasStartedHosting = useRef(false); // Track if we've already called startHosting
   const [webglAvailable, setWebglAvailable] = useState(true);
   const [micAvailable, setMicAvailable] = useState(true);
   const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
+  const [showPerformanceStats, setShowPerformanceStats] = useState(false); // Toggle performance monitor
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
@@ -186,6 +186,26 @@ export default function PlayerPage() {
     console.log(`📊 [PLAYER] Is hosting:`, shareManager.isHosting);
     console.log(`👥 [PLAYER] Connected viewers:`, shareManager.connectedViewers);
   }, [shareManager.peerId, shareManager.isHosting, shareManager.connectedViewers]);
+  
+  // Keyboard shortcut: Press 'S' to toggle performance stats
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if not typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (e.key === 's' || e.key === 'S') {
+        setShowPerformanceStats(prev => {
+          console.log(`📊 Performance stats ${!prev ? 'enabled' : 'disabled'}`);
+          return !prev;
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
   
   // Broadcast state to viewers (lightweight - only song/lyrics/queue info)
   useEffect(() => {
@@ -881,7 +901,6 @@ export default function PlayerPage() {
         <MusicVisualization
             key="particles"
           micData={micData}
-          fps={fps}
         />
         );
       case "fractal":
@@ -890,7 +909,6 @@ export default function PlayerPage() {
             key="fractal"
 
           micData={micData}
-          fps={fps}
         />
         );
       case "psychedelic":
@@ -944,7 +962,6 @@ export default function PlayerPage() {
         <OscilloscopeVisualization
             key="oscilloscope"
           micData={micData}
-          fps={fps}
         />
         );
       case "camera":
@@ -992,6 +1009,12 @@ export default function PlayerPage() {
         isPlaying={playbackState?.is_playing ?? false}
         micData={micData}
         color="#1ed760"
+      />
+
+      {/* Performance Stats Monitor - Toggle with 'S' key */}
+      <PerformanceStats 
+        visible={showPerformanceStats}
+        position="top-left"
       />
 
       {/* Top Controls */}
@@ -1212,20 +1235,17 @@ export default function PlayerPage() {
         )}
       </div>
 
-      {/* Floating Stats Panel */}
-      <div className={styles.floatingStats}>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>FPS</span>
-          <span className={styles.statValue}>{fps}</span>
-        </div>
-        {(() => {
-          const customViz = customVisualizations.find((v) => v.id === visualizationType);
-          const isDSL = customViz && isDSLFormat(customViz.code);
-          const hasCompiled = customViz?.compiledCode;
-          
-          if (isDSL) {
-            return (
-              <>
+      {/* Floating Stats Panel - Only show for DSL visualizations */}
+      {(() => {
+        const customViz = customVisualizations.find((v) => v.id === visualizationType);
+        const isDSL = customViz && isDSLFormat(customViz.code);
+        const hasCompiled = customViz?.compiledCode;
+        
+        if (!isDSL) return null;
+        
+        return (
+          <div className={styles.floatingStats}>
+            <>
                 {hasCompiled && (
                   <div className={styles.statItem}>
                     <span className={styles.statLabel}>Mode</span>
@@ -1318,12 +1338,10 @@ export default function PlayerPage() {
                     {useCompiledMode ? "⚡ Use Compiled" : "🐌 Use Interpreted"}
                   </button>
                 )}
-              </>
-            );
-          }
-          return null;
-        })()}
-      </div>
+            </>
+          </div>
+        );
+      })()}
 
       {/* Visualization Creator */}
       {isCreatingVisualization && (
