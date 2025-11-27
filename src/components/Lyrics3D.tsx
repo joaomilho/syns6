@@ -138,31 +138,7 @@ function LyricText3D({
     <group ref={groupRef} position={position}>
       {textLines.map((line, lineIndex) => (
         <group key={lineIndex} position={[0, -lineIndex * lineSpacing, 0]}>
-          {/* Black outline/shadow layer behind */}
-          {color !== "#000000" && (
-            <Text
-              fontSize={1}
-              color="#000000"
-              anchorX="center"
-              anchorY="middle"
-              font={font}
-              outlineWidth={0.05}
-              letterSpacing={0}
-              characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
-              fontWeight={600}
-
-            >
-              {line}
-              <meshBasicMaterial
-                color="#000000"
-                transparent
-                opacity={isCurrent ? 0.8 : isPast ? 0.4 : 0.6}
-                side={THREE.DoubleSide}
-              />
-            </Text>
-          )}
-          
-          {/* Main glowing text */}
+          {/* Single text with built-in outline - 50% fewer draw calls! */}
           <Text
             fontSize={1}
             color={color}
@@ -170,22 +146,17 @@ function LyricText3D({
             anchorY="middle"
             font={font}
             fontWeight={600}
-            outlineWidth={0}
+            outlineWidth={color !== "#000000" ? 0.02 : 0}
+            outlineColor="#000000"
             letterSpacing={0}
-            // fillOpacity={color === "#000000" ? 1.0 : undefined}
             characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ "
           >
             {line}
-            <meshStandardMaterial
+            <meshBasicMaterial
               toneMapped={false}
               color={color}
-              emissive={color}
-              emissiveIntensity={
-                color === "#000000" ? 0 : (isCurrent ? 1.9 : isPast ? 0.9 : 0.7)
-              }
               transparent
               opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
-              side={THREE.DoubleSide}
             />
           </Text>
         </group>
@@ -205,15 +176,14 @@ function LyricText3D({
           anchorX="center"
           anchorY="middle"
           font={font}
+          outlineWidth={0.02}
+          outlineColor="#000000"
         >
           {Math.ceil(countdownSeconds)}
-          <meshStandardMaterial
+          <meshBasicMaterial
             color="#ffffff"
-            emissive="#ffffff"
-            emissiveIntensity={1.5}
             transparent
             opacity={1.0}
-            side={THREE.DoubleSide}
           />
         </Text>
       </>
@@ -277,14 +247,12 @@ export default function Lyrics3D({
           anchorX="center"
           anchorY="middle"
           font={font}
-          outlineWidth={0.05}
+          outlineWidth={0.03}
           outlineColor="#000000"
         >
           Lyrics not found
-          <meshStandardMaterial
+          <meshBasicMaterial
             color="#ff3333"
-            emissive="#ff3333"
-            emissiveIntensity={0.8}
             transparent
             opacity={0.9}
           />
