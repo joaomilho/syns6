@@ -127,15 +127,17 @@ return getVisibleLines(lyrics, currentIndex, 1, 3); // 5 lines instead of 8
 ```
 **Status**: Reduced from 8 visible lines to 5 lines (1 before, current, 3 after)
 
-### 8. **Text Character Pre-caching**
+### 8. **Text Character Pre-caching** ✅ **COMPLETED**
 **Problem**: `characters` prop regenerates on every render
 **Fix**:
 ```typescript
 // Top of Lyrics3D.tsx, outside component:
-const COMMON_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ ";
+export const COMMON_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ ";
 
-// Then use COMMON_CHARS constant instead of inline string (lines 151, 176)
+// Then use COMMON_CHARS constant instead of inline string
+characters={COMMON_CHARS}
 ```
+**Status**: COMMON_CHARS constant created and exported, replaced inline string at line 155
 
 ---
 
