@@ -4,7 +4,7 @@ import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import * as THREE from "three";
+import { MeshPhysicalMaterial, DoubleSide, Sphere, Vector3, PointLight } from "three";
 import { MarchingCubes } from "@/lib/MarchingCubes";
 
 interface LavaLampVisualizationProps {
@@ -40,7 +40,7 @@ export function LavaLampBlobs({
   // Initialize marching cubes with premium GLOWING material
   const material = useMemo(() => {
     // Create a MeshPhysicalMaterial for advanced effects
-    const mat = new THREE.MeshPhysicalMaterial({
+    const mat = new MeshPhysicalMaterial({
       color: 0xff6644, // Warm orange-red
       roughness: 0.2,
       metalness: 0.8,
@@ -52,10 +52,10 @@ export function LavaLampBlobs({
       ior: 1.5, // Index of refraction
       thickness: 1.0,
       transmission: 0.0, // Adjust for transparency
-      side: THREE.DoubleSide,
+      side: DoubleSide,
       toneMapped: false,
     });
-    mat.shadowSide = THREE.DoubleSide;
+    mat.shadowSide = DoubleSide;
     return mat;
   }, []);
 
@@ -82,8 +82,8 @@ export function LavaLampBlobs({
       effect.isolation = 80; // Back to original
       
       // Fix bounding sphere to prevent frustum culling
-      effect.geometry.boundingSphere = new THREE.Sphere(
-        new THREE.Vector3(0, 0, 0),
+      effect.geometry.boundingSphere = new Sphere(
+        new Vector3(0, 0, 0),
         50
       );
       effect.frustumCulled = false;
@@ -244,8 +244,8 @@ export function LavaLampLighting({
 }: {
   micData: LavaLampVisualizationProps["micData"];
 }) {
-  const pointLightRef = useRef<THREE.PointLight>(null);
-  const centralLightRef = useRef<THREE.PointLight>(null);
+  const pointLightRef = useRef<PointLight>(null);
+  const centralLightRef = useRef<PointLight>(null);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();

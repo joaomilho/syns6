@@ -3,14 +3,14 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
+import { AdditiveBlending, BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Points, PointsMaterial, Vector3 } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 // Camera shake component
 function CameraShake({ micData }: { micData?: MicrophoneData }) {
   const { camera } = useThree();
-  const originalPosition = useRef(new THREE.Vector3(0, 0, 25));
+  const originalPosition = useRef(new Vector3(0, 0, 25));
   const shakeIntensity = useRef(0);
 
   useFrame(() => {
@@ -64,13 +64,13 @@ function WavyLine({
   micData?: MicrophoneData;
   instrumentType?: "bass" | "vocal" | "drums";
 }) {
-  const lineRef = useRef<THREE.Line | null>(null);
-  const materialRef = useRef<THREE.LineBasicMaterial | null>(null);
+  const lineRef = useRef<Line | null>(null);
+  const materialRef = useRef<LineBasicMaterial | null>(null);
   const pointCount = 200;
 
   // Create line geometry and material
   const [line, geometry, material] = useMemo(() => {
-    const geometry = new THREE.BufferGeometry();
+    const geometry = new BufferGeometry();
     const positions = new Float32Array(pointCount * 3);
 
     for (let i = 0; i < pointCount; i++) {
@@ -80,15 +80,15 @@ function WavyLine({
       positions[i * 3 + 2] = zPosition;
     }
 
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("position", new BufferAttribute(positions, 3));
     
-    const material = new THREE.LineBasicMaterial({
+    const material = new LineBasicMaterial({
       color: "#6666ff",
       transparent: true,
       opacity: 0.6,
     });
     
-    const line = new THREE.Line(geometry, material);
+    const line = new Line(geometry, material);
     return [line, geometry, material];
   }, [yPosition, zPosition]);
   
@@ -274,7 +274,7 @@ export function WavyLineField({ audioFeatures, syncedData, micData }: Visualizat
 
 // Particle accents that move left to right
 export function FlowingParticles({ audioFeatures, syncedData }: VisualizationProps) {
-  const pointsRef = useRef<THREE.Points>(null);
+  const pointsRef = useRef<Points>(null);
   const particleCount = 500;
 
   const positions = useMemo(() => {
@@ -322,7 +322,7 @@ export function FlowingParticles({ audioFeatures, syncedData }: VisualizationPro
     positionAttribute.needsUpdate = true;
 
     // Color matches wave intensity - MORE DRAMATIC
-    const material = pointsRef.current.material as THREE.PointsMaterial;
+    const material = pointsRef.current.material as PointsMaterial;
     const intensity = Math.min(1, energy * loudness * beatPulse);
     const hue = 0.7 - intensity * 0.7;
     material.color.setHSL(hue, 0.9, 0.6 + intensity * 0.3);
@@ -346,7 +346,7 @@ export function FlowingParticles({ audioFeatures, syncedData }: VisualizationPro
         transparent
         opacity={0.5}
         sizeAttenuation
-        blending={THREE.AdditiveBlending}
+        blending={AdditiveBlending}
       />
     </points>
   );
