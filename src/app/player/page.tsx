@@ -3,6 +3,7 @@
 import { useSession, signIn } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
@@ -11,31 +12,8 @@ import { useCamera } from "@/hooks/useCamera";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
-import OrbitalVisualization from "@/components/OrbitalVisualization";
-import FractalVisualization from "@/components/FractalVisualization";
-import PsychedelicVisualization from "@/components/PsychedelicVisualization";
-import WavyLinesVisualization from "@/components/WavyLinesVisualization";
-import LavaLampVisualization from "@/components/LavaLampVisualization";
-import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
-import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
-import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
-import LyricsOnlyVisualization from "@/components/LyricsOnlyVisualization";
-import CameraVisualization from "@/components/CameraVisualization";
-import DebugVisualization from "@/components/DebugVisualization";
-import YouTubeVisualization from "@/components/YouTubeVisualization";
-import CustomVisualization from "@/components/CustomVisualization";
-import DSLVisualization from "@/components/DSLVisualization";
-import CompiledVisualization from "@/components/CompiledVisualization";
-import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
 import PerformanceStats from "@/components/PerformanceStats";
-import FFTSpectrumScene from "@/components/FFTSpectrumScene";
-import OrbitalScene from "@/components/OrbitalScene";
-import FractalScene from "@/components/FractalScene";
-import PsychedelicScene from "@/components/PsychedelicScene";
-import WavyLinesScene from "@/components/WavyLinesScene";
-import LavaLampScene from "@/components/LavaLampScene";
-import Spectrum3DScene from "@/components/Spectrum3DScene";
 import Lyrics3D from "@/components/Lyrics3D";
 import { Canvas } from "@react-three/fiber";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
@@ -44,6 +22,33 @@ import VisualizationDropdown, {
 } from "@/components/VisualizationDropdown";
 import ModeDropdown, { VisualizationMode } from "@/components/ModeDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
+
+// Lazy load all visualization components (only loaded when needed)
+const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
+const FractalVisualization = dynamic(() => import("@/components/FractalVisualization"), { ssr: false });
+const PsychedelicVisualization = dynamic(() => import("@/components/PsychedelicVisualization"), { ssr: false });
+const WavyLinesVisualization = dynamic(() => import("@/components/WavyLinesVisualization"), { ssr: false });
+const LavaLampVisualization = dynamic(() => import("@/components/LavaLampVisualization"), { ssr: false });
+const Spectrum3DVisualization = dynamic(() => import("@/components/Spectrum3DVisualization"), { ssr: false });
+const FFTSpectrumVisualization = dynamic(() => import("@/components/FFTSpectrumVisualization"), { ssr: false });
+const OscilloscopeVisualization = dynamic(() => import("@/components/OscilloscopeVisualization"), { ssr: false });
+const LyricsOnlyVisualization = dynamic(() => import("@/components/LyricsOnlyVisualization"), { ssr: false });
+const CameraVisualization = dynamic(() => import("@/components/CameraVisualization"), { ssr: false });
+const DebugVisualization = dynamic(() => import("@/components/DebugVisualization"), { ssr: false });
+const YouTubeVisualization = dynamic(() => import("@/components/YouTubeVisualization"), { ssr: false });
+const CustomVisualization = dynamic(() => import("@/components/CustomVisualization"), { ssr: false });
+const DSLVisualization = dynamic(() => import("@/components/DSLVisualization"), { ssr: false });
+const CompiledVisualization = dynamic(() => import("@/components/CompiledVisualization"), { ssr: false });
+const BlankGridVisualization = dynamic(() => import("@/components/BlankGridVisualization"), { ssr: false });
+
+// Lazy load scene components for unified canvas
+const FFTSpectrumScene = dynamic(() => import("@/components/FFTSpectrumScene"), { ssr: false });
+const OrbitalScene = dynamic(() => import("@/components/OrbitalScene"), { ssr: false });
+const FractalScene = dynamic(() => import("@/components/FractalScene"), { ssr: false });
+const PsychedelicScene = dynamic(() => import("@/components/PsychedelicScene"), { ssr: false });
+const WavyLinesScene = dynamic(() => import("@/components/WavyLinesScene"), { ssr: false });
+const LavaLampScene = dynamic(() => import("@/components/LavaLampScene"), { ssr: false });
+const Spectrum3DScene = dynamic(() => import("@/components/Spectrum3DScene"), { ssr: false });
 import {
   CustomVisualization as CustomVizType,
   getAllCustomVisualizations,
@@ -476,7 +481,10 @@ export default function PlayerPage() {
       const data = await getCurrentlyPlaying(session.accessToken);
       if (data && data.item) {
         setPlaybackState(data);
-        setLastKnownTrack(data); // Save as last known track
+        // Only update lastKnownTrack if it's a different track (avoid redundant updates)
+        if (!lastKnownTrack?.item || lastKnownTrack.item.id !== data.item.id) {
+          setLastKnownTrack(data);
+        }
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
         setTokenRefreshAttempts(0); // Reset on success
