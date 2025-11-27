@@ -232,8 +232,6 @@ export default function VisualizationDropdown({
 
       {isOpen && (
         <div className={styles.dropdownMenu}>
-          <div className={styles.menuHeader}>Select Visualization</div>
-          
           {/* Built-in Visualizations */}
           <div className={styles.visualizationGrid}>
             {visualizations.map((viz) => (
