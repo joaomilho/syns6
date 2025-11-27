@@ -56,6 +56,14 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.trialNote {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .featuresList {
   list-style: none;
   padding: 0;

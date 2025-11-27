@@ -2,6 +2,10 @@
 
 [ ] Trial period
     Allow testing for 1-3 days without CC (only for PH).
+[ ] Legalities
+    TOS
+    GRPC
+    etc
 [ ] Lyrics design
     Make lyrics pop a bit more, Bloom?
 [ ] Perf review
