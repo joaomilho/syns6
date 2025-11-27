@@ -20,7 +20,7 @@ if (!secretKey) {
 }
 
 const stripe = new Stripe(secretKey, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 async function testStripeConnection() {
