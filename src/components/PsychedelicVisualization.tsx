@@ -253,6 +253,7 @@ export default function PsychedelicVisualization({
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
         style={{ background: "radial-gradient(circle, #330033 0%, #000000 100%)" }}
+        dpr={1}
       >
         <ambientLight intensity={0.4} />
         <pointLight position={[10, 10, 10]} intensity={1.5} color="#ff00ff" />

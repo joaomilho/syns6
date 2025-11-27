@@ -145,7 +145,7 @@ export default function OscilloscopeVisualization({
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(1); // Fixed 1x for performance (was window.devicePixelRatio)
     renderer.setClearColor(0x000000, 1);
     
     // Make canvas visible with explicit styles

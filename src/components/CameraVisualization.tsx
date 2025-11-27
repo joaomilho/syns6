@@ -314,6 +314,7 @@ export default function CameraVisualization({
     >
       <Canvas
         camera={{ position: [0, 0, 30], fov: 75 }}
+        dpr={1}
         style={{
           background: "#000",
         }}
