@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import * as THREE from "three";
 import { AmbientLight, Color, DirectionalLight, Fog, GridHelper, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Canvas } from "@react-three/fiber";
