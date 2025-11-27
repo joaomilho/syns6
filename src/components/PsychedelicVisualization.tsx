@@ -17,13 +17,12 @@ interface AudioFeatures {
 
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
-  isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
   micData?: MicrophoneData;
 }
 
 // Morphing blob with shader-like color effects
-function PsychedelicBlob({ audioFeatures, isPlaying }: VisualizationProps) {
+function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -74,7 +73,7 @@ function PsychedelicBlob({ audioFeatures, isPlaying }: VisualizationProps) {
 }
 
 // Kaleidoscope effect with rotating planes
-function KaleidoscopePlanes({ audioFeatures, isPlaying }: VisualizationProps) {
+function KaleidoscopePlanes({ audioFeatures }: VisualizationProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -105,7 +104,6 @@ function KaleidoscopePlanes({ audioFeatures, isPlaying }: VisualizationProps) {
           rotation={plane.rotation}
           hue={plane.hue}
           audioFeatures={audioFeatures || null}
-          isPlaying={isPlaying}
           index={i}
         />
       ))}
@@ -117,13 +115,11 @@ function AnimatedPlane({
   rotation,
   hue,
   audioFeatures,
-  isPlaying,
   index,
 }: {
   rotation: [number, number, number];
   hue: number;
   audioFeatures: AudioFeatures | null;
-  isPlaying: boolean;
   index: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -162,7 +158,7 @@ function AnimatedPlane({
 }
 
 // Spiraling liquid-like particles
-function LiquidParticles({ audioFeatures, isPlaying }: VisualizationProps) {
+function LiquidParticles({ audioFeatures }: VisualizationProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const particleCount = 3000;
 
@@ -240,7 +236,6 @@ function LiquidParticles({ audioFeatures, isPlaying }: VisualizationProps) {
 
 export default function PsychedelicVisualization({
   audioFeatures,
-  isPlaying,
   syncedData,
   micData,
 }: VisualizationProps) {
@@ -264,9 +259,9 @@ export default function PsychedelicVisualization({
         <pointLight position={[-10, -10, -10]} intensity={1} color="#00ffff" />
         <pointLight position={[0, 10, -10]} intensity={1} color="#ffff00" />
 
-        <PsychedelicBlob audioFeatures={audioFeatures} isPlaying={isPlaying} />
-        <KaleidoscopePlanes audioFeatures={audioFeatures} isPlaying={isPlaying} />
-        <LiquidParticles audioFeatures={audioFeatures} isPlaying={isPlaying} />
+        <PsychedelicBlob audioFeatures={audioFeatures} />
+        <KaleidoscopePlanes audioFeatures={audioFeatures} />
+        <LiquidParticles audioFeatures={audioFeatures} />
 
         <OrbitControls
           enableZoom={true}

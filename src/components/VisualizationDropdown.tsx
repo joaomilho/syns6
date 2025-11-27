@@ -15,6 +15,7 @@ export type VisualizationType =
   | "spectrum3d"
   | "wavespectrum"
   | "fftspectrum"
+  | "lyricsonly"
   | "oscilloscope"
   | "camera"
   | "debug"
@@ -41,6 +42,16 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/fftspectrum.png",
       animated: "/viz-thumbnails/fftspectrum.webm",
+    },
+  },
+  {
+    id: "lyricsonly",
+    name: "Lyrics Only",
+    icon: "♪",
+    thumbnail: "/viz-thumbnails/lyricsonly.png",
+    assets: {
+      static: "/viz-thumbnails/lyricsonly.png",
+      animated: "/viz-thumbnails/lyricsonly.png",
     },
   },
   {

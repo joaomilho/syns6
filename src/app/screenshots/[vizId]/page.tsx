@@ -3,7 +3,6 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
-import { LyricLine } from "@/lib/lyrics";
 import MusicVisualization from "@/components/MusicVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
@@ -17,10 +16,6 @@ import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
 
-// Empty mock lyrics (prevents "no lyrics found" messages)
-const mockLyrics: LyricLine[] = [
-  { time: 0, text: "" },
-];
 
 // Generate realistic animated microphone data
 function useAnimatedMicData(): MicrophoneData {
@@ -180,106 +175,72 @@ export default function ScreenshotPage() {
       case "particles":
         return (
           <MusicVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "fractal":
         return (
           <FractalVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "psychedelic":
         return (
           <PsychedelicVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "waves":
         return (
           <WavyLinesVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "animated":
         return (
           <LavaLampVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "spectrum3d":
         return (
           <Spectrum3DVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "wavespectrum":
         return (
           <WaveSpectrum3DVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "fftspectrum":
         return (
           <FFTSpectrumVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "camera":
         return (
           <CameraVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "debug":
         return (
           <DebugVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );
       case "youtube":
         return (
           <YouTubeVisualization
-            currentTimeMs={currentTime}
-            lyrics={mockLyrics}
+
           />
         );
       case "oscilloscope":
         return (
           <OscilloscopeVisualization
-            isPlaying={true}
-            lyrics={mockLyrics}
-            currentTimeMs={currentTime}
             micData={micData}
           />
         );

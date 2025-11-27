@@ -10,20 +10,17 @@ import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
   micData?: MicrophoneData;
-  fps?: number;
   onWebGLUnavailable?: () => void;
 }
 
 
 function FFTSpectrumPlanes({ 
   micData, 
-  fps = 60,
   bassIntensity,
   rows
 
 }: { 
   micData?: MicrophoneData; 
-  fps?: number;
   bassIntensity?: number;
   rows: number;
 }) {
@@ -49,7 +46,7 @@ function FFTSpectrumPlanes({
   const prevGeometry = useRef<THREE.CylinderGeometry | null>(null);
 
   // Create instanced mesh for thick lines using cylinders
-  const { cylinderGeometry, instancedMeshes } = useMemo(() => {
+  const instancedMeshes = useMemo(() => {
     // Dispose previous meshes before creating new ones
     if (prevInstancedMeshes.current.length > 0) {
       console.log(`[perf] 🧹 Disposing ${prevInstancedMeshes.current.length} old instanced meshes`);
@@ -129,7 +126,7 @@ function FFTSpectrumPlanes({
     // Store for next cleanup
     prevInstancedMeshes.current = meshes;
 
-    return { cylinderGeometry: cylGeo, instancedMeshes: meshes };
+    return meshes;
   }, [cols, rows, spacingX, spacingZ]);
 
   // Cleanup on unmount
@@ -314,7 +311,6 @@ function FFTSpectrumPlanes({
 
 export default function FFTSpectrumVisualization({
   micData,
-  fps = 60,
   onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
@@ -356,7 +352,6 @@ export default function FFTSpectrumVisualization({
       >
         <FFTSpectrumPlanes 
           micData={micData} 
-          fps={fps} 
           bassIntensity={bassIntensity} 
           rows={rows}
         />
