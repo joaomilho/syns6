@@ -17,7 +17,6 @@ import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import LavaLampVisualization from "@/components/LavaLampVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
-import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
 import LyricsOnlyVisualization from "@/components/LyricsOnlyVisualization";
@@ -29,8 +28,16 @@ import DSLVisualization from "@/components/DSLVisualization";
 import CompiledVisualization from "@/components/CompiledVisualization";
 import BlankGridVisualization from "@/components/BlankGridVisualization";
 import HueControls from "@/components/HueControls";
-import LyricsCanvas from "@/components/LyricsCanvas";
 import PerformanceStats from "@/components/PerformanceStats";
+import FFTSpectrumScene from "@/components/FFTSpectrumScene";
+import OrbitalScene from "@/components/OrbitalScene";
+import FractalScene from "@/components/FractalScene";
+import PsychedelicScene from "@/components/PsychedelicScene";
+import WavyLinesScene from "@/components/WavyLinesScene";
+import LavaLampScene from "@/components/LavaLampScene";
+import Spectrum3DScene from "@/components/Spectrum3DScene";
+import Lyrics3D from "@/components/Lyrics3D";
+import { Canvas } from "@react-three/fiber";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
   VisualizationType,
@@ -357,7 +364,6 @@ export default function PlayerPage() {
         "waves",
         "animated",
         "spectrum3d",
-        "wavespectrum",
         "oscilloscope",
         "camera",
         "youtube",
@@ -939,13 +945,6 @@ export default function PlayerPage() {
           micData={micData}
         />
         );
-      case "wavespectrum":
-        return (
-        <WaveSpectrum3DVisualization
-            key="wavespectrum"
-          micData={micData}
-        />
-        );
       case "fftspectrum":
         return (
         <FFTSpectrumVisualization
@@ -997,19 +996,114 @@ export default function PlayerPage() {
     }
   };
 
+  // Get camera settings for each visualization
+  const getCameraSettings = () => {
+    switch(visualizationType) {
+      case 'fftspectrum': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+      case 'particles': return { position: [0, 0, 40] as [number, number, number], fov: 80 };
+      case 'animated': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+      case 'waves': return { position: [0, 0, 25] as [number, number, number], fov: 75 };
+      default: return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+    }
+  };
+
+  // Get background for each visualization
+  const getBackground = () => {
+    switch(visualizationType) {
+      case 'fftspectrum': return "linear-gradient(to bottom, #000000 0%, #0a0020 100%)";
+      case 'particles': return "radial-gradient(circle, #0a0a0a 0%, #000000 100%)";
+      case 'psychedelic': return "radial-gradient(circle, #330033 0%, #000000 100%)";
+      case 'fractal': return "black";
+      case 'waves': return "linear-gradient(to bottom, #0a0015 0%, #000000 100%)";
+      case 'spectrum3d': return "linear-gradient(to bottom, #000000 0%, #1a0033 100%)";
+      case 'lyricsonly': return "linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%)";
+      case 'animated': return "#050505"; // Lava lamp has fog
+      default: return "black";
+    }
+  };
+
+  // Check if this is a special visualization that needs separate rendering
+  const isSpecialVisualization = [
+    'oscilloscope',
+    'camera', 
+    'youtube',
+    'debug'
+  ].includes(visualizationType) || visualizationType.startsWith('custom-') || visualizationType.startsWith('dsl-');
+
   return (
     <div className={styles.fullscreenPage}>
-      {/* Background Visualization - Only render ONE at a time */}
-      {renderVisualization()}
+      {/* Unified Canvas for regular visualizations (WITHOUT lyrics) */}
+      {!isSpecialVisualization && (
+        <Canvas
+          camera={getCameraSettings()}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: getBackground(),
+            zIndex: 0,
+          }}
+          gl={{
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance",
+            failIfMajorPerformanceCaveat: false,
+          }}
+          dpr={1}
+        >
+          {/* Conditionally render visualization scene - scene swaps independently of lyrics! */}
+          {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} />}
+          {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
+          {visualizationType === 'fractal' && <FractalScene micData={micData} />}
+          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
+          {visualizationType === 'waves' && <WavyLinesScene micData={micData} />}
+          {visualizationType === 'animated' && <LavaLampScene micData={micData} />}
+          {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
+          {/* lyricsonly has no scene content - just background */}
+        </Canvas>
+      )}
 
-      {/* Lyrics Layer - Persists across visualization changes */}
-      <LyricsCanvas
-        lyrics={lyrics}
-        currentTimeMs={currentProgress}
-        isPlaying={playbackState?.is_playing ?? false}
-        micData={micData}
-        color="#1ed760"
-      />
+      {/* Special visualizations - rendered separately */}
+      {isSpecialVisualization && renderVisualization()}
+
+      {/* PERSISTENT LYRICS CANVAS - ALWAYS RENDERED, NEVER UNMOUNTS! */}
+      {lyrics && lyrics.length > 0 && (
+        <Canvas
+          camera={{ position: [0, 0, 30] as [number, number, number], fov: 75 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'transparent',
+            zIndex: 2, // Above everything
+            pointerEvents: 'none', // Allow clicks to pass through
+          }}
+          gl={{
+            antialias: true,
+            alpha: true, // Transparent background
+            powerPreference: "high-performance",
+          }}
+          dpr={1}
+        >
+          <group 
+            position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
+            scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
+          >
+            <Lyrics3D
+              lyrics={lyrics}
+              currentTimeMs={currentProgress}
+              isPlaying={playbackState?.is_playing ?? false}
+              syncedData={null}
+              micData={micData}
+              color="#1ed760"
+            />
+          </group>
+        </Canvas>
+      )}
 
       {/* Performance Stats Monitor - Toggle with 'S' key */}
       <PerformanceStats 

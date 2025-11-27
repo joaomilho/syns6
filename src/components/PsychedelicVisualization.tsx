@@ -22,7 +22,7 @@ interface VisualizationProps {
 }
 
 // Morphing blob with shader-like color effects
-function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
+export function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -73,7 +73,7 @@ function PsychedelicBlob({ audioFeatures }: VisualizationProps) {
 }
 
 // Kaleidoscope effect with rotating planes
-function KaleidoscopePlanes({ audioFeatures }: VisualizationProps) {
+export function KaleidoscopePlanes({ audioFeatures }: VisualizationProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -158,7 +158,7 @@ function AnimatedPlane({
 }
 
 // Spiraling liquid-like particles
-function LiquidParticles({ audioFeatures }: VisualizationProps) {
+export function LiquidParticles({ audioFeatures }: VisualizationProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const particleCount = 3000;
 

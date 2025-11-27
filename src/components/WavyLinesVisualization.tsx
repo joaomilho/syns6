@@ -216,7 +216,7 @@ function WavyLine({
   return <primitive object={line} />;
 }
 
-function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProps) {
+export function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProps) {
   const linesPerSet = 60; // 5x more lines (was 12)
   
   // Original bass-reactive waves (Blue → Red) - main layer
@@ -273,7 +273,7 @@ function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProp
 }
 
 // Particle accents that move left to right
-function FlowingParticles({ audioFeatures, syncedData }: VisualizationProps) {
+export function FlowingParticles({ audioFeatures, syncedData }: VisualizationProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const particleCount = 500;
 

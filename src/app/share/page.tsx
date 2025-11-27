@@ -17,7 +17,6 @@ import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import LavaLampVisualization from "@/components/LavaLampVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
-import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import CustomVisualization from "@/components/CustomVisualization";
@@ -403,13 +402,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <Spectrum3DVisualization
             key="spectrum3d"
-            micData={micData}
-          />
-        );
-      case "wavespectrum":
-        return (
-          <WaveSpectrum3DVisualization
-            key="wavespectrum"
             micData={micData}
           />
         );
