@@ -381,8 +381,8 @@ stats.end();
 ## **🎯 PRIORITY ORDER (Best ROI)**
 
 1. **Remove duplicate canvas** (#1) - **Instant 50% boost**
-2. **Remove double text rendering** (#2) - **30% boost**  
-3. **Switch to meshBasicMaterial** (#3) - **20% boost**
+[x] 2. **Remove double text rendering** (#2) - **30% boost**  
+[x] 3. **Switch to meshBasicMaterial** (#3) - **20% boost**
 4. **Reduce DPR to 1** (#5) - **40% boost on retina**
 5. **Disable one antialias** (#6) - **10% boost**
 6. **Reduce visible lines to 5** (#7) - **15% boost**
@@ -390,6 +390,8 @@ stats.end();
 8. **Remove console.logs** (#14) - **5% boost**
 9. **Lazy load visualizations** (#13) - **Faster initial load**
 10. **Dispose resources properly** (#16) - **Prevents memory leaks**
+[ ] Fetch lyrics sequentially
+[ ] Can we separate PROCESSING in JS in the browser?
 
 ---
 
