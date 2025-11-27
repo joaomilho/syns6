@@ -12,6 +12,7 @@ import { useCamera } from "@/hooks/useCamera";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useLyricsWorker } from "@/hooks/useLyricsWorker";
 import HueControls from "@/components/HueControls";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
@@ -108,6 +109,40 @@ export default function PlayerPage() {
   const hue = useHueLights();
   const wakeLock = useWakeLock();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
+  
+  // Lyrics worker for background fetching (keeps main thread smooth)
+  const lyricsWorker = useLyricsWorker({
+    onLyricsReceived: useCallback((spotifyId: string, receivedLyrics: LyricLine[] | null) => {
+      console.log(`📥 Main thread: Received lyrics from worker for track ${spotifyId}`);
+      console.log(`   Lines received: ${receivedLyrics?.length || 0}`);
+      
+      // Cache the result
+      lyricsCache.current.set(spotifyId, receivedLyrics);
+      
+      // Only update UI if this is the currently playing track
+      if (playbackState?.item?.id === spotifyId) {
+        console.log(`   ✅ This is the current track, updating UI`);
+        setLyrics(receivedLyrics);
+        setLastFetchedTrackId(spotifyId);
+      } else {
+        console.log(`   ℹ️  Cached but not current track, not updating UI`);
+      }
+    }, [playbackState?.item?.id]),
+    
+    onQueuePrefetched: useCallback((results) => {
+      // Cache all prefetched lyrics
+      results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
+        lyricsCache.current.set(trackId, prefetchedLyrics);
+      });
+      
+      const successCount = results.filter(r => r.success).length;
+      console.log(`✅ Prefetched ${successCount}/${results.length} lyrics from queue`);
+    }, []),
+    
+    onError: useCallback((error: string) => {
+      console.error('❌ Lyrics worker error:', error);
+    }, []),
+  });
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
   const [visualizationMode, setVisualizationMode] =
@@ -497,24 +532,36 @@ export default function PlayerPage() {
             setLyrics(cachedLyrics || null);
             setLastFetchedTrackId(data.item.id);
           } else {
-            // Fetch from backend API (checks IndexedDB → PostgreSQL → Remote APIs)
-            try {
-              const lyricsLines = await fetchSyncedLyrics(
+            // Use worker to fetch lyrics (off main thread for smooth UI)
+            if (lyricsWorker.isWorkerReady) {
+              console.log(`🔄 Main thread: Sending lyrics request to worker for: ${data.item.name}`);
+              lyricsWorker.fetchLyrics(
                 data.item.name,
                 data.item.artists[0].name,
                 data.item.duration_ms,
-                data.item.id // Pass Spotify ID for IndexedDB caching
+                data.item.id
               );
-
-              // Cache the result in memory (even if null)
-              lyricsCache.current.set(data.item.id, lyricsLines);
-              setLyrics(lyricsLines);
-              setLastFetchedTrackId(data.item.id);
-            } catch (err) {
-              console.error("❌ Error fetching lyrics:", err);
-              lyricsCache.current.set(data.item.id, null);
-              setLyrics(null);
-              setLastFetchedTrackId(data.item.id);
+              console.log(`📤 Main thread: Message sent to worker, waiting for response...`);
+              // Worker will call onLyricsReceived callback when done
+            } else {
+              // Fallback to main thread if worker not ready
+              console.warn('⚠️ Worker not ready, falling back to main thread');
+              try {
+                const lyricsLines = await fetchSyncedLyrics(
+                  data.item.name,
+                  data.item.artists[0].name,
+                  data.item.duration_ms,
+                  data.item.id
+                );
+                lyricsCache.current.set(data.item.id, lyricsLines);
+                setLyrics(lyricsLines);
+                setLastFetchedTrackId(data.item.id);
+              } catch (err) {
+                console.error("❌ Error fetching lyrics:", err);
+                lyricsCache.current.set(data.item.id, null);
+                setLyrics(null);
+                setLastFetchedTrackId(data.item.id);
+              }
             }
           }
         }
@@ -563,31 +610,35 @@ export default function PlayerPage() {
         
         console.log(`🎵 Queue fetched: ${queueData.queue.length} tracks`);
         
-        // Prefetch lyrics for all songs in queue (background task)
-        queueData.queue.forEach(async (track, index) => {
-          // Only prefetch first 5 songs to avoid overwhelming the system
-          if (index >= 5) return;
-          
-          // Check if already cached (including null results)
-          if (lyricsCache.current.has(track.id)) {
-            return;
+        // Filter queue to only uncached tracks
+        const uncachedTracks = queueData.queue.filter(track => !lyricsCache.current.has(track.id));
+        
+        if (uncachedTracks.length > 0) {
+          if (lyricsWorker.isWorkerReady) {
+            // Use worker to prefetch lyrics (off main thread)
+            console.log(`🔄 Prefetching ${Math.min(uncachedTracks.length, 5)} lyrics via worker...`);
+            lyricsWorker.prefetchQueue(uncachedTracks, 5);
+            // Worker will call onQueuePrefetched callback when done
+          } else {
+            // Fallback to main thread if worker not ready
+            console.warn('⚠️ Worker not ready for prefetch, falling back to main thread');
+            uncachedTracks.forEach(async (track, index) => {
+              if (index >= 5) return;
+              
+              try {
+                const lyricsLines = await fetchSyncedLyrics(
+                  track.name,
+                  track.artists[0].name,
+                  track.duration_ms,
+                  track.id
+                );
+                lyricsCache.current.set(track.id, lyricsLines);
+              } catch (err) {
+                lyricsCache.current.set(track.id, null);
+              }
+            });
           }
-          
-          try {
-            const lyricsLines = await fetchSyncedLyrics(
-              track.name,
-              track.artists[0].name,
-              track.duration_ms,
-              track.id
-            );
-            
-            // Cache the result (even if null) to prevent repeated fetches
-            lyricsCache.current.set(track.id, lyricsLines);
-          } catch (err) {
-            // Cache null to prevent repeated failed attempts
-            lyricsCache.current.set(track.id, null);
-          }
-        });
+        }
       } else {
         setQueue([]);
         setNextTrack(null);
