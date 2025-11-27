@@ -58,7 +58,6 @@ const LyricsCanvas = memo(function LyricsCanvas({
         isPlaying={isPlaying}
         syncedData={null}
         micData={micData}
-        reducedEmissive={false} // Full emissive since no bloom affects this canvas
         color={color}
       />
     </Canvas>
