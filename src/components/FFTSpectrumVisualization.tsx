@@ -14,7 +14,7 @@ interface FFTSpectrumVisualizationProps {
 }
 
 
-function FFTSpectrumPlanes({ 
+export function FFTSpectrumPlanes({ 
   micData, 
   bassIntensity,
   rows
@@ -366,10 +366,9 @@ export default function FFTSpectrumVisualization({
       {/* Bloom Effect */}
       <EffectComposer>
         <Bloom 
-          intensity={Math.pow(bassIntensity*10,3)}
-          luminanceThreshold={0}
-          luminanceSmoothing={1.8}
-          radius={0.3}
+          intensity={bassIntensity * 2}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.9}
         />
       </EffectComposer>
     </Canvas>

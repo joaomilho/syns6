@@ -106,7 +106,7 @@ const mandelbrotFragmentShader = `
   }
 `;
 
-function MandelbrotPlane({
+export function MandelbrotPlane({
   audioFeatures,
   syncedData,
   micData,

@@ -9,7 +9,6 @@ import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import LavaLampVisualization from "@/components/LavaLampVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
-import WaveSpectrum3DVisualization from "@/components/WaveSpectrum3DVisualization";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
@@ -205,12 +204,6 @@ export default function ScreenshotPage() {
       case "spectrum3d":
         return (
           <Spectrum3DVisualization
-            micData={micData}
-          />
-        );
-      case "wavespectrum":
-        return (
-          <WaveSpectrum3DVisualization
             micData={micData}
           />
         );

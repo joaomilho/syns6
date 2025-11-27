@@ -117,7 +117,7 @@ function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
   );
 }
 
-function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
+export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRefs = useRef<THREE.Mesh[]>([]);
 
