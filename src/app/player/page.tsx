@@ -1158,7 +1158,7 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <Logo loading={status === "loading" || subscriptionLoading} size={20} />
+        <Logo loading={subscriptionLoading} size={20} />
 
         <div className={styles.controlGroups}>
         {/* Share Controls (leftmost) */}
