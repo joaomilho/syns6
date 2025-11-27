@@ -335,8 +335,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                 compiledCode={customViz.compiledCode}
                 micData={micData}
                 isPlaying={isPlaying}
-                lyrics={lyrics}
-                currentTimeMs={currentTimeMs}
               />
             );
           }
@@ -348,8 +346,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
               config={config}
               micData={micData}
               isPlaying={isPlaying}
-              lyrics={lyrics}
-              currentTimeMs={currentTimeMs}
             />
           );
         } catch (error) {
@@ -376,8 +372,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <MusicVisualization
             key="particles"
             isPlaying={isPlaying}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
             micData={micData}
           />
         );
@@ -386,8 +380,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <FractalVisualization
             key="fractal"
             isPlaying={isPlaying}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
             micData={micData}
           />
         );
@@ -396,8 +388,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <PsychedelicVisualization
             key="psychedelic"
             isPlaying={isPlaying}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
             micData={micData}
           />
         );
@@ -406,8 +396,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <WavyLinesVisualization
             key="waves"
             isPlaying={isPlaying}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
             micData={micData}
           />
         );
@@ -416,9 +404,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <LavaLampVisualization
             key="animated"
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
           />
         );
       case "spectrum3d":
@@ -426,9 +411,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <Spectrum3DVisualization
             key="spectrum3d"
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
           />
         );
       case "wavespectrum":
@@ -436,9 +418,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <WaveSpectrum3DVisualization
             key="wavespectrum"
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
           />
         );
       case "fftspectrum":
@@ -446,9 +425,7 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <FFTSpectrumVisualization
             key="fftspectrum"
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
+            // TODO remove this
             onWebGLUnavailable={handleWebGLUnavailable}
           />
         );
@@ -459,8 +436,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             trackName={playbackState?.trackName}
             artistName={playbackState?.artistName}
             spotifyId={playbackState?.trackId}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
             micData={micData}
           />
         );
@@ -470,9 +445,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             key="camera"
             videoElement={videoElement}
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
           />
         );
       default:
@@ -480,9 +452,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <FFTSpectrumVisualization
             key="default"
             micData={micData}
-            lyrics={lyrics}
-            currentTimeMs={currentTimeMs}
-            isPlaying={isPlaying}
             onWebGLUnavailable={handleWebGLUnavailable}
           />
         );

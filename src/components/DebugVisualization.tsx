@@ -4,7 +4,6 @@ import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { HueConfig } from "@/hooks/useHueLights";
 
 interface VisualizationProps {
-  isPlaying: boolean;
   micData?: MicrophoneData;
   hueDebugData?: { bass: number; brightness: number } | null;
   hueIsActive?: boolean;
@@ -199,7 +198,6 @@ function MicSpectrumBars({
 }
 
 export default function DebugVisualization({
-  isPlaying,
   micData,
   hueDebugData,
   hueIsActive,

@@ -297,10 +297,6 @@ export default function Home() {
           // WebGL available - show 3D viz
           <FFTSpectrumVisualization
             micData={micData}
-            lyrics={null}
-            currentTimeMs={0}
-            isPlaying={true}
-            fps={fps}
           />
         ) : (
           // WebGL not available - show fallback image

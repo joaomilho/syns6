@@ -43,7 +43,6 @@ interface AudioFeatures {
 
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
-  isPlaying: boolean;
   syncedData?: SyncedAudioData | null;
   micData?: MicrophoneData;
 }
@@ -219,7 +218,7 @@ function WavyLine({
   return <primitive object={line} />;
 }
 
-function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: VisualizationProps) {
+function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProps) {
   const linesPerSet = 60; // 5x more lines (was 12)
   
   // Original bass-reactive waves (Blue → Red) - main layer
@@ -277,7 +276,7 @@ function WavyLineField({ audioFeatures, isPlaying, syncedData, micData }: Visual
 }
 
 // Particle accents that move left to right
-function FlowingParticles({ audioFeatures, isPlaying, syncedData }: VisualizationProps) {
+function FlowingParticles({ audioFeatures, syncedData }: VisualizationProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const particleCount = 500;
 
@@ -358,7 +357,6 @@ function FlowingParticles({ audioFeatures, isPlaying, syncedData }: Visualizatio
 
 export default function WavyLinesVisualization({
   audioFeatures,
-  isPlaying,
   syncedData,
   micData,
 }: VisualizationProps) {
@@ -380,8 +378,8 @@ export default function WavyLinesVisualization({
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
 
-        <WavyLineField audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} micData={micData} />
-        <FlowingParticles audioFeatures={audioFeatures || null} isPlaying={isPlaying} syncedData={syncedData || null} />
+        <WavyLineField audioFeatures={audioFeatures || null} syncedData={syncedData || null} micData={micData} />
+        <FlowingParticles audioFeatures={audioFeatures || null} syncedData={syncedData || null} />
 
         <OrbitControls
           enableZoom={true}
