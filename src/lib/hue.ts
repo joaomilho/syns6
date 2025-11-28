@@ -150,18 +150,25 @@ export async function setLightState(
 
     const data = await response.json();
     
-    // Log the response for debugging
-    if (data[0]?.error) {
-      console.error(`❌ Light ${lightId} error:`, data[0].error);
-      throw new Error(data[0].error.description);
+    // Hue returns array of success/error objects
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid Hue API response');
     }
     
-    // Check if all properties were successfully set
+    // Count successes and errors
     const successCount = data.filter((item: any) => item.success).length;
     const errorCount = data.filter((item: any) => item.error).length;
     
+    // Only throw if ALL properties failed (no successes)
+    if (errorCount > 0 && successCount === 0) {
+      const firstError = data.find((item: any) => item.error)?.error;
+      console.error(`❌ Light ${lightId} - ALL FAILED:`, firstError?.description || 'Unknown error');
+      throw new Error(firstError?.description || 'All properties failed');
+    }
+    
+    // Partial failure is OK - log but don't throw
     if (errorCount > 0) {
-      console.warn(`⚠️ Light ${lightId}: ${successCount} success, ${errorCount} errors`, data);
+      console.warn(`⚠️ Light ${lightId}: ${successCount} success, ${errorCount} errors (partial failure OK)`);
     }
   } catch (error) {
     // Re-throw to let the circuit breaker handle it
