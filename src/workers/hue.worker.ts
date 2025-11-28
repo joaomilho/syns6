@@ -73,23 +73,46 @@ let username = '';
 let selectedLights: Set<string> = new Set();
 let isActive = false;
 let lightConfigs: Record<string, { mode: 'bass' | 'voice' | 'drums' }> = {};
+let colorCapableLights: Set<string> = new Set(); // Track which lights support color
 
 /**
  * Set the state of a specific light
+ * 
+ * Hue API returns an array of results, one per property set:
+ * [
+ *   { success: { "/lights/1/state/bri": 128 } },
+ *   { error: { type: 6, description: "parameter, hue, not available" } }
+ * ]
+ * 
+ * Type 6 errors mean the light doesn't support that property (e.g., white-only bulbs)
  */
 async function setLightState(
   lightId: string,
   state: HueLightState
 ): Promise<void> {
   try {
+    // Filter state based on light capabilities
+    const filteredState = { ...state };
+    
+    // If light is known to not support color, remove hue/sat
+    if (!colorCapableLights.has(lightId) && colorCapableLights.size > 0) {
+      delete filteredState.hue;
+      delete filteredState.sat;
+    }
+    
+    // Debug: Log what we're sending (only in production issues)
+    console.log(`📤 Worker: Sending to light ${lightId}:`, JSON.stringify(filteredState));
+    
     const response = await fetch(
       `http://${bridgeIp}/api/${username}/lights/${lightId}/state`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state),
+        body: JSON.stringify(filteredState),
       }
     );
+    
+    console.log(`📥 Worker: Response from light ${lightId}:`, response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -97,10 +120,49 @@ async function setLightState(
 
     const data = await response.json();
     
-    if (data[0]?.error) {
-      console.error(`❌ Light ${lightId} error:`, data[0].error);
-      throw new Error(data[0].error.description);
+    // Debug: Log full response
+    console.log(`📋 Worker: Full response for light ${lightId}:`, data);
+    
+    // Hue returns array of success/error objects
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid Hue API response');
     }
+    
+    // Check for "parameter not available" errors (Type 6)
+    const colorErrors = data.filter((item: any) => 
+      item.error?.type === 6 && 
+      (item.error?.address?.includes('/hue') || item.error?.address?.includes('/sat'))
+    );
+    
+    if (colorErrors.length > 0) {
+      // Light doesn't support color - remember this
+      colorCapableLights.delete(lightId);
+      console.log(`💡 Worker: Light ${lightId} is white-only (no color support)`);
+    } else if (state.hue !== undefined || state.sat !== undefined) {
+      // Light accepted color properties - it's color capable
+      colorCapableLights.add(lightId);
+    }
+    
+    // Count successes and errors
+    const successCount = data.filter((item: any) => item.success).length;
+    const errorCount = data.filter((item: any) => item.error).length;
+    
+    // Only throw if ALL properties failed (no successes)
+    if (errorCount > 0 && successCount === 0) {
+      const firstError = data.find((item: any) => item.error)?.error;
+      console.error(`❌ Light ${lightId} - ALL FAILED:`, firstError?.description || 'Unknown error');
+      throw new Error(firstError?.description || 'All properties failed');
+    }
+    
+    // Ignore Type 6 errors (not available) - they're handled above
+    const realErrors = data.filter((item: any) => 
+      item.error && item.error.type !== 6
+    );
+    
+    if (realErrors.length > 0) {
+      console.warn(`⚠️ Worker Light ${lightId}: ${successCount} success, ${realErrors.length} errors`);
+    }
+    
   } catch (error: any) {
     // Detect mixed content errors
     if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
@@ -238,6 +300,17 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
         // Calculate state for this light
         const lightState = lightConfigToState(lightConfig, audioData);
         const newBrightness = lightState.bri || 0;
+        
+        // Debug: Log calculated state for first light
+        if (updatesQueued === 0) {
+          console.log(`🎨 Worker: Calculated state for light ${lightId}:`, {
+            bri: lightState.bri,
+            hue: lightState.hue,
+            sat: lightState.sat,
+            on: lightState.on,
+            transitiontime: lightState.transitiontime
+          });
+        }
         
         // Skip if brightness hasn't changed
         const prevBri = lastBrightness.get(lightId);
