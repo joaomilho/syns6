@@ -20,7 +20,7 @@
     When I'm in my dark bedroom with the projector they interfere in the image when too intense. Allow setting max.
 [ ] HUE sync
     Fix sequential call to HUE when we have multiple lights. Call all in parallel will fix the issue, or _sequential per light_.
-[ ] Visualization mode
+[X] Visualization mode
     Dropdown bleads to the right of the screen
 [ ] AI creation
     Show "COMING SOON"
@@ -33,8 +33,8 @@
 
 Question:
     - Should I allow customization of views?
-    - Should I allow customization of lyrics?
     - Should I ask people what they want instead?
+    - Should viewers also log with Spotify?
 
 # Done:
 
