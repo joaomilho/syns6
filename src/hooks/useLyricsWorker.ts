@@ -2,22 +2,25 @@ import { useEffect, useRef, useCallback } from 'react';
 import { LyricLine } from '@/lib/lyrics';
 
 interface LyricsWorkerMessage {
-  type: 'FETCH_LYRICS' | 'PREFETCH_QUEUE';
+  type: 'FETCH_LYRICS' | 'PREFETCH_QUEUE' | 'START_POLLING' | 'STOP_POLLING' | 'UPDATE_POLLING_STATE';
   data: any;
 }
 
 interface LyricsWorkerResponse {
-  type: 'LYRICS_RESULT' | 'QUEUE_PREFETCHED' | 'ERROR';
+  type: 'LYRICS_RESULT' | 'QUEUE_PREFETCHED' | 'ERROR' | 'PLAYBACK_STATE' | 'POLLING_ERROR';
   requestId?: string;
   spotifyId?: string;
   lyrics?: LyricLine[] | null;
   results?: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>;
   error?: string;
+  data?: any; // For playback state
 }
 
 interface UseLyricsWorkerOptions {
   onLyricsReceived?: (spotifyId: string, lyrics: LyricLine[] | null) => void;
   onQueuePrefetched?: (results: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>) => void;
+  onPlaybackState?: (data: any) => void;
+  onPollingError?: (error: string) => void;
   onError?: (error: string) => void;
 }
 
@@ -28,14 +31,18 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
   // Use refs for callbacks to avoid reinitializing worker
   const onLyricsReceivedRef = useRef(options.onLyricsReceived);
   const onQueuePrefetchedRef = useRef(options.onQueuePrefetched);
+  const onPlaybackStateRef = useRef(options.onPlaybackState);
+  const onPollingErrorRef = useRef(options.onPollingError);
   const onErrorRef = useRef(options.onError);
   
   // Update refs when callbacks change
   useEffect(() => {
     onLyricsReceivedRef.current = options.onLyricsReceived;
     onQueuePrefetchedRef.current = options.onQueuePrefetched;
+    onPlaybackStateRef.current = options.onPlaybackState;
+    onPollingErrorRef.current = options.onPollingError;
     onErrorRef.current = options.onError;
-  }, [options.onLyricsReceived, options.onQueuePrefetched, options.onError]);
+  }, [options.onLyricsReceived, options.onQueuePrefetched, options.onPlaybackState, options.onPollingError, options.onError]);
 
   // Initialize worker
   useEffect(() => {
@@ -52,7 +59,7 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
 
       // Handle messages from worker
       worker.onmessage = (event: MessageEvent<LyricsWorkerResponse>) => {
-        const { type, spotifyId, lyrics, results, error } = event.data;
+        const { type, spotifyId, lyrics, results, error, data } = event.data;
 
         switch (type) {
           case 'LYRICS_RESULT':
@@ -64,6 +71,19 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
           case 'QUEUE_PREFETCHED':
             if (results && onQueuePrefetchedRef.current) {
               onQueuePrefetchedRef.current(results);
+            }
+            break;
+
+          case 'PLAYBACK_STATE':
+            if (onPlaybackStateRef.current) {
+              onPlaybackStateRef.current(data);
+            }
+            break;
+
+          case 'POLLING_ERROR':
+            console.error('❌ Polling error:', error);
+            if (onPollingErrorRef.current) {
+              onPollingErrorRef.current(error || 'Unknown polling error');
             }
             break;
 
@@ -141,9 +161,55 @@ export function useLyricsWorker(options: UseLyricsWorkerOptions = {}) {
     []
   );
 
+  /**
+   * Start Spotify polling in worker
+   */
+  const startPolling = useCallback((accessToken: string) => {
+    if (!workerRef.current) {
+      console.warn('⚠️ Worker not initialized, cannot start polling');
+      return;
+    }
+
+    workerRef.current.postMessage({
+      type: 'START_POLLING',
+      data: { accessToken },
+    });
+  }, []);
+
+  /**
+   * Stop Spotify polling
+   */
+  const stopPolling = useCallback(() => {
+    if (!workerRef.current) {
+      return;
+    }
+
+    workerRef.current.postMessage({
+      type: 'STOP_POLLING',
+      data: {},
+    });
+  }, []);
+
+  /**
+   * Update polling state (for smart interval calculation)
+   */
+  const updatePollingState = useCallback((isPlaying: boolean, currentProgress: number, duration: number) => {
+    if (!workerRef.current) {
+      return;
+    }
+
+    workerRef.current.postMessage({
+      type: 'UPDATE_POLLING_STATE',
+      data: { isPlaying, currentProgress, duration },
+    });
+  }, []);
+
   return {
     fetchLyrics,
     prefetchQueue,
+    startPolling,
+    stopPolling,
+    updatePollingState,
     isWorkerReady: !!workerRef.current,
   };
 }
