@@ -1,5 +1,8 @@
 # Soft launch checklist
 
+[ ] Product Hunt
+    [ ] Animated icon e.g https://www.producthunt.com/products/calk-ai
+    [ ] Improved images: https://www.producthunt.com/products/welltory
 [X] Trial period
     Allow testing for 1-3 days without CC (only for PH).
 [X] Legalities
