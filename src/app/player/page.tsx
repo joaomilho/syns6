@@ -13,6 +13,7 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useLyricsWorker } from "@/hooks/useLyricsWorker";
+import { useSmartPolling } from "@/hooks/useSmartPolling";
 import HueControls from "@/components/HueControls";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
@@ -638,21 +639,15 @@ export default function PlayerPage() {
     }
   };
 
-  // Initial fetch and periodic updates
-  useEffect(() => {
-    if (session?.accessToken) {
-      fetchPlaybackState();
-      fetchQueueAndPrefetchLyrics(); // Fetch queue on mount
-      
-      const playbackInterval = setInterval(fetchPlaybackState, 5000);
-      const queueInterval = setInterval(fetchQueueAndPrefetchLyrics, 10000); // Update queue every 10s
-      
-      return () => {
-        clearInterval(playbackInterval);
-        clearInterval(queueInterval);
-      };
-    }
-  }, [session?.accessToken]); // Only depend on access token, not entire session object
+  // Smart adaptive polling based on playback state
+  useSmartPolling({
+    isEnabled: !!session?.accessToken,
+    playbackState,
+    currentProgress,
+    onFetchPlayback: fetchPlaybackState,
+    onFetchQueue: fetchQueueAndPrefetchLyrics,
+    queueInterval: 10000,
+  });
 
   // Update progress bar in real-time
   useEffect(() => {
