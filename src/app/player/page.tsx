@@ -902,7 +902,7 @@ export default function PlayerPage() {
     return (
       <div className={styles.fullscreenPage}>
         <div className={styles.centerMessage}>
-          <Logo loading={true} size={48} />
+          <Logo loading={true} />
         </div>
       </div>
     );
@@ -1248,7 +1248,7 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <Logo loading={subscriptionLoading} size={20} />
+        <Logo loading={subscriptionLoading} />
 
         <div className={styles.controlGroups}>
         {/* Share Controls (leftmost) */}
