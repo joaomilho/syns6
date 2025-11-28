@@ -13,8 +13,6 @@ export const COMMON_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY
 interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
   currentTimeMs: number;
-  isPlaying: boolean;
-  syncedData?: null; // Deprecated, kept for compatibility (optional)
   font?: string; // Optional custom font URL
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
@@ -66,7 +64,7 @@ function LyricText3D({
   isPast,
   offset,
   font,
-  color = "#0f0",
+  color,
   showCountdown,
   countdownSeconds,
   micData,
@@ -76,8 +74,8 @@ function LyricText3D({
   isCurrent: boolean;
   isPast: boolean;
   offset: number;
-  font?: string;
-  color?: string;
+  font: string;
+  color: string;
   showCountdown?: boolean;
   countdownSeconds?: number;
   micData?: MicrophoneData;
@@ -100,9 +98,8 @@ function LyricText3D({
     // Calculate target scale based on position
     let targetScale = 1.0;
     if (isCurrent) {
-      const voiceStrength = micData?.voiceStrength || 0;
-      const voiceScale = 1 + voiceStrength/2;
-      targetScale = 2.2 * voiceScale; // Reduced from 2.0 to 1.7
+      const voiceStrength = 1 + (micData?.voiceStrength || 0) / 1.6;
+      targetScale = 2 * voiceStrength; // Reduced from 2.0 to 1.7
       groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
       targetScale = 1.0;
@@ -148,9 +145,9 @@ function LyricText3D({
             anchorX="center"
             anchorY="middle"
             font={font}
-            fontWeight={600}
-            outlineWidth={color !== "#000000" ? 0.02 : 0}
-            outlineColor="#000000"
+            fontWeight={400}
+            outlineWidth={isCurrent ? 0.1 : isPast? 0 : 0.05 }
+            outlineColor="black"
             letterSpacing={0}
             characters={COMMON_CHARS}
           >
@@ -199,10 +196,9 @@ function LyricText3D({
 export default function Lyrics3D({
   lyrics,
   currentTimeMs,
-  isPlaying,
-  syncedData, // Deprecated, ignored
+  
   font,
-  color = "#1ed760",
+  color = '#ff0',
   micData,
   position = [0, 5, 0],
 }: Lyrics3DProps) {
