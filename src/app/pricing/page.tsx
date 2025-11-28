@@ -6,8 +6,7 @@ import { useState, useEffect } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
 import SubscriptionStatus from '@/components/SubscriptionStatus';
 import CurrencyDropdown, { CurrencyCode } from '@/components/CurrencyDropdown';
-import Syns6Logo from '@/components/Syns6Logo';
-import { H1, Button } from '@/components/ds';
+import { H1, Button, Logo } from '@/components/ds';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prices, formatPrice, getCurrencySymbol } from '@/lib/prices';
@@ -260,7 +259,7 @@ export default function PricingPage() {
     <div className={styles.container}>
       {/* Top Bar */}
       <div className={styles.topBar}>
-        <Syns6Logo />
+        <Logo />
         
         <div className={styles.controlGroups}>
           <CurrencyDropdown value={currency} onChange={handleCurrencyChange} />

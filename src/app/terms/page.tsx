@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import styles from './terms.module.css';
-import Syns6Logo from '@/components/Syns6Logo';
+import { Logo } from '@/components/ds';
 
 export const metadata = {
   title: 'Terms of Service | syns6',
@@ -12,7 +12,7 @@ export default function TermsPage() {
     <div className={styles.container}>
       <div className={styles.topBar}>
         <Link href="/">
-          <Syns6Logo />
+          <Logo />
         </Link>
       </div>
 
