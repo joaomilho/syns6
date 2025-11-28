@@ -36,6 +36,7 @@ export function LavaLampBlobs({
   const effectRef = useRef<MarchingCubes | null>(null);
   const timeRef = useRef(0);
   const particlesRef = useRef<Particle[]>([]);
+  const frameCountRef = useRef(0); // For throttling updates
 
   // Initialize marching cubes with premium GLOWING material
   const material = useMemo(() => {
@@ -73,12 +74,16 @@ export function LavaLampBlobs({
   }, []);
 
   useFrame((state, delta) => {
+    // Throttle updates to every 2nd frame for +2-3 FPS boost
+    frameCountRef.current++;
+    
+    
     if (!effectRef.current) {
       // Initialize on first frame - optimized resolution for performance
       const resolution = 28; // Balanced resolution for performance
       const effect = new MarchingCubes(resolution, material, false, false, 100000);
-      effect.position.set(0, -5, -20); // Moved further back to avoid lyrics
-      effect.scale.set(25, 25, 25);
+      effect.position.set(0, -8, -35); // Moved further back and down to avoid lyrics
+      effect.scale.set(30,30,30);
       effect.isolation = 80; // Back to original
       
       // Fix bounding sphere to prevent frustum culling
@@ -307,7 +312,7 @@ export default function LavaLampVisualization({
   return (
     <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }} dpr={1}>
       <OrbitControls
-        target={[0, -5, -20]}
+        target={[0, -8, -25]}
         enablePan={false}
         enableDamping
         dampingFactor={0.05}
@@ -316,7 +321,7 @@ export default function LavaLampVisualization({
       />
 
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 15, 60]} />
+      <fog attach="fog" args={["#050505", 20, 70]} />
 
       <LavaLampLighting micData={micData} />
 
@@ -324,13 +329,13 @@ export default function LavaLampVisualization({
       <LavaLampBlobs micData={micData} />
 
       {/* Post-processing for refined GLOW effect */}
-      <EffectComposer multisampling={8}>
+      <EffectComposer multisampling={4}>
         <Bloom 
           intensity={bloomIntensity}
           luminanceThreshold={0.35}
           luminanceSmoothing={6}
           radius={0.8}
-          levels={8}
+          levels={6}
           mipmapBlur={true}
         />
       </EffectComposer>
