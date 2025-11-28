@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ds';
 import styles from './SubscriptionStatus.module.css';
 
 interface Subscription {
@@ -151,13 +152,14 @@ export default function SubscriptionStatus({ onManageSubscription, planName, pla
       </div>
 
       <div className={styles.buttonContainer}>
-        <button
+        <Button
           onClick={onManageSubscription || handleManageSubscription}
           disabled={portalLoading}
-          className={styles.manageButton}
+          color="white"
+          size="medium"
         >
           {portalLoading ? 'Loading...' : 'Manage'}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
 import { getPlanFromPriceId, getPriceForPlan, formatPrice, getCurrencySymbol } from "@/lib/prices";
 import { CurrencyCode } from "@/components/CurrencyDropdown";
-import { Logo } from "@/components/ds";
+import { Logo, Button } from "@/components/ds";
 import styles from "./profile.module.css";
 
 export default function ProfilePage() {
@@ -99,13 +99,13 @@ export default function ProfilePage() {
          
            {subLoading ? (
              <div className={styles.loadingText}>Loading subscription...</div>
-           ) : isActive && subscription && planInfo ? (
+           ) : isActive && subscription ? (
              <SubscriptionStatus 
-               planName={`${planInfo.name} Plan`}
-               planPrice={`${formatPrice(
+               planName={planInfo ? `${planInfo.name} Plan` : undefined}
+               planPrice={planInfo ? `${formatPrice(
                  getPriceForPlan(planInfo.type, detectedCurrency),
                  detectedCurrency
-               )}/${planInfo.interval}`}
+               )}/${planInfo.interval}` : undefined}
              />
            ) : (
              <div className={styles.noSubscription}>
@@ -119,15 +119,18 @@ export default function ProfilePage() {
 
 
         <div className={styles.actions}>
-          <Link href="/player" className={styles.primaryButton}>
-            Open Player
+          <Link href="/player">
+            <Button color="green" size="medium">
+              Open Player
+            </Button>
           </Link>
-          <button
+          <Button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className={styles.dangerButton}
+            color="red"
+            size="medium"
           >
             Sign Out
-          </button>
+          </Button>
         </div>
       </main>
     </div>
