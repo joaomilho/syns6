@@ -9,7 +9,6 @@ import Lyrics3D from "./Lyrics3D";
 interface LyricsCanvasProps {
   lyrics: LyricLine[] | null;
   currentTimeMs: number;
-  isPlaying: boolean;
   micData?: MicrophoneData;
   color?: string;
 }
@@ -22,7 +21,6 @@ interface LyricsCanvasProps {
 const LyricsCanvas = memo(function LyricsCanvas({
   lyrics,
   currentTimeMs,
-  isPlaying,
   micData,
   color = "#1ed760",
 }: LyricsCanvasProps) {
