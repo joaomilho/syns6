@@ -55,8 +55,6 @@ const LyricsCanvas = memo(function LyricsCanvas({
       <Lyrics3D
         lyrics={lyrics}
         currentTimeMs={currentTimeMs}
-        isPlaying={isPlaying}
-        syncedData={null}
         micData={micData}
         color={color}
       />
