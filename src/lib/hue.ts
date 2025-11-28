@@ -221,19 +221,15 @@ export function lightConfigToState(
   }
 ): HueLightState {
   // Handle different modes
-  console.log(`🎵 lightConfigToState called with mode: ${config.mode}`, audioData.drums);
-  
   if (config.mode === "bass") {
     return createBassLightState(audioData.bass);
   } else if (config.mode === "voice") {
     return createVoiceLightState(audioData.voice || 0);
   } else if (config.mode === "drums") {
-    console.log(`🥁 Calling createDrumsLightState with:`, audioData.drums);
     return createDrumsLightState(audioData);
   }
   
   // Fallback to bass mode if mode is not recognized
-  console.log(`⚠️ Unknown mode: ${config.mode}, falling back to bass`);
   return createBassLightState(audioData.bass);
 }
 
@@ -277,8 +273,8 @@ function createBassLightState(intensity: number): HueLightState {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 12 buckets to reduce API calls
-  const numBuckets = 12;
+  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
+  const numBuckets = 32;
   const bucketSize = Math.floor(254 / numBuckets);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
@@ -291,7 +287,7 @@ function createBassLightState(intensity: number): HueLightState {
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 1, // 100ms smooth transition - balances responsiveness with smoothness
+    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
@@ -332,8 +328,8 @@ function createVoiceLightState(intensity: number): HueLightState {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 12 buckets to reduce API calls
-  const numBuckets = 12;
+  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
+  const numBuckets = 32;
   const bucketSize = Math.floor(254 / numBuckets);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
@@ -345,7 +341,7 @@ function createVoiceLightState(intensity: number): HueLightState {
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 1, // 100ms smooth transition
+    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
@@ -368,11 +364,6 @@ function createDrumsLightState(audioData: {
   // Weight hi-hat and cymbal more heavily (they're detected very well)
   // Snare is good but less consistent
   const intensity = (hihat * 2.0 + cymbal * 2.0 + snare * 1.0) / 5.0;
-  
-  // Debug logging
-  if (intensity > 0.1) {
-    console.log(`🥁 Drums: H=${hihat.toFixed(2)} C=${cymbal.toFixed(2)} S=${snare.toFixed(2)} → ${(intensity * 100).toFixed(1)}%`);
-  }
   
   // Apply exponential curve for more dramatic response
   const dramaticIntensity = Math.pow(intensity, 0.5);
@@ -407,8 +398,8 @@ function createDrumsLightState(audioData: {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 12 buckets to reduce API calls
-  const numBuckets = 12;
+  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
+  const numBuckets = 32;
   const bucketSize = Math.floor(254 / numBuckets);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
@@ -420,7 +411,7 @@ function createDrumsLightState(audioData: {
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 1, // 100ms smooth transition
+    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
