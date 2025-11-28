@@ -22,6 +22,7 @@ import VisualizationDropdown, {
   VisualizationType,
 } from "@/components/VisualizationDropdown";
 import ModeDropdown, { VisualizationMode } from "@/components/ModeDropdown";
+import TypographyDropdown, { LyricsFont, LyricsColor, getFontPath } from "@/components/TypographyDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 
 // Lazy load all visualization components (only loaded when needed)
@@ -138,6 +139,8 @@ export default function PlayerPage() {
     useState<VisualizationType>("fftspectrum");
   const [visualizationMode, setVisualizationMode] =
     useState<VisualizationMode>("STATIC");
+  const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
+  const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
   const [showHueControls, setShowHueControls] = useState(false);
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
@@ -1141,10 +1144,9 @@ export default function PlayerPage() {
             <Lyrics3D
               lyrics={lyrics}
               currentTimeMs={currentProgress}
-              isPlaying={playbackState?.is_playing ?? false}
-              syncedData={null}
               micData={micData}
-              color="#1ed760"
+              font={getFontPath(lyricsFont)}
+              color={lyricsColor}
             />
           </group>
         </Canvas>
@@ -1228,6 +1230,14 @@ export default function PlayerPage() {
         <ModeDropdown
           value={visualizationMode}
           onChange={setVisualizationMode}
+        />
+
+        {/* Typography Dropdown */}
+        <TypographyDropdown
+          font={lyricsFont}
+          color={lyricsColor}
+          onFontChange={setLyricsFont}
+          onColorChange={setLyricsColor}
         />
 
         {/* User Profile */}

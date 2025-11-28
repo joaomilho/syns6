@@ -4,19 +4,35 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 
-// Disable body parsing for webhook
-export const runtime = 'nodejs';
+// This is critical for Stripe webhook signature verification
+// We need the raw body, not the parsed JSON
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = (await headers()).get('stripe-signature');
 
   if (!signature) {
+    console.error('❌ No Stripe signature header found');
     return NextResponse.json(
       { error: 'No signature provided' },
       { status: 400 }
     );
   }
+
+  // Log the webhook secret being used (first/last 4 chars only for security)
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('❌ STRIPE_WEBHOOK_SECRET is not set in environment variables');
+    return NextResponse.json(
+      { error: 'Webhook secret not configured' },
+      { status: 500 }
+    );
+  }
+
+  console.log('🔐 Using webhook secret:', `${webhookSecret.substring(0, 7)}...${webhookSecret.substring(webhookSecret.length - 4)}`);
+  console.log('📝 Signature header:', signature.substring(0, 20) + '...');
+  console.log('📦 Body length:', body.length, 'bytes');
 
   let event: Stripe.Event;
 
@@ -25,10 +41,16 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
-  } catch (error) {
-    console.error('Webhook signature verification failed:', error);
+    console.log('✅ Webhook signature verified successfully');
+  } catch (error: any) {
+    console.error('❌ Webhook signature verification failed:', {
+      message: error.message,
+      type: error.type,
+      header: signature,
+      secretPrefix: webhookSecret.substring(0, 7),
+    });
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
