@@ -41,12 +41,12 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'viz-thumbnails');
 const TEMP_DIR = path.join(process.cwd(), '.temp-frames');
 const WAIT_TIME = 1500; // Wait 1.5 seconds for animation to start
-const VIEWPORT_WIDTH = 800;
-const VIEWPORT_HEIGHT = 600;
-const ANIMATION_FRAMES = 27; // 27 frames for smooth, compact animation
+const VIEWPORT_WIDTH = 400; // Reduced from 800 - plenty for thumbnails
+const VIEWPORT_HEIGHT = 300; // Reduced from 600 - maintains 4:3 ratio
+const ANIMATION_FRAMES = 20; // Reduced from 27 for smaller file sizes
 const ANIMATION_DURATION = 1.5; // 1.5 second animation (short & snappy)
-const FPS = ANIMATION_FRAMES / ANIMATION_DURATION; // ~18 FPS
-const FRAME_DELAY = 1000 / FPS; // ~55ms between frames
+const FPS = ANIMATION_FRAMES / ANIMATION_DURATION; // ~13 FPS
+const FRAME_DELAY = 1000 / FPS; // ~75ms between frames
 
 async function captureScreenshots() {
   // Show what we're capturing
@@ -97,7 +97,7 @@ async function captureScreenshots() {
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
       },
-      deviceScaleFactor: 2, // Retina display for better quality
+      deviceScaleFactor: 1, // Changed from 2 - thumbnails don't need retina resolution
     });
 
     const page = await context.newPage();
@@ -123,13 +123,30 @@ async function captureScreenshots() {
           fs.mkdirSync(vizFrameDir, { recursive: true });
         }
 
-        // Capture static thumbnail (first frame)
+        // Capture static thumbnail (first frame) as WebP for better compression
         console.log(`  📸 Capturing static thumbnail...`);
         const staticPath = path.join(OUTPUT_DIR, `${vizId}.png`);
+        const staticWebPPath = path.join(OUTPUT_DIR, `${vizId}-static.webp`);
+        
+        // Save as PNG (for compatibility)
         await page.screenshot({
           path: staticPath,
           type: 'png',
         });
+        
+        // Also save as WebP (much smaller, we'll use this in the dropdown)
+        await page.screenshot({
+          path: staticWebPPath,
+          type: 'png',
+        });
+        
+        // Optimize PNG to WebP using ffmpeg
+        try {
+          await execAsync(`ffmpeg -y -i "${staticPath}" -c:v libwebp -quality 80 "${staticWebPPath}"`);
+          console.log(`  ✅ Created optimized static WebP`);
+        } catch (error) {
+          console.error(`  ⚠️  Failed to create static WebP:`, error instanceof Error ? error.message : error);
+        }
 
         // Capture frames for animation
         console.log(`  🎞️  Capturing ${ANIMATION_FRAMES} frames...`);
@@ -165,8 +182,9 @@ async function captureScreenshots() {
 
             // Create WebM video with VP9 codec for scroll-based scrubbing
             // -pix_fmt yuv420p ensures compatibility
-            // -crf 30 is quality (lower = better, range 0-63)
-            const videoCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -c:v libvpx-vp9 -pix_fmt yuv420p -crf 30 -b:v 0 -an "${videoPath}"`;
+            // -crf 35 is quality (increased from 30 for smaller files, range 0-63)
+            // -b:v 200k sets max bitrate for smaller files
+            const videoCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -vf scale=${VIEWPORT_WIDTH}:${VIEWPORT_HEIGHT} -c:v libvpx-vp9 -pix_fmt yuv420p -crf 35 -b:v 200k -an "${videoPath}"`;
             
             await execAsync(videoCmd);
             console.log(`  ✅ Created WebM video`);
@@ -186,8 +204,11 @@ async function captureScreenshots() {
               throw new Error('ffmpeg not found. Install it with: brew install ffmpeg');
             });
 
-            // Create animated WebP: ffmpeg -framerate 15 -i frame-%03d.png -c:v libwebp -loop 0 -quality 80 output.webp
-            const ffmpegCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -c:v libwebp -lossless 0 -compression_level 6 -q:v 75 -loop 0 -an -vsync 0 "${animatedPath}"`;
+            // Create animated WebP with aggressive compression for smaller file sizes
+            // -q:v 60 = lower quality (was 75), smaller files
+            // -preset picture = optimize for photographic content
+            // -vf scale=400:300 = ensure correct dimensions
+            const ffmpegCmd = `ffmpeg -y -framerate ${FPS} -i "${vizFrameDir}/frame-%03d.png" -vf scale=${VIEWPORT_WIDTH}:${VIEWPORT_HEIGHT} -c:v libwebp -lossless 0 -compression_level 6 -q:v 60 -preset picture -loop 0 -an -vsync 0 "${animatedPath}"`;
             
             await execAsync(ffmpegCmd);
             console.log(`  ✅ Created animated WebP`);
