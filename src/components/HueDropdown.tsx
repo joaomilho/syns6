@@ -13,6 +13,7 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [manualIp, setManualIp] = useState("");
+  const isProduction = process.env.NODE_ENV === 'production';
 
   const {
     isConnected,
@@ -83,7 +84,21 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
 
       {isOpen && (
         <div className={styles.dropdownMenu}>
-          {isConnected && config ? (
+          {isProduction ? (
+            // Coming soon in production
+            <div className={styles.comingSoon}>
+              <div className={styles.header}>
+                <span className={styles.title}>💡 Hue Lights</span>
+              </div>
+              <div className={styles.comingSoonContent}>
+                <p className={styles.comingSoonText}>🚧 Coming Soon</p>
+                <p className={styles.hint}>
+                  Hue integration is currently in development.
+                  Available in local mode only.
+                </p>
+              </div>
+            </div>
+          ) : isConnected && config ? (
             // Connected view
               <>
                 <div className={styles.header}>
@@ -103,7 +118,26 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
 
               </div>
 
-              
+              <div className={styles.smoothnessControl}>
+                <label className={styles.smoothnessLabel}>
+                  <span>Smoothness: {config.smoothness} levels</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="7"
+                    value={[2, 4, 6, 8, 16, 32, 64, 128].indexOf(config.smoothness)}
+                    onChange={(e) => {
+                      const buckets = [2, 4, 6, 8, 16, 32, 64, 128][parseInt(e.target.value)];
+                      hue.setSmoothness(buckets);
+                    }}
+                    className={styles.smoothnessSlider}
+                  />
+                  <div className={styles.smoothnessHint}>
+                    <span>2 (Responsive)</span>
+                    <span>128 (Smooth)</span>
+                  </div>
+                </label>
+              </div>
 
               <div className={styles.lightSelector}>
                 <div className={styles.selectorHeader}>
