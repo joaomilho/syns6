@@ -23,6 +23,46 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "syns6",
   description: "Neon-soaked bass-pounding karaoke machine",
+  metadataBase: new URL('https://syns6.com'),
+  icons: {
+    icon: [
+      { url: '/icon', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon', type: 'image/png' },
+    ],
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://syns6.com',
+    siteName: 'syns6',
+    title: 'syns6',
+    description: 'Neon-soaked bass-pounding karaoke machine',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'syns6 - Neon-soaked bass-pounding karaoke machine',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@_syns6_',
+    creator: '@_syns6_',
+    title: 'syns6',
+    description: 'Neon-soaked bass-pounding karaoke machine',
+    images: ['/opengraph-image'],
+  },
+  manifest: '/manifest.webmanifest',
+  themeColor: '#00ff00',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'syns6',
+  },
 };
 
 export default function RootLayout({
