@@ -74,7 +74,7 @@ function LyricText3D({
   isCurrent: boolean;
   isPast: boolean;
   offset: number;
-  font: string;
+  font?: string;
   color: string;
   showCountdown?: boolean;
   countdownSeconds?: number;
@@ -152,9 +152,12 @@ function LyricText3D({
             characters={COMMON_CHARS}
           >
             {line}
-            <meshBasicMaterial
-              toneMapped={false}
+            <meshStandardMaterial
               color={color}
+              emissive="#000000" // BLACK emission = NO bloom trigger!
+              emissiveIntensity={0}
+              metalness={0}
+              roughness={1}
               transparent
               opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
             />
@@ -180,8 +183,12 @@ function LyricText3D({
           outlineColor="#000000"
         >
           {Math.ceil(countdownSeconds)}
-          <meshBasicMaterial
+          <meshStandardMaterial
             color="#ffffff"
+            emissive="#000000" // BLACK emission = NO bloom trigger!
+            emissiveIntensity={0}
+            metalness={0}
+            roughness={1}
             transparent
             opacity={1.0}
           />
@@ -250,8 +257,12 @@ export default function Lyrics3D({
           outlineColor="#000000"
         >
           Lyrics not found
-          <meshBasicMaterial
+          <meshStandardMaterial
             color="#ff3333"
+            emissive="#000000" // BLACK emission = NO bloom trigger!
+            emissiveIntensity={0}
+            metalness={0}
+            roughness={1}
             transparent
             opacity={0.9}
           />
@@ -262,6 +273,10 @@ export default function Lyrics3D({
 
   return (
     <group ref={groupRef} position={position}>
+      {/* Add lighting so meshStandardMaterial is visible */}
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[0, 0, 10]} intensity={1.0} />
+      
       {visibleLines.map(({ line, index, isAdjacent }, i) => {
         const isPast = index < currentIndex;
         const offset = index - currentIndex;

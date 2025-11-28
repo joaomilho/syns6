@@ -1143,7 +1143,7 @@ export default function PlayerPage() {
 
   return (
     <div className={styles.fullscreenPage}>
-      {/* Unified Canvas for regular visualizations (WITHOUT lyrics) */}
+      {/* UNIFIED CANVAS - Single WebGL context for visualizations + lyrics! */}
       {!isSpecialVisualization && (
         <Canvas
           camera={getCameraSettings()}
@@ -1163,8 +1163,13 @@ export default function PlayerPage() {
             failIfMajorPerformanceCaveat: false,
           }}
           dpr={1}
+          onCreated={({ camera }) => {
+            // Enable camera to see both layer 0 (visualizations with bloom) and layer 1 (text without bloom)
+            camera.layers.enable(0);
+            camera.layers.enable(1);
+          }}
         >
-          {/* Conditionally render visualization scene - scene swaps independently of lyrics! */}
+          {/* Visualization Scenes - swap based on selection */}
           {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} />}
           {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
           {visualizationType === 'fractal' && <FractalScene micData={micData} />}
@@ -1173,46 +1178,67 @@ export default function PlayerPage() {
           {visualizationType === 'animated' && <LavaLampScene micData={micData} />}
           {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
           {/* lyricsonly has no scene content - just background */}
+
+          {/* LYRICS - ALWAYS RENDERED IN SAME CANVAS! Never unmounts! */}
+          {lyrics && lyrics.length > 0 && (
+            <group 
+              position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
+              scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
+            >
+              <Lyrics3D
+                lyrics={lyrics}
+                currentTimeMs={currentProgress + lyricsTimeOffset}
+                micData={micData}
+                font={getFontPath(lyricsFont)}
+                color={lyricsColor}
+              />
+            </group>
+          )}
         </Canvas>
       )}
 
-      {/* Special visualizations - rendered separately */}
-      {isSpecialVisualization && renderVisualization()}
-
-      {/* PERSISTENT LYRICS CANVAS - ALWAYS RENDERED, NEVER UNMOUNTS! */}
-      {lyrics && lyrics.length > 0 && (
-        <Canvas
-          camera={{ position: [0, 0, 30] as [number, number, number], fov: 75 }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'transparent',
-            zIndex: 2, // Above everything
-            pointerEvents: 'none', // Allow clicks to pass through
-          }}
-          gl={{
-            antialias: false, // Disabled for performance - less noticeable on text
-            alpha: true, // Transparent background
-            powerPreference: "high-performance",
-          }}
-          dpr={1}
-        >
-          <group 
-            position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
-            scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
-          >
-            <Lyrics3D
-              lyrics={lyrics}
-              currentTimeMs={currentProgress + lyricsTimeOffset}
-              micData={micData}
-              font={getFontPath(lyricsFont)}
-              color={lyricsColor}
-            />
-          </group>
-        </Canvas>
+      {/* Special visualizations - need separate rendering (oscilloscope, camera, youtube, debug) */}
+      {isSpecialVisualization && (
+        <>
+          {/* Render the special visualization */}
+          {renderVisualization()}
+          
+          {/* Separate lyrics canvas ONLY for special visualizations */}
+          {lyrics && lyrics.length > 0 && (
+            <Canvas
+              camera={{ position: [0, 0, 30] as [number, number, number], fov: 75 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'transparent',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}
+              gl={{
+                antialias: false,
+                alpha: true,
+                powerPreference: "high-performance",
+              }}
+              dpr={1}
+              onCreated={({ camera }) => {
+                // Enable camera to see layer 1 (text without bloom)
+                camera.layers.enable(0);
+                camera.layers.enable(1);
+              }}
+            >
+              <Lyrics3D
+                lyrics={lyrics}
+                currentTimeMs={currentProgress + lyricsTimeOffset}
+                micData={micData}
+                font={getFontPath(lyricsFont)}
+                color={lyricsColor}
+              />
+            </Canvas>
+          )}
+        </>
       )}
 
       {/* Performance Stats Monitor - Toggle with 'S' key */}
