@@ -91,13 +91,22 @@ async function setLightState(
       }
     );
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data = await response.json();
     
     if (data[0]?.error) {
       console.error(`❌ Light ${lightId} error:`, data[0].error);
       throw new Error(data[0].error.description);
     }
-  } catch (error) {
+  } catch (error: any) {
+    // Detect mixed content errors
+    if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+      console.error('❌ Mixed content error? HTTPS page cannot call HTTP Hue bridge');
+      throw new Error('MIXED_CONTENT_ERROR');
+    }
     throw error;
   }
 }
@@ -111,10 +120,12 @@ function queueLightUpdate(lightId: string, state: HueLightState): void {
   const newPromise = previousPromise.then(async () => {
     // Check if still active and selected BEFORE executing
     if (!isActive) {
+      console.log(`⏭️ Worker: Skipping light ${lightId} - not active`);
       return; // Skip - deactivated
     }
     
     if (!selectedLights.has(lightId)) {
+      console.log(`⏭️ Worker: Skipping light ${lightId} - not selected`);
       return; // Skip - deselected
     }
     
@@ -131,23 +142,24 @@ function queueLightUpdate(lightId: string, state: HueLightState): void {
         lightId,
         brightness: state.bri,
       });
-    } catch (e) {
+    } catch (e: any) {
       // Failure
       const failures = (lightFailures.get(lightId) || 0) + 1;
       lightFailures.set(lightId, failures);
       
-      // Only log on first failure or max failures
-      if (failures === 1 || failures >= MAX_FAILURES) {
-        console.log(`💡 Worker: Light ${lightId} failed (${failures}/${MAX_FAILURES})`);
-      }
+      console.error(`❌ Worker: Light ${lightId} failed (${failures}/${MAX_FAILURES})`, e.message || e);
       
       // Send failure message back to main thread
       self.postMessage({
         type: 'UPDATE_FAILURE',
         lightId,
         failures,
+        error: e.message || 'Unknown error',
       });
     }
+  }).catch((error) => {
+    // Catch any promise chain errors
+    console.error(`💥 Worker: Unhandled error in light ${lightId} queue:`, error);
   });
   
   lightQueues.set(lightId, newPromise);
@@ -187,6 +199,12 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
     case 'UPDATE_AUDIO':
       // Skip if not active
       if (!isActive) {
+        console.log('⏭️ Worker: Skipping audio update - not active');
+        return;
+      }
+      
+      if (selectedLights.size === 0) {
+        console.log('⏭️ Worker: Skipping audio update - no lights selected');
         return;
       }
       
@@ -208,9 +226,14 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
         },
       };
       
+      let updatesQueued = 0;
+      
       for (const lightId of selectedLights) {
         const lightConfig = lightConfigs[lightId];
-        if (!lightConfig) continue;
+        if (!lightConfig) {
+          console.warn(`⚠️ Worker: No config for light ${lightId}`);
+          continue;
+        }
         
         // Calculate state for this light
         const lightState = lightConfigToState(lightConfig, audioData);
@@ -224,6 +247,11 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
         
         // Queue the update
         queueLightUpdate(lightId, lightState);
+        updatesQueued++;
+      }
+      
+      if (updatesQueued === 0) {
+        // This is normal - brightness didn't change
       }
       break;
       
