@@ -10,15 +10,15 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { LavaLampBlobs, LavaLampLighting } from "./LavaLampVisualization";
 
 export default function LavaLampScene({ micData }: { micData?: any }) {
-  const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
+  const bloomIntensity = 0.5 + (micData?.bass || 0) * 2;
 
   return (
     <>
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 15, 60]} />
+      <fog attach="fog" args={["#050505", 20, 70]} />
 
       <OrbitControls
-        target={[0, -5, -20]}
+        target={[0, -8, -25]}
         enablePan={false}
         enableDamping
         dampingFactor={0.05}
@@ -29,14 +29,15 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
       <LavaLampLighting micData={micData} />
       <LavaLampBlobs micData={micData} />
 
-      <EffectComposer multisampling={8}>
+      <EffectComposer multisampling={4}>
         <Bloom
           intensity={bloomIntensity}
           luminanceThreshold={0.35}
           luminanceSmoothing={6}
           radius={0.8}
-          levels={8}
-          mipmapBlur={true}
+          levels={6}
+          mipmapBlur={false}
+          
         />
       </EffectComposer>
     </>
