@@ -36,8 +36,8 @@ export function useSmartPolling({
   onFetchQueue,
   queueInterval = 10000,
 }: UseSmartPollingOptions) {
-  const playbackTimeoutRef = useRef<NodeJS.Timeout>();
-  const queueIntervalRef = useRef<NodeJS.Timeout>();
+  const playbackTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const queueIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isPageVisibleRef = useRef(true);
   const errorCountRef = useRef(0);
   
