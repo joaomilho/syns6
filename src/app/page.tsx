@@ -308,7 +308,7 @@ export default function Home() {
         {/* Header with Logo and Icon */}
         <header className={styles.header}>
           <div className={styles.logoWrapper}>
-            <Logo size={20} />
+            <Logo />
           </div>
         </header>
 
