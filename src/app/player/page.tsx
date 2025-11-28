@@ -111,12 +111,20 @@ export default function PlayerPage() {
   const hue = useHueLights();
   const wakeLock = useWakeLock();
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
+  const [lyricsTimeOffset, setLyricsTimeOffset] = useState(0); // Offset for showing next track's lyrics early
+  const hasSwitchedToNextRef = useRef(false); // Track if we've already switched to next lyrics
   
   // Lyrics worker for background fetching (keeps main thread smooth)
   const lyricsWorker = useLyricsWorker({
     onLyricsReceived: useCallback((spotifyId: string, receivedLyrics: LyricLine[] | null) => {
       // Cache the result
       lyricsCache.current.set(spotifyId, receivedLyrics);
+      
+      // DON'T update UI if we've already switched to next track's lyrics!
+      if (hasSwitchedToNextRef.current) {
+        console.log(`⏭️ Skipping lyrics update - already showing next track`);
+        return;
+      }
       
       // Only update UI if this is the currently playing track
       if (playbackState?.item?.id === spotifyId) {
@@ -521,8 +529,13 @@ export default function PlayerPage() {
 
         // Fetch synced lyrics only if track changed
         if (data.item.id && data.item.id !== lastFetchedTrackId) {
-          // Check cache first
-          if (lyricsCache.current.has(data.item.id)) {
+          // DON'T update lyrics if we've already switched to next track!
+          if (hasSwitchedToNextRef.current) {
+            console.log(`⏭️ Skipping lyrics cache check - already showing next track`);
+            // Just update the fetched ID to prevent re-fetching
+            setLastFetchedTrackId(data.item.id);
+          } else if (lyricsCache.current.has(data.item.id)) {
+            // Check cache first
             const cachedLyrics = lyricsCache.current.get(data.item.id);
             setLyrics(cachedLyrics || null);
             setLastFetchedTrackId(data.item.id);
@@ -538,21 +551,26 @@ export default function PlayerPage() {
               // Worker will call onLyricsReceived callback when done
             } else {
               // Fallback to main thread if worker not ready
-              try {
-                const lyricsLines = await fetchSyncedLyrics(
-                  data.item.name,
-                  data.item.artists[0].name,
-                  data.item.duration_ms,
-                  data.item.id
-                );
-                lyricsCache.current.set(data.item.id, lyricsLines);
-                setLyrics(lyricsLines);
-                setLastFetchedTrackId(data.item.id);
-              } catch (err) {
-                console.error("Error fetching lyrics:", err);
-                lyricsCache.current.set(data.item.id, null);
-                setLyrics(null);
-                setLastFetchedTrackId(data.item.id);
+              // DON'T update lyrics if we've already switched to next!
+              if (!hasSwitchedToNextRef.current) {
+                try {
+                  const lyricsLines = await fetchSyncedLyrics(
+                    data.item.name,
+                    data.item.artists[0].name,
+                    data.item.duration_ms,
+                    data.item.id
+                  );
+                  lyricsCache.current.set(data.item.id, lyricsLines);
+                  setLyrics(lyricsLines);
+                  setLastFetchedTrackId(data.item.id);
+                } catch (err) {
+                  console.error("Error fetching lyrics:", err);
+                  lyricsCache.current.set(data.item.id, null);
+                  setLyrics(null);
+                  setLastFetchedTrackId(data.item.id);
+                }
+              } else {
+                console.log(`⏭️ Skipping main thread fetch - already showing next track`);
               }
             }
           }
@@ -661,6 +679,56 @@ export default function PlayerPage() {
       return () => clearInterval(interval);
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
+
+  // Reset the "switched to next" flag when track actually changes
+  useEffect(() => {
+    if (playbackState?.item?.id) {
+      if (hasSwitchedToNextRef.current) {
+        console.log(`🔄 Track changed! Resetting switch flag. New track:`, playbackState.item.name);
+      }
+      hasSwitchedToNextRef.current = false;
+      setLyricsTimeOffset(0); // Reset offset when track changes
+    }
+  }, [playbackState?.item?.id]);
+
+  // SWITCH TO NEXT TRACK'S LYRICS during instrumental outro (SICK TRANSITION!)
+  useEffect(() => {
+    if (!playbackState?.item || !playbackState?.is_playing || !queue.length || !lyrics || lyrics.length === 0) return;
+    if (hasSwitchedToNextRef.current) return; // Already switched, don't do it again!
+
+    const timeRemaining = (playbackState.item.duration_ms || 0) - currentProgress;
+    
+    // Get the last lyric line's timestamp
+    const lastLyric = lyrics[lyrics.length - 1];
+    const timeSinceLastLyric = currentProgress - lastLyric.time;
+    
+    // Smart transition: If last lyric passed 10+ seconds ago AND we have ~15s left in song
+    const lastLyricHasPassed = timeSinceLastLyric >= 10000; // 10 seconds after last lyric
+    const songIsEnding = timeRemaining <= 15000 && timeRemaining > 0; // Less than 15s remaining
+    
+    if (lastLyricHasPassed && songIsEnding) {
+      const nextTrack = queue[0];
+      
+      if (nextTrack && lyricsCache.current.has(nextTrack.id)) {
+        const nextLyrics = lyricsCache.current.get(nextTrack.id);
+        
+        if (nextLyrics && nextLyrics.length > 0) {
+          console.log(`🎵 Lyrics ended, switching to NEXT! ${Math.ceil(timeRemaining / 1000)}s remaining, ${Math.ceil(timeSinceLastLyric / 1000)}s since last lyric - showing:`, nextTrack.name);
+          
+          // Switch to next lyrics WITHOUT touching currentProgress!
+          setLyrics(nextLyrics);
+          setLastFetchedTrackId(nextTrack.id);
+          
+          // Set time offset to show next lyrics from beginning
+          // The offset is negative of current progress, so lyrics display time = 0
+          setLyricsTimeOffset(-currentProgress);
+          
+          // Mark that we've switched so we don't do it again
+          hasSwitchedToNextRef.current = true;
+        }
+      }
+    }
+  }, [playbackState?.item, playbackState?.is_playing, currentProgress, queue, lyrics]);
 
   // Hue lights react to mic input only (ignore play state)
   useEffect(() => {
@@ -1138,7 +1206,7 @@ export default function PlayerPage() {
           >
             <Lyrics3D
               lyrics={lyrics}
-              currentTimeMs={currentProgress}
+              currentTimeMs={currentProgress + lyricsTimeOffset}
               micData={micData}
               font={getFontPath(lyricsFont)}
               color={lyricsColor}
