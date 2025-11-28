@@ -31,6 +31,7 @@ interface InitMessage {
 interface UpdateConfigMessage {
   type: 'UPDATE_CONFIG';
   selectedLights: string[];
+  smoothness: number;
 }
 
 interface SetActiveMessage {
@@ -61,7 +62,10 @@ interface UpdateAudioMessage {
 type WorkerMessage = UpdateLightMessage | InitMessage | UpdateConfigMessage | SetActiveMessage | UpdateAudioMessage;
 
 // Per-light queues (same pattern as main thread, but in worker)
-const lightQueues = new Map<string, Promise<void>>();
+// Track which lights are currently updating
+const lightUpdating = new Map<string, boolean>();
+// Store the NEXT state to send (only the latest, replaces previous pending)
+const pendingStates = new Map<string, HueLightState | null>();
 const lightFailures = new Map<string, number>();
 const lastBrightness = new Map<string, number>();
 
@@ -74,6 +78,7 @@ let selectedLights: Set<string> = new Set();
 let isActive = false;
 let lightConfigs: Record<string, { mode: 'bass' | 'voice' | 'drums' }> = {};
 let colorCapableLights: Set<string> = new Set(); // Track which lights support color
+let smoothness = 6; // Brightness buckets (2-128)
 
 /**
  * Set the state of a specific light
@@ -100,8 +105,6 @@ async function setLightState(
       delete filteredState.sat;
     }
     
-    // Debug: Log what we're sending (only in production issues)
-    console.log(`📤 Worker: Sending to light ${lightId}:`, JSON.stringify(filteredState));
     
     const response = await fetch(
       `http://${bridgeIp}/api/${username}/lights/${lightId}/state`,
@@ -111,8 +114,6 @@ async function setLightState(
         body: JSON.stringify(filteredState),
       }
     );
-    
-    console.log(`📥 Worker: Response from light ${lightId}:`, response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -120,8 +121,6 @@ async function setLightState(
 
     const data = await response.json();
     
-    // Debug: Log full response
-    console.log(`📋 Worker: Full response for light ${lightId}:`, data);
     
     // Hue returns array of success/error objects
     if (!Array.isArray(data)) {
@@ -137,7 +136,6 @@ async function setLightState(
     if (colorErrors.length > 0) {
       // Light doesn't support color - remember this
       colorCapableLights.delete(lightId);
-      console.log(`💡 Worker: Light ${lightId} is white-only (no color support)`);
     } else if (state.hue !== undefined || state.sat !== undefined) {
       // Light accepted color properties - it's color capable
       colorCapableLights.add(lightId);
@@ -159,8 +157,14 @@ async function setLightState(
       item.error && item.error.type !== 6
     );
     
+    // Log only if there are real errors (ignore Type 6 - not available)
     if (realErrors.length > 0) {
-      console.warn(`⚠️ Worker Light ${lightId}: ${successCount} success, ${realErrors.length} errors`);
+      const errorDetails = realErrors.map((e: any) => {
+        const address = e.error?.address || 'unknown';
+        const property = address.split('/').pop();
+        return `${property} (Type ${e.error?.type})`;
+      }).join(', ');
+      console.warn(`⚠️ Light ${lightId}: ${successCount} success, ${realErrors.length} errors - ${errorDetails}`);
     }
     
   } catch (error: any) {
@@ -174,57 +178,68 @@ async function setLightState(
 }
 
 /**
- * Queue an update for a specific light
+ * Update light state - only sends the LATEST state, discards intermediate states
+ * This prevents lag between audio and lights
  */
 function queueLightUpdate(lightId: string, state: HueLightState): void {
-  const previousPromise = lightQueues.get(lightId) || Promise.resolve();
+  // Check if still active and selected
+  if (!isActive || !selectedLights.has(lightId)) {
+    return;
+  }
   
-  const newPromise = previousPromise.then(async () => {
-    // Check if still active and selected BEFORE executing
-    if (!isActive) {
-      console.log(`⏭️ Worker: Skipping light ${lightId} - not active`);
-      return; // Skip - deactivated
-    }
-    
-    if (!selectedLights.has(lightId)) {
-      console.log(`⏭️ Worker: Skipping light ${lightId} - not selected`);
-      return; // Skip - deselected
-    }
-    
-    try {
-      await setLightState(lightId, state);
-      
-      // Success
-      lightFailures.set(lightId, 0);
-      lastBrightness.set(lightId, state.bri || 0);
-      
-      // Send success message back to main thread
-      self.postMessage({
-        type: 'UPDATE_SUCCESS',
-        lightId,
-        brightness: state.bri,
-      });
-    } catch (e: any) {
-      // Failure
-      const failures = (lightFailures.get(lightId) || 0) + 1;
-      lightFailures.set(lightId, failures);
-      
-      console.error(`❌ Worker: Light ${lightId} failed (${failures}/${MAX_FAILURES})`, e.message || e);
-      
-      // Send failure message back to main thread
-      self.postMessage({
-        type: 'UPDATE_FAILURE',
-        lightId,
-        failures,
-        error: e.message || 'Unknown error',
-      });
-    }
-  }).catch((error) => {
-    // Catch any promise chain errors
-    console.error(`💥 Worker: Unhandled error in light ${lightId} queue:`, error);
-  });
+  // If this light is currently updating, store this as the next state to send
+  if (lightUpdating.get(lightId)) {
+    pendingStates.set(lightId, state);
+    return;
+  }
   
-  lightQueues.set(lightId, newPromise);
+  // Start updating this light
+  lightUpdating.set(lightId, true);
+  sendLightUpdate(lightId, state);
+}
+
+/**
+ * Actually send the light update and handle any pending states
+ */
+async function sendLightUpdate(lightId: string, state: HueLightState): Promise<void> {
+  try {
+    await setLightState(lightId, state);
+    
+    // Success
+    lightFailures.set(lightId, 0);
+    lastBrightness.set(lightId, state.bri || 0);
+    
+    // Send success message back to main thread
+    self.postMessage({
+      type: 'UPDATE_SUCCESS',
+      lightId,
+      brightness: state.bri,
+    });
+  } catch (e: any) {
+    // Failure
+    const failures = (lightFailures.get(lightId) || 0) + 1;
+    lightFailures.set(lightId, failures);
+    
+    // Send failure message back to main thread
+    self.postMessage({
+      type: 'UPDATE_FAILURE',
+      lightId,
+      failures,
+      error: e.message || 'Unknown error',
+    });
+  }
+  
+  // Check if there's a pending state to send
+  const nextState = pendingStates.get(lightId);
+  if (nextState && isActive && selectedLights.has(lightId)) {
+    // Clear pending and send the latest state
+    pendingStates.set(lightId, null);
+    await sendLightUpdate(lightId, nextState);
+  } else {
+    // Done updating this light
+    lightUpdating.set(lightId, false);
+    pendingStates.set(lightId, null);
+  }
 }
 
 /**
@@ -237,7 +252,6 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
     case 'INIT':
       bridgeIp = message.bridgeIp || '';
       username = message.username || '';
-      console.log('💡 Hue Worker initialized');
       break;
       
     case 'UPDATE_CONFIG':
@@ -245,28 +259,30 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
       if (message.selectedLights) {
         const newSelectedLights = new Set(message.selectedLights);
         
-        // Clear queues for lights that were deselected
-        for (const lightId of lightQueues.keys()) {
+        // Clear pending states for lights that were deselected
+        for (const lightId of pendingStates.keys()) {
           if (!newSelectedLights.has(lightId)) {
-            lightQueues.delete(lightId);
-            console.log(`💡 Worker: Cleared queue for deselected light ${lightId}`);
+            pendingStates.delete(lightId);
+            lightUpdating.delete(lightId);
           }
         }
         
         selectedLights = newSelectedLights;
-        console.log(`💡 Worker: Updated selected lights (${selectedLights.size})`);
+      }
+      
+      // Update smoothness
+      if (message.smoothness !== undefined) {
+        smoothness = message.smoothness;
       }
       break;
       
     case 'UPDATE_AUDIO':
       // Skip if not active
       if (!isActive) {
-        console.log('⏭️ Worker: Skipping audio update - not active');
         return;
       }
       
       if (selectedLights.size === 0) {
-        console.log('⏭️ Worker: Skipping audio update - no lights selected');
         return;
       }
       
@@ -293,24 +309,13 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
       for (const lightId of selectedLights) {
         const lightConfig = lightConfigs[lightId];
         if (!lightConfig) {
-          console.warn(`⚠️ Worker: No config for light ${lightId}`);
           continue;
         }
         
-        // Calculate state for this light
-        const lightState = lightConfigToState(lightConfig, audioData);
+        // Calculate state for this light with smoothness setting
+        const lightState = lightConfigToState(lightConfig, audioData, smoothness);
         const newBrightness = lightState.bri || 0;
         
-        // Debug: Log calculated state for first light
-        if (updatesQueued === 0) {
-          console.log(`🎨 Worker: Calculated state for light ${lightId}:`, {
-            bri: lightState.bri,
-            hue: lightState.hue,
-            sat: lightState.sat,
-            on: lightState.on,
-            transitiontime: lightState.transitiontime
-          });
-        }
         
         // Skip if brightness hasn't changed
         const prevBri = lastBrightness.get(lightId);
@@ -332,13 +337,11 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
       // Update active state
       const wasActive = isActive;
       isActive = message.isActive ?? false;
-      console.log(`💡 Worker: Hue ${isActive ? 'activated' : 'deactivated'}`);
       
-      // Clear ALL queues when deactivated (stops in-progress updates)
+      // Clear ALL pending states when deactivated
       if (!isActive && wasActive) {
-        const numQueues = lightQueues.size;
-        lightQueues.clear();
-        console.log(`💡 Worker: Cleared ${numQueues} light queues`);
+        pendingStates.clear();
+        lightUpdating.clear();
       }
       break;
       

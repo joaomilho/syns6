@@ -225,25 +225,26 @@ export function lightConfigToState(
       hihat: number; // 0-1
       cymbal: number; // 0-1
     };
-  }
+  },
+  smoothness: number = 6 // Brightness buckets
 ): HueLightState {
   // Handle different modes
   if (config.mode === "bass") {
-    return createBassLightState(audioData.bass);
+    return createBassLightState(audioData.bass, smoothness);
   } else if (config.mode === "voice") {
-    return createVoiceLightState(audioData.voice || 0);
+    return createVoiceLightState(audioData.voice || 0, smoothness);
   } else if (config.mode === "drums") {
-    return createDrumsLightState(audioData);
+    return createDrumsLightState(audioData, smoothness);
   }
   
   // Fallback to bass mode if mode is not recognized
-  return createBassLightState(audioData.bass);
+  return createBassLightState(audioData.bass, smoothness);
 }
 
 /**
  * Create bass-reactive light state (red → purple → blue)
  */
-function createBassLightState(intensity: number): HueLightState {
+function createBassLightState(intensity: number, smoothness: number): HueLightState {
 
   // Apply exponential curve for more dramatic response
   // This makes quiet sounds dimmer and loud sounds much brighter
@@ -280,28 +281,25 @@ function createBassLightState(intensity: number): HueLightState {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
-  const numBuckets = 32;
-  const bucketSize = Math.floor(254 / numBuckets);
+  // Quantize based on smoothness setting (2-128 buckets)
+  const bucketSize = Math.floor(254 / smoothness);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
   // Clamp to valid range and ensure integer
   const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
 
-  // Send full state including color for dramatic effect
+  // Send only necessary properties (no 'on' or 'transitiontime')
   return {
-    on: true,
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
 /**
  * Create voice-reactive light state (blue, dramatic)
  */
-function createVoiceLightState(intensity: number): HueLightState {
+function createVoiceLightState(intensity: number, smoothness: number): HueLightState {
   // Apply exponential curve for more dramatic response
   const dramaticIntensity = Math.pow(intensity, 0.5);
   
@@ -335,20 +333,18 @@ function createVoiceLightState(intensity: number): HueLightState {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
-  const numBuckets = 32;
-  const bucketSize = Math.floor(254 / numBuckets);
+  // Quantize based on smoothness setting (2-128 buckets)
+  const bucketSize = Math.floor(254 / smoothness);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
   // Clamp to valid range and ensure integer
   const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
 
+  // Send only necessary properties (lights assumed already on, transitiontime=0 is default)
   return {
-    on: true,
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
@@ -362,7 +358,7 @@ function createDrumsLightState(audioData: {
     hihat: number;
     cymbal: number;
   };
-}): HueLightState {
+}, smoothness: number): HueLightState {
   // Calculate drums intensity from well-detected elements only
   const snare = audioData.drums?.snare || 0;
   const hihat = audioData.drums?.hihat || 0;
@@ -405,20 +401,18 @@ function createDrumsLightState(audioData: {
   // Convert to Hue scale (0-254)
   const rawBri = (brightness / 100) * 254;
   
-  // Quantize into 32 buckets (smoother than 12, still reduces API calls)
-  const numBuckets = 32;
-  const bucketSize = Math.floor(254 / numBuckets);
+  // Quantize based on smoothness setting (2-128 buckets)
+  const bucketSize = Math.floor(254 / smoothness);
   const quantizedBri = Math.round(rawBri / bucketSize) * bucketSize;
   
   // Clamp to valid range and ensure integer
   const finalBri = Math.round(Math.max(1, Math.min(254, quantizedBri)));
 
+  // Send only necessary properties (lights assumed already on, transitiontime=0 is default)
   return {
-    on: true,
     bri: finalBri,
     hue: hue,
     sat: sat,
-    transitiontime: 0, // INSTANT - maximum responsiveness
   };
 }
 
