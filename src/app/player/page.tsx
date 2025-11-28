@@ -259,16 +259,12 @@ export default function PlayerPage() {
   // Broadcast state to viewers (lightweight - only song/lyrics/queue info)
   useEffect(() => {
     if (!shareManager.isHosting) {
-      console.log('🚫 [HOST] Not hosting, skipping broadcast');
       return;
     }
     
     if (shareManager.connectedViewers === 0) {
-      console.log('🚫 [HOST] No viewers connected, skipping broadcast');
       return;
     }
-
-    console.log(`🎬 [HOST] Starting broadcast to ${shareManager.connectedViewers} viewer(s)`);
 
     let broadcastCount = 0;
     

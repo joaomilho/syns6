@@ -20,6 +20,7 @@ export interface HueConfig {
   username: string;
   selectedLights: string[];
   lightConfigs: Record<string, LightConfig>; // lightId -> config
+  smoothness: number; // Brightness buckets: 2, 4, 8, 16, 32, 64, 128
 }
 
 export interface HueConnection {
@@ -38,6 +39,7 @@ export interface HueConnection {
   disconnect: () => void;
   selectLights: (lightIds: string[]) => void;
   setLightConfig: (lightId: string, config: LightConfig) => void;
+  setSmoothness: (smoothness: number) => void;
   updateLights: (state: HueLightState) => Promise<void>;
   reactToMusic: (micData: {
     energy: number;
@@ -118,16 +120,16 @@ export function useHueLights(): HueConnection {
       console.log('💡 Initializing Hue worker');
       initWorker(config.bridgeIp, config.username);
       // Send initial config
-      updateConfig(config.selectedLights);
+      updateConfig(config.selectedLights, config.smoothness);
     }
   }, [config, isConnected, initWorker, updateConfig]);
 
-  // Update worker when selected lights change
+  // Update worker when selected lights or smoothness change
   useEffect(() => {
     if (config && isConnected) {
-      updateConfig(config.selectedLights);
+      updateConfig(config.selectedLights, config.smoothness);
     }
-  }, [config?.selectedLights, isConnected, updateConfig]);
+  }, [config?.selectedLights, config?.smoothness, isConnected, updateConfig]);
 
   // Update worker when active state changes
   useEffect(() => {
@@ -159,6 +161,11 @@ export function useHueLights(): HueConnection {
               savedConfig.lightConfigs[lightId] = { mode: "bass" };
             }
           });
+        }
+        
+        // Migrate old configs that don't have smoothness
+        if (!savedConfig.smoothness) {
+          savedConfig.smoothness = 6; // Default to 6 buckets
         }
         
         setConfig(savedConfig as HueConfig);
@@ -229,6 +236,7 @@ export function useHueLights(): HueConnection {
         username,
         selectedLights: Object.keys(fetchedLights),
         lightConfigs,
+        smoothness: 6, // Default to 6 buckets
       };
       
       // Set initial colors for all lights (red, full saturation)
@@ -285,6 +293,15 @@ export function useHueLights(): HueConnection {
           ...config.lightConfigs,
           [lightId]: lightConfig,
         },
+      });
+    }
+  };
+
+  const setSmoothness = (smoothness: number) => {
+    if (config) {
+      setConfig({
+        ...config,
+        smoothness,
       });
     }
   };
@@ -428,7 +445,7 @@ export function useHueLights(): HueConnection {
         const firstLightId = lightsToUpdate[0];
         const firstLightConfig = config.lightConfigs[firstLightId];
         if (firstLightConfig) {
-          const firstLightState = lightConfigToState(firstLightConfig, audioData);
+          const firstLightState = lightConfigToState(firstLightConfig, audioData, config.smoothness);
           setDebugData({
             bass: audioData.bass,
             brightness: firstLightState.bri || 0,
@@ -494,6 +511,7 @@ export function useHueLights(): HueConnection {
     disconnect,
     selectLights,
     setLightConfig,
+    setSmoothness,
     updateLights,
     reactToMusic,
     setActive: setActiveWithLog,

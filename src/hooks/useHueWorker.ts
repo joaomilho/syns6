@@ -26,7 +26,7 @@ interface HueWorkerHook {
   updateLight: (lightId: string, state: HueLightState) => void;
   updateAudio: (audioData: AudioData, lightConfigs: Record<string, { mode: string }>) => void;
   initWorker: (bridgeIp: string, username: string) => void;
-  updateConfig: (selectedLights: string[]) => void;
+  updateConfig: (selectedLights: string[], smoothness: number) => void;
   setActive: (isActive: boolean) => void;
   terminateWorker: () => void;
   setCallbacks: (callbacks: {
@@ -105,7 +105,7 @@ export function useHueWorker(): HueWorkerHook {
     }
   }, []);
 
-  const updateConfig = useCallback((selectedLights: string[]) => {
+  const updateConfig = useCallback((selectedLights: string[], smoothness: number) => {
     if (!workerRef.current) {
       return;
     }
@@ -113,6 +113,7 @@ export function useHueWorker(): HueWorkerHook {
     workerRef.current.postMessage({
       type: 'UPDATE_CONFIG',
       selectedLights,
+      smoothness,
     });
   }, []);
 

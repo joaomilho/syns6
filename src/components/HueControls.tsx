@@ -71,6 +71,27 @@ export default function HueControls({ hue }: HueControlsProps) {
           </p>
         </div>
 
+        <div className={styles.smoothnessControl}>
+          <label className={styles.smoothnessLabel}>
+            <span>Smoothness: {config.smoothness} levels</span>
+            <input
+              type="range"
+              min="0"
+              max="7"
+              value={[2, 4, 6, 8, 16, 32, 64, 128].indexOf(config.smoothness)}
+              onChange={(e) => {
+                const buckets = [2, 4, 6, 8, 16, 32, 64, 128][parseInt(e.target.value)];
+                hue.setSmoothness(buckets);
+              }}
+              className={styles.smoothnessSlider}
+            />
+            <div className={styles.smoothnessHint}>
+              <span>2 (Responsive)</span>
+              <span>128 (Smooth)</span>
+            </div>
+          </label>
+        </div>
+
         <div className={styles.lightSelector}>
           <div className={styles.selectorHeader}>
             <span>Lights:</span>
