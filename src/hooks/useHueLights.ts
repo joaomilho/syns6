@@ -13,6 +13,7 @@ import {
   HueLightState,
   LightConfig,
 } from "@/lib/hue";
+import { useHueWorker } from "@/hooks/useHueWorker";
 
 export interface HueConfig {
   bridgeIp: string;
@@ -83,7 +84,7 @@ export function useHueLights(): HueConnection {
   const [debugData, setDebugData] = useState<{ bass: number; brightness: number } | null>(null);
   
   const lastUpdateTime = useRef<number>(0);
-  const updateThrottleMs = 100; // 10 updates/second (reduced to prevent overload)
+  const updateThrottleMs = 1000/60; // 60 updates/second
   const responsiveLights = useRef<Set<string>>(new Set()); // Track which lights respond
   const lightFailures = useRef<Map<string, number>>(new Map()); // Track failures per light
   const lastLogTime = useRef<number>(0);
@@ -91,6 +92,49 @@ export function useHueLights(): HueConnection {
   const FAILURE_RESET_MS = 10000; // Reset failures after 10 seconds
   const isUpdating = useRef<boolean>(false); // Lock to prevent concurrent updates
   const lastBrightness = useRef<Map<string, number>>(new Map()); // Track last brightness per light
+  
+  // Hue Worker: handles all HTTP requests in separate thread
+  const { updateAudio, initWorker, updateConfig, setActive: setWorkerActive, terminateWorker, setCallbacks } = useHueWorker();
+
+  // Setup worker callbacks to handle success/failure
+  useEffect(() => {
+    setCallbacks({
+      onSuccess: (lightId, brightness) => {
+        lightFailures.current.set(lightId, 0);
+        responsiveLights.current.add(lightId);
+      },
+      onFailure: (lightId, failures) => {
+        lightFailures.current.set(lightId, failures);
+        if (failures >= MAX_FAILURES) {
+          responsiveLights.current.delete(lightId);
+        }
+      },
+    });
+  }, [setCallbacks]);
+
+  // Initialize worker when config is available
+  useEffect(() => {
+    if (config && isConnected) {
+      console.log('💡 Initializing Hue worker');
+      initWorker(config.bridgeIp, config.username);
+      // Send initial config
+      updateConfig(config.selectedLights);
+    }
+  }, [config, isConnected, initWorker, updateConfig]);
+
+  // Update worker when selected lights change
+  useEffect(() => {
+    if (config && isConnected) {
+      updateConfig(config.selectedLights);
+    }
+  }, [config?.selectedLights, isConnected, updateConfig]);
+
+  // Update worker when active state changes
+  useEffect(() => {
+    if (isConnected) {
+      setWorkerActive(isActive);
+    }
+  }, [isActive, isConnected, setWorkerActive]);
 
   // Load saved config
   useEffect(() => {
@@ -217,6 +261,9 @@ export function useHueLights(): HueConnection {
   };
 
   const disconnect = () => {
+    // Terminate worker
+    terminateWorker();
+    
     setIsConnected(false);
     setConfig(null);
     setLights({});
@@ -358,58 +405,38 @@ export function useHueLights(): HueConnection {
         return;
       }
 
-      // Update lights sequentially to avoid overwhelming the bridge
-      for (const lightId of lightsToUpdate) {
-        const lightConfig = config.lightConfigs[lightId];
-        if (!lightConfig) continue;
-
-        // Debug: log mode for first light
-        if (lightsToUpdate.indexOf(lightId) === 0) {
-          console.log(`💡 Light ${lightId} mode: ${lightConfig.mode}`);
-        }
-
-        const lightState = lightConfigToState(lightConfig, audioData);
-        const newBrightness = lightState.bri || 0;
-        
-        // Skip if brightness hasn't changed
-        const previousBrightness = lastBrightness.current.get(lightId);
-        if (previousBrightness === newBrightness) {
-          // Update debug data even if skipping (to show current state)
-          if (lightsToUpdate.indexOf(lightId) === 0) {
-            setDebugData({
-              bass: audioData.bass,
-              brightness: newBrightness,
-            });
-          }
-          continue;
-        }
-        
-        // Update debug data with the first light's values
-        if (lightsToUpdate.indexOf(lightId) === 0) {
+      // Send audio data to worker once - worker calculates states for all lights
+      // This is much more efficient than sending per-light updates
+      updateAudio(
+        {
+          bass: audioData.bass,
+          mid: audioData.mid,
+          treble: audioData.treble,
+          subBass: audioData.subBass,
+          presence: audioData.presence,
+          voiceStrength: audioData.voice,
+          instruments: micData.instruments ? {
+            drumComponents: {
+              snare: micData.instruments.drumComponents.snare,
+              hihat: micData.instruments.drumComponents.hihat,
+              cymbal: micData.instruments.drumComponents.cymbal,
+            },
+          } : undefined,
+        },
+        config.lightConfigs
+      );
+      
+      // Update debug data
+      if (lightsToUpdate.length > 0) {
+        // Calculate first light's state for debug display
+        const firstLightId = lightsToUpdate[0];
+        const firstLightConfig = config.lightConfigs[firstLightId];
+        if (firstLightConfig) {
+          const firstLightState = lightConfigToState(firstLightConfig, audioData);
           setDebugData({
             bass: audioData.bass,
-            brightness: newBrightness,
+            brightness: firstLightState.bri || 0,
           });
-        }
-        
-        try {
-          await setLightState(config.bridgeIp, config.username, lightId, lightState);
-          // Success - reset failure count, mark as responsive, and store brightness
-          lightFailures.current.set(lightId, 0);
-          responsiveLights.current.add(lightId);
-          lastBrightness.current.set(lightId, newBrightness);
-        } catch (e) {
-          // Increment failure count
-          const failures = (lightFailures.current.get(lightId) || 0) + 1;
-          lightFailures.current.set(lightId, failures);
-          
-          if (failures >= MAX_FAILURES) {
-            responsiveLights.current.delete(lightId);
-            if (now - lastLogTime.current > 5000) {
-              console.log(`💡 Light ${lightId} (${lights[lightId]?.name || 'unknown'}) failed ${MAX_FAILURES} times, pausing updates`);
-              lastLogTime.current = now;
-            }
-          }
         }
       }
 
