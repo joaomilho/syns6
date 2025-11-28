@@ -364,10 +364,6 @@ export function useHueLights(): HueConnection {
       }
 
       // Update each light individually based on its configuration
-      
-      // Debug: log instruments data
-      console.log('🎸 micData.instruments:', micData.instruments);
-      
       const audioData = {
         bass: calculatedBass,
         mid: micData.mid,
