@@ -9,7 +9,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
 import { getPlanFromPriceId, getPriceForPlan, formatPrice, getCurrencySymbol } from "@/lib/prices";
 import { CurrencyCode } from "@/components/CurrencyDropdown";
-import Syns6Logo from "@/components/Syns6Logo";
+import { Logo } from "@/components/ds";
 import styles from "./profile.module.css";
 
 export default function ProfilePage() {
@@ -43,7 +43,7 @@ export default function ProfilePage() {
       {/* Top Bar */}
       <div className={styles.topBar}>
         <Link href="/player">
-          <Syns6Logo />
+          <Logo />
         </Link>
         
         <div className={styles.controlGroups}>

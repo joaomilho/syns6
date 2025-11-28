@@ -8,7 +8,7 @@ import { useCamera } from "@/hooks/useCamera";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import VisualizationDropdown, { VisualizationType } from "@/components/VisualizationDropdown";
 import NowPlayingFooter from "@/components/NowPlayingFooter";
-import Syns6Logo from "@/components/Syns6Logo";
+import { Logo } from "@/components/ds";
 import ToolsMenu from "@/components/ToolsMenu";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import OrbitalVisualization from "@/components/OrbitalVisualization";
@@ -859,7 +859,7 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
 
       {/* Top Bar - matching master view */}
       <div className={styles.topBar}>
-        <Syns6Logo />
+        <Logo />
 
         <div className={styles.viewerControls}>
           {/* Latency indicator */}

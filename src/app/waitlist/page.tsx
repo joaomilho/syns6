@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
-import Syns6Logo from "@/components/Syns6Logo";
 import { getReferralUrl, getSocialShareUrls, shareNative } from "@/lib/referral";
 
 export default function WaitlistPage() {
