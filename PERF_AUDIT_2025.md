@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-After implementing the initial optimization list, we've achieved significant performance gains. However, there's still a 10-15 FPS gap to reach consistent 60 FPS. This audit identifies **remaining bottlenecks** and provides **advanced optimizations** to close that gap.
+After implementing the initial optimization list, we've achieved significant performance gains. However, there's still a 00-15 FPS gap to reach consistent 60 FPS. This audit identifies **remaining bottlenecks** and provides **advanced optimizations** to close that gap.
 
 ---
 
@@ -207,46 +207,20 @@ Pre-render common words to textures instead of regenerating SDF.
 
 ## 🔧 React Rendering Optimizations (Medium Impact)
 
-### 5. **Polling Interval Too Aggressive**
+### 5. **Polling Interval - Already Optimized** ✅
 
-**Problem:**
+**Current Status:**
 ```typescript
-// player/page.tsx - Line 369
-const polling = setInterval(fetchPlayback, 1000); // Every 1 second
+// player/page.tsx - Line 647-648
+const playbackInterval = setInterval(fetchPlaybackState, 5000); // Every 5 seconds
+const queueInterval = setInterval(fetchQueueAndPrefetchLyrics, 10000); // Every 10 seconds
 ```
 
-Fetching Spotify API every second causes:
-- Network overhead
-- State updates triggering re-renders
-- Queue refetching
+**Status:** ✅ **Already optimized!** Polling is set to 5 seconds for playback and 10 seconds for queue.
 
-**Impact:** ~2-3 FPS loss (from re-renders)
+**Impact:** None - this is already well-optimized.
 
-**Solutions:**
-
-#### A. Increase Polling Interval
-```typescript
-const polling = setInterval(fetchPlayback, 2000); // Every 2 seconds
-```
-
-#### B. Use Local Progress Estimation
-```typescript
-// Only fetch every 5 seconds, estimate progress locally
-const polling = setInterval(fetchPlayback, 5000);
-
-// Locally estimate progress between fetches
-useEffect(() => {
-  if (!playbackState?.is_playing) return;
-  
-  const interval = setInterval(() => {
-    setCurrentProgress(prev => prev + 100); // +100ms per tick
-  }, 100);
-  
-  return () => clearInterval(interval);
-}, [playbackState?.is_playing]);
-```
-
-**Recommendation:** Implement B for smoother progress + less network overhead.
+**Recommendation:** No changes needed. Current polling intervals are appropriate.
 
 ---
 
@@ -567,22 +541,21 @@ self.addEventListener('message', (event) => {
 3. ✅ **Reduce LavaLamp resolution:** 48 → 32 (+3-5 FPS)
 4. ✅ **Reduce lyrics to 3 lines:** (+2-3 FPS)
 5. ✅ **Remove outline on non-current lyrics:** (+1-2 FPS)
-6. ✅ **Increase Spotify polling:** 1s → 2s (+1-2 FPS)
 
-**Total Expected Gain: +13-20 FPS** 🔥
+**Total Expected Gain: +11-18 FPS** 🔥
 
 ### Medium (1-2 hours)
-7. ✅ **Merge canvases:** Single WebGL context (+5-8 FPS)
-8. ✅ **Stable useCallback refs:** Prevent re-renders (+2 FPS)
-9. ✅ **Throttle LavaLamp updates:** Every 2nd frame (+2-3 FPS)
-10. ✅ **Variable FFT size:** Per-viz configuration (+1-2 FPS)
+6. ✅ **Merge canvases:** Single WebGL context (+5-8 FPS)
+7. ✅ **Stable useCallback refs:** Prevent re-renders (+2 FPS)
+8. ✅ **Throttle LavaLamp updates:** Every 2nd frame (+2-3 FPS)
+9. ✅ **Variable FFT size:** Per-viz configuration (+1-2 FPS)
 
 **Total Expected Gain: +10-15 FPS**
 
 ### Advanced (4+ hours)
-11. ⚠️ **GPU shaders for Psychedelic:** Move to vertex shaders (+5-10 FPS)
-12. ⚠️ **Instanced meshes for LavaLamp:** Replace marching cubes (+5-8 FPS)
-13. ⚠️ **Texture atlas for lyrics:** Pre-render common words (+2-3 FPS)
+10. ⚠️ **GPU shaders for Psychedelic:** Move to vertex shaders (+5-10 FPS)
+11. ⚠️ **Instanced meshes for LavaLamp:** Replace marching cubes (+5-8 FPS)
+12. ⚠️ **Texture atlas for lyrics:** Pre-render common words (+2-3 FPS)
 
 **Total Expected Gain: +12-21 FPS**
 
@@ -592,7 +565,7 @@ self.addEventListener('message', (event) => {
 
 | Current | After Quick Wins | After Medium | After Advanced |
 |---------|-----------------|--------------|----------------|
-| 45-50   | 58-70 🎯        | 68-85 🚀     | 80-106 ⚡     |
+| 45-50   | 56-68 🎯        | 66-83 🚀     | 78-104 ⚡     |
 
 **Target: 60 FPS** → Achievable with Quick + Medium wins!
 
@@ -650,13 +623,15 @@ useEffect(() => {
 
 **Current State:** 45-50 FPS (good progress!)  
 **Target:** 60 FPS (achievable!)  
-**Path:** Quick Wins → 58-70 FPS → Mission accomplished! 🎉
+**Path:** Quick Wins → 56-68 FPS → Medium Wins → 60+ FPS → Mission accomplished! 🎉
 
 **Recommended Next Steps:**
-1. Start with Quick Wins (30 mins for +13-20 FPS)
+1. Start with Quick Wins (30 mins for +11-18 FPS)
 2. Test and measure
-3. Implement Medium optimizations if needed
+3. Implement Medium optimizations to reach 60+ FPS
 4. Advanced optimizations are optional but fun! 🚀
+
+**Note:** Spotify polling is already optimized at 5 seconds (playback) and 10 seconds (queue) - no changes needed there! ✅
 
 ---
 
