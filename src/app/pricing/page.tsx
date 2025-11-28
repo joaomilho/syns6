@@ -393,6 +393,10 @@ export default function PricingPage() {
                 {error}
               </div>
             )}
+
+            <p className={styles.termsNotice}>
+              By subscribing, you agree to our <Link href="/terms" className={styles.termsLink}>Terms of Service</Link> and <Link href="/privacy" className={styles.termsLink}>Privacy Policy</Link>.
+            </p>
           </div>
         </div>
 

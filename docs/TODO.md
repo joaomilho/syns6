@@ -1,15 +1,16 @@
 # Soft launch checklist
 
-[ ] Trial period
+[X] Trial period
     Allow testing for 1-3 days without CC (only for PH).
-[ ] Legalities
+[X] Legalities
     TOS
     GRPC
     etc
-[ ] Lyrics design
+[X] Lyrics design
     Make lyrics pop a bit more, Bloom?
 [ ] Perf review
     Perf review EVERYTHING
+    [X] First pass
     [ ] Maybe passing the bass/etc instead of micData for compo? Or getting AT compo?
 [ ] LavaLamp holes
     The LavaLamp seems to have a clipping problem (aka holes) that's related to limits set in the "MarchingSquares" compo. Hard to tweak to perfection.
