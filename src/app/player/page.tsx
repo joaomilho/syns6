@@ -14,7 +14,7 @@ import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useLyricsWorker } from "@/hooks/useLyricsWorker";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
-import HueControls from "@/components/HueControls";
+import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
 import { Canvas } from "@react-three/fiber";
@@ -150,7 +150,6 @@ export default function PlayerPage() {
     useState<VisualizationMode>("STATIC");
   const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
   const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
-  const [showHueControls, setShowHueControls] = useState(false);
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
@@ -1292,10 +1291,6 @@ export default function PlayerPage() {
           onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
           showMic={micAvailable}
           showCamera={webglAvailable}
-          showHue={true}
-          isHueConnected={hue.isConnected}
-          onHueToggle={() => setShowHueControls(!showHueControls)}
-          isHueHighlighted={showHueControls}
         />
 
         {/* AI Create Button */}
@@ -1329,6 +1324,9 @@ export default function PlayerPage() {
           onColorChange={setLyricsColor}
         />
 
+        {/* Hue Dropdown */}
+        <HueDropdown hue={hue} />
+
         {/* User Profile */}
         {session?.user && (
           <Link href="/profile" className={styles.userProfile}>
@@ -1349,13 +1347,6 @@ export default function PlayerPage() {
         )}
         </div>
       </div>
-
-      {/* Hue Controls Panel */}
-      {showHueControls && (
-        <div className={styles.huePanel}>
-          <HueControls hue={hue} />
-        </div>
-      )}
 
       {/* Bottom Player Controls - with transition */}
       <div 
