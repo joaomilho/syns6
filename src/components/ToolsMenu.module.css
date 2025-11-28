@@ -17,13 +17,30 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
+  border-radius: 18px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.statusIcon.playing {
   color: #1ed760;
   background: rgba(29, 185, 84, 0.3);
   border: 1px solid rgba(29, 185, 84, 0.5);
-  border-radius: 18px;
-  flex-shrink: 0;
   box-shadow: 0 0 8px rgba(29, 185, 84, 0.3);
-  transition: all 0.3s ease;
+}
+
+.statusIcon.paused {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+}
+
+.statusIcon.stopped {
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
 }
 
 .statusIcon span {

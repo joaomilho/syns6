@@ -8,10 +8,6 @@ interface ToolsMenuProps {
   isCameraEnabled: boolean;
   onMicToggle: () => void;
   onCameraToggle: () => void;
-  showHue?: boolean;
-  isHueConnected?: boolean;
-  onHueToggle?: () => void;
-  isHueHighlighted?: boolean;
   showMic?: boolean;
   showCamera?: boolean;
 }
@@ -22,17 +18,19 @@ export default function ToolsMenu({
   isCameraEnabled,
   onMicToggle,
   onCameraToggle,
-  showHue = false,
-  isHueConnected = false,
-  onHueToggle,
-  isHueHighlighted = false,
   showMic = true,
   showCamera = true,
 }: ToolsMenuProps) {
+  const getStatusClass = () => {
+    if (isPlaying === null) return styles.stopped;
+    if (isPlaying) return styles.playing;
+    return styles.paused;
+  };
+
   return (
     <div className={styles.toolsMenu}>
       {/* Play/Pause Status Indicator */}
-      <div className={styles.statusIcon}>
+      <div className={`${styles.statusIcon} ${getStatusClass()}`}>
         {isPlaying === null ? (
           <span title="No song playing">⏹︎</span>
         ) : isPlaying ? (
@@ -61,19 +59,6 @@ export default function ToolsMenu({
           title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
         >
           ⊡
-        </button>
-      )}
-
-      {/* Hue Lights Toggle (optional) */}
-      {showHue && (
-        <button
-          className={`${styles.toolButton} ${
-            isHueConnected ? styles.active : ""
-          } ${isHueHighlighted ? styles.highlighted : ""}`}
-          onClick={onHueToggle}
-          title={isHueConnected ? "Hue Connected" : "Connect Hue Lights"}
-        >
-          ◐
         </button>
       )}
     </div>
