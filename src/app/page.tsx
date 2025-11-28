@@ -594,7 +594,15 @@ export default function Home() {
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© syns6. All rights reserved.</p>
+          <div className={styles.footerContent}>
+            <div className={styles.footerBrand}>
+              <p className={styles.copyright}>© 2025 syns6. All rights reserved.</p>
+            </div>
+            <div className={styles.footerLinks}>
+              <a href="/privacy" className={styles.footerLink}>Privacy & Data Protection</a>
+              <a href="/terms" className={styles.footerLink}>Terms of Service</a>
+            </div>
+          </div>
         </footer>
       </main>
     </div>

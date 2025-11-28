@@ -1109,10 +1109,48 @@ button.secondary {
 
 /* Footer */
 .footer {
-  padding: 40px 20px;
+  padding: 60px 20px 40px;
   color: #666;
   font-size: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 80px;
+}
+
+.footerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.footerBrand {
+  flex: 1;
+  min-width: 200px;
+}
+
+.copyright {
+  margin: 0;
+  color: #888;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.footerLink {
+  color: #888;
+  text-decoration: none;
+  transition: color 0.3s;
+  font-size: 14px;
+}
+
+.footerLink:hover {
+  color: #fff;
 }
 
 /* Responsive Updates */
@@ -1193,6 +1231,19 @@ button.secondary {
     font-size: 14px;
     padding: 10px 16px;
     white-space: nowrap;
+  }
+
+  /* Footer - stack on mobile */
+  .footerContent {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .footerLinks {
+    justify-content: center;
+    gap: 20px;
   }
 
   /* Instagram embeds - horizontal scroll on mobile */
