@@ -1171,6 +1171,7 @@ export default function PlayerPage() {
           }}
           dpr={1}
           onCreated={({ camera }) => {
+            // TODO is this needed?
             // Enable camera to see both layer 0 (visualizations with bloom) and layer 1 (text without bloom)
             camera.layers.enable(0);
             camera.layers.enable(1);
