@@ -21,40 +21,52 @@ interface Lyrics3DProps {
 
 /**
  * Split long text into multiple lines at word boundaries
+ * Recursively splits text into as many lines as needed
  */
 function splitLongText(text: string, maxLength: number = 60): string[] {
   if (text.length <= maxLength) {
     return [text];
   }
 
-  // Find best break point (space) near the middle
-  const middle = text.length / 2;
+  // Find best break point (space) near maxLength
   let bestBreak = -1;
-  let minDistance = Infinity;
-
-  for (let i = 0; i < text.length; i++) {
+  
+  // Look for the last space before maxLength
+  for (let i = Math.min(maxLength, text.length - 1); i >= 0; i--) {
     if (text[i] === " ") {
-      const distance = Math.abs(i - middle);
-      if (distance < minDistance && distance < maxLength / 2) {
-        minDistance = distance;
+      bestBreak = i;
+      break;
+    }
+  }
+
+  // If no space found in reasonable range, try to find first space after maxLength
+  if (bestBreak === -1) {
+    for (let i = maxLength; i < text.length; i++) {
+      if (text[i] === " ") {
         bestBreak = i;
+        break;
       }
     }
   }
 
   // Use the break point if found
   if (bestBreak > 0) {
-    return [
-      text.substring(0, bestBreak).trim(),
-      text.substring(bestBreak + 1).trim(),
-    ];
+    const firstLine = text.substring(0, bestBreak).trim();
+    const remaining = text.substring(bestBreak + 1).trim();
+    
+    // Recursively split the remaining text if it's still too long
+    return [firstLine, ...splitLongText(remaining, maxLength)];
   }
 
-  // Otherwise split at maxLength
-  return [
-    text.substring(0, maxLength).trim(),
-    text.substring(maxLength).trim(),
-  ];
+  // Otherwise split at maxLength (fallback for text without spaces)
+  const firstLine = text.substring(0, maxLength).trim();
+  const remaining = text.substring(maxLength).trim();
+  
+  if (remaining.length === 0) {
+    return [firstLine];
+  }
+  
+  return [firstLine, ...splitLongText(remaining, maxLength)];
 }
 
 function LyricText3D({
@@ -217,6 +229,60 @@ export default function Lyrics3D({
     return getCurrentLyricIndex(lyrics, currentTimeMs);
   }, [lyrics, currentTimeMs]);
 
+  // Calculate cumulative positions for each lyric, accounting for line breaks AND scale
+  const lyricPositions = useMemo(() => {
+    if (!lyrics) return [];
+    
+    const positions: number[] = [];
+    let cumulativeY = 0;
+    const baseSpacing = 6; // Base spacing between lyrics
+    const lineSpacing = 1.3; // Spacing between split lines within same lyric
+    
+    for (let i = 0; i < lyrics.length; i++) {
+      positions.push(cumulativeY);
+      
+      // Calculate how many lines this lyric will have
+      const textLines = splitLongText(lyrics[i].text);
+      const numLines = textLines.length;
+      
+      // Determine scale factor based on position relative to current
+      let scaleFactor = 1.0;
+      const offset = i - currentIndex;
+      if (i === currentIndex) {
+        scaleFactor = 2.0; // Current line is scaled to 2x
+      } else if (offset === 1) {
+        scaleFactor = 1.8; // Next line is scaled to 1.8x
+      } else if (offset === 2) {
+        scaleFactor = 1.0;
+      } else if (offset >= 3) {
+        scaleFactor = 0.7;
+      } else {
+        scaleFactor = 0.4; // Past lines
+      }
+      
+      // Calculate actual height needed for this lyric
+      const fontSize = 1; // Base font size
+      
+      // Height = (number of lines * scaled font size) + (gaps between lines * scaled spacing)
+      const textHeight = numLines * fontSize * scaleFactor;
+      const gapHeight = (numLines - 1) * lineSpacing * scaleFactor;
+      const totalHeight = textHeight + gapHeight;
+      
+      // Base spacing + extra space for the actual scaled height
+      let spacing = baseSpacing;
+      
+      // For multi-line or scaled lyrics, add the extra height beyond a single line
+      const singleLineHeight = fontSize * 1.0; // Normal single line height
+      if (totalHeight > singleLineHeight) {
+        spacing += (totalHeight - singleLineHeight);
+      }
+      
+      cumulativeY += spacing;
+    }
+    
+    return positions;
+  }, [lyrics, currentIndex]);
+
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
     // Show fewer lines for better performance: 1 before, current, 3 after = 5 total
@@ -225,10 +291,13 @@ export default function Lyrics3D({
 
   // Update target position when current line changes
   useEffect(() => {
-    // Each line is spaced 6 units apart
-    // Move the group UP by 6 units for each lyric progression
-    targetYRef.current = currentIndex * 6;
-  }, [currentIndex]);
+    // Use the pre-calculated cumulative position for the current line
+    if (currentIndex >= 0 && currentIndex < lyricPositions.length) {
+      targetYRef.current = lyricPositions[currentIndex];
+    } else {
+      targetYRef.current = 0;
+    }
+  }, [currentIndex, lyricPositions]);
 
   // Smooth animation to keep current line centered
   useFrame(() => {
@@ -281,9 +350,8 @@ export default function Lyrics3D({
         const isPast = index < currentIndex;
         const offset = index - currentIndex;
 
-        // Position ALL lines in absolute positions
-        // Each line is 6 units apart vertically
-        const yPos = -index * 6;
+        // Position using pre-calculated cumulative positions
+        const yPos = -(lyricPositions[index] || 0);
 
         const isCurrent = index === currentIndex;
 
