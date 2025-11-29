@@ -8,6 +8,7 @@ export type VisualizationType =
   | "particles"
   | "fractal"
   | "psychedelic"
+  | "kaleidoscope"
   | "youtube"
   | "waves"
   | "blackmetal"
@@ -81,6 +82,16 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/psychedelic-static.webp",
       animated: "/viz-thumbnails/psychedelic.webm",
+    },
+  },
+  {
+    id: "kaleidoscope",
+    name: "Kaleidoscope",
+    icon: "🔮",
+    thumbnail: "/viz-thumbnails/kaleidoscope-static.webp",
+    assets: {
+      static: "/viz-thumbnails/kaleidoscope-static.webp",
+      animated: "/viz-thumbnails/kaleidoscope.webm",
     },
   },
   {

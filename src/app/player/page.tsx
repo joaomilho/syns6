@@ -30,6 +30,7 @@ import VisualizationCreator from "@/components/VisualizationCreator";
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
 const FractalVisualization = dynamic(() => import("@/components/FractalVisualization"), { ssr: false });
 const PsychedelicVisualization = dynamic(() => import("@/components/PsychedelicVisualization"), { ssr: false });
+const KaleidoscopeVisualization = dynamic(() => import("@/components/KaleidoscopeVisualization"), { ssr: false });
 const WavyLinesVisualization = dynamic(() => import("@/components/WavyLinesVisualization"), { ssr: false });
 const LavaLampVisualization = dynamic(() => import("@/components/LavaLampVisualization"), { ssr: false });
 const Spectrum3DVisualization = dynamic(() => import("@/components/Spectrum3DVisualization"), { ssr: false });
@@ -49,6 +50,7 @@ const FFTSpectrumScene = dynamic(() => import("@/components/FFTSpectrumScene"), 
 const OrbitalScene = dynamic(() => import("@/components/OrbitalScene"), { ssr: false });
 const FractalScene = dynamic(() => import("@/components/FractalScene"), { ssr: false });
 const PsychedelicScene = dynamic(() => import("@/components/PsychedelicScene"), { ssr: false });
+const KaleidoscopeScene = dynamic(() => import("@/components/KaleidoscopeScene"), { ssr: false });
 const WavyLinesScene = dynamic(() => import("@/components/WavyLinesScene"), { ssr: false });
 const LavaLampScene = dynamic(() => import("@/components/LavaLampScene"), { ssr: false });
 const Spectrum3DScene = dynamic(() => import("@/components/Spectrum3DScene"), { ssr: false });
@@ -1030,6 +1032,15 @@ export default function PlayerPage() {
           micData={micData}
         />
         );
+      case "kaleidoscope":
+        const kaleidoscopeAlbumArt = playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url;
+        return (
+        <KaleidoscopeVisualization
+            key="kaleidoscope"
+          micData={micData}
+          albumArt={kaleidoscopeAlbumArt}
+        />
+        );
       case "waves":
         return (
         <WavyLinesVisualization
@@ -1119,6 +1130,7 @@ export default function PlayerPage() {
       case 'fftspectrum': return "linear-gradient(to bottom, #000000 0%, #0a0020 100%)";
       case 'particles': return "radial-gradient(circle, #0a0a0a 0%, #000000 100%)";
       case 'psychedelic': return "radial-gradient(circle, #330033 0%, #000000 100%)";
+      case 'kaleidoscope': return "#000000";
       case 'fractal': return "black";
       case 'waves': return "linear-gradient(to bottom, #0a0015 0%, #000000 100%)";
       case 'spectrum3d': return "linear-gradient(to bottom, #000000 0%, #1a0033 100%)";
@@ -1168,7 +1180,8 @@ export default function PlayerPage() {
           {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} />}
           {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
           {visualizationType === 'fractal' && <FractalScene micData={micData} />}
-          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} />}
+          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
+          {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} />}
           {visualizationType === 'animated' && <LavaLampScene micData={micData} />}
           {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
