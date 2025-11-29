@@ -21,7 +21,7 @@
     Verify why some lyrics are not loading, eg Texas BigXtahPlug
 [ ] HUE lights intensity
     When I'm in my dark bedroom with the projector they interfere in the image when too intense. Allow setting max.
-[ ] HUE sync
+[X] HUE sync
     Fix sequential call to HUE when we have multiple lights. Call all in parallel will fix the issue, or _sequential per light_.
 [X] Visualization mode
     Dropdown bleads to the right of the screen
@@ -33,6 +33,11 @@
     Try logo with just circle instead of "syns6" on the left
 [ ] Synthwave viz
     https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
+[x] Viewer mode
+    ✅ Refactored from WebRTC/PeerJS to simple polling-based backend system
+    ✅ All sharing logic moved to lyrics worker
+    ✅ Viewers independently fetch lyrics
+    ✅ Backend API with 6-digit codes for easy sharing
 
 Question:
     - Should I allow customization of views?
