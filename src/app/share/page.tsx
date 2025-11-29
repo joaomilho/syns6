@@ -492,10 +492,9 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                     // Auto-connect when all 6 digits entered
                     if (index === 5 && value && newCode.every(d => d)) {
                       const code = newCode.join('');
-                      const peerId = `syns-${code}`;
                       console.log('🔗 Connecting with code:', code);
                       hasAttemptedConnection.current = false; // Allow new connection attempt
-                      setHostPeerId(peerId);
+                      setHostPeerId(code);
                       setShowCodeInput(false);
                     }
                   }
@@ -515,10 +514,9 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                     setCodeInput(newCode);
                     // Auto-connect
                     const code = newCode.join('');
-                    const peerId = `syns-${code}`;
                     console.log('🔗 Connecting with code:', code);
                     hasAttemptedConnection.current = false;
-                    setHostPeerId(peerId);
+                    setHostPeerId(code);
                     setShowCodeInput(false);
                   }
                 }}
@@ -532,10 +530,9 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             disabled={!codeInput.every(d => d)}
             onClick={() => {
               const code = codeInput.join('');
-              const peerId = `syns-${code}`;
               console.log('🔗 Connecting with code:', code);
               hasAttemptedConnection.current = false; // Allow new connection attempt
-              setHostPeerId(peerId);
+              setHostPeerId(code);
               setShowCodeInput(false);
             }}
           >
@@ -608,12 +605,11 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                     // Auto-connect when all 6 digits entered
                     if (index === 5 && value && newCode.every(d => d)) {
                       const code = newCode.join('');
-                      const peerId = `syns-${code}`;
                       console.log('🔗 Connecting with code:', code);
                       setConnectionAttempts(0);
                       setMaxAttemptsReached(false);
                       hasAttemptedConnection.current = false;
-                      setHostPeerId(peerId);
+                      setHostPeerId(code);
                       setShowCodeInput(false);
                     }
                   }
@@ -633,12 +629,11 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
                     setCodeInput(newCode);
                     // Auto-connect
                     const code = newCode.join('');
-                    const peerId = `syns-${code}`;
                     console.log('🔗 Connecting with code:', code);
                     setConnectionAttempts(0);
                     setMaxAttemptsReached(false);
                     hasAttemptedConnection.current = false;
-                    setHostPeerId(peerId);
+                    setHostPeerId(code);
                     setShowCodeInput(false);
                   }
                 }}
@@ -652,12 +647,11 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             disabled={!codeInput.every(d => d)}
             onClick={() => {
               const code = codeInput.join('');
-              const peerId = `syns-${code}`;
               console.log('🔗 Connecting with code:', code);
               setConnectionAttempts(0);
               setMaxAttemptsReached(false);
               hasAttemptedConnection.current = false;
-              setHostPeerId(peerId);
+              setHostPeerId(code);
               setShowCodeInput(false);
             }}
           >

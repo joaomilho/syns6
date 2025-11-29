@@ -4,6 +4,9 @@
   justify-content: center;
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
   transition: all 0.3s ease;
 }
 

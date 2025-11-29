@@ -185,13 +185,6 @@ export default function PrivacyPage() {
             <li><strong>Privacy Policy:</strong> <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></li>
           </ul>
 
-          <h4>PeerJS Cloud Server</h4>
-          <ul>
-            <li><strong>Purpose:</strong> WebRTC signaling for peer-to-peer session sharing (viewer mode)</li>
-            <li><strong>Data Processed:</strong> Peer IDs, signaling data for WebRTC connections</li>
-            <li><strong>Note:</strong> Video/audio streams are peer-to-peer and do not transit through servers</li>
-            <li><strong>Privacy:</strong> <a href="https://peerjs.com" target="_blank" rel="noopener noreferrer">peerjs.com</a></li>
-          </ul>
         </section>
 
         <section>

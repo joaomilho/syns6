@@ -171,14 +171,14 @@ export default function PlayerPage() {
   
   // Reset auto-expand flag after QR code is shown
   useEffect(() => {
-    if (shareManager.peerId && showQRCodeOnConnect) {
+    if (shareManager.shareCode && showQRCodeOnConnect) {
       // Reset the flag after a short delay to allow the component to render
       const timer = setTimeout(() => {
         setShowQRCodeOnConnect(false);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [shareManager.peerId, showQRCodeOnConnect]);
+  }, [shareManager.shareCode, showQRCodeOnConnect]);
   
   // Check subscription and redirect to pricing if not active
   useEffect(() => {
@@ -231,12 +231,12 @@ export default function PlayerPage() {
     setMicAvailable(isHttps || isLocalhost);
   }, []);
   
-  // Debug: Log when peerId changes
+  // Debug: Log when shareCode changes
   useEffect(() => {
-    console.log(`🔑 [PLAYER] Peer ID state:`, shareManager.peerId || 'null');
+    console.log(`🔑 [PLAYER] Share Code state:`, shareManager.shareCode || 'null');
     console.log(`📊 [PLAYER] Is hosting:`, shareManager.isHosting);
     console.log(`👥 [PLAYER] Connected viewers:`, shareManager.connectedViewers);
-  }, [shareManager.peerId, shareManager.isHosting, shareManager.connectedViewers]);
+  }, [shareManager.shareCode, shareManager.isHosting, shareManager.connectedViewers]);
   
   // Keyboard shortcut: Press 'S' to toggle performance stats
   useEffect(() => {
@@ -1270,10 +1270,10 @@ export default function PlayerPage() {
             hasStartedHosting.current = true;
             setShowQRCodeOnConnect(true); // Auto-expand QR on connect
           }} />
-        ) : shareManager.peerId ? (
+        ) : shareManager.shareCode ? (
           // Sharing and connected - show QR code
           <ShareQRCode 
-            peerId={shareManager.peerId}
+            peerId={shareManager.shareCode}
             connectedViewers={shareManager.connectedViewers}
             autoExpand={showQRCodeOnConnect}
           />

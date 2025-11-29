@@ -16,9 +16,8 @@ export default function ShareQRCode({ peerId, connectedViewers, autoExpand = fal
   const [isExpanded, setIsExpanded] = useState(autoExpand);
 
   useEffect(() => {
-    // Extract 6-digit code from peer ID (format: syns-123456)
-    const code = peerId.replace('syns-', '');
-    setShareCode(code);
+    // peerId is now just the 6-digit code (e.g., "123456")
+    setShareCode(peerId);
     
     // Full URL for QR code
     const url = `${window.location.origin}/share?host=${peerId}`;
