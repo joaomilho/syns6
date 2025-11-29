@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import Peer, { DataConnection } from "peerjs";
+import { useState, useCallback, useRef } from "react";
+import { useLyricsWorker } from "./useLyricsWorker";
 
 export interface SharedState {
   // Current playing track
@@ -40,24 +40,24 @@ export interface SharedState {
 
 interface UseShareManagerReturn {
   // Host mode
-  peerId: string | null;
+  shareCode: string | null;
   isHosting: boolean;
   connectedViewers: number;
   startHosting: () => void;
   stopHosting: () => void;
   broadcastState: (state: SharedState) => void;
-  isShareActive: boolean; // Track if user has intentionally started sharing
+  isShareActive: boolean;
   
   // Viewer mode
   isViewer: boolean;
   viewerState: SharedState | null;
-  connectToHost: (hostPeerId: string) => void;
+  connectToHost: (code: string) => void;
   disconnectFromHost: () => void;
   connectionError: string | null;
 }
 
 export function useShareManager(): UseShareManagerReturn {
-  const [peerId, setPeerId] = useState<string | null>(null);
+  const [shareCode, setShareCode] = useState<string | null>(null);
   const [isHosting, setIsHosting] = useState(false);
   const [connectedViewers, setConnectedViewers] = useState(0);
   const [isViewer, setIsViewer] = useState(false);
@@ -70,398 +70,175 @@ export function useShareManager(): UseShareManagerReturn {
     }
     return false;
   });
-  
-  const peerRef = useRef<Peer | null>(null);
-  const connectionsRef = useRef<DataConnection[]>([]);
-  const hostConnectionRef = useRef<DataConnection | null>(null);
-  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hostConnectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hostRetryCountRef = useRef<number>(0);
-  const MAX_HOST_RETRIES = 3;
 
-  // Start hosting (create peer and accept connections)
+  // Throttle state updates to avoid spamming the backend
+  const lastUpdateRef = useRef<number>(0);
+  const UPDATE_THROTTLE = 500; // 500ms = 2 updates per second
+
+  // Use lyrics worker for sharing functionality
+  const lyricsWorker = useLyricsWorker({
+    onSharingStarted: useCallback((code: string) => {
+      console.log('✅ [HOST] Sharing started with code:', code);
+      setShareCode(code);
+      setIsHosting(true);
+      setIsShareActive(true);
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('syns-share-active', 'true');
+        localStorage.setItem('syns-share-code', code);
+      }
+    }, []),
+    
+    onSharingStopped: useCallback(() => {
+      console.log('👋 [HOST] Sharing stopped');
+      setShareCode(null);
+      setIsHosting(false);
+      setConnectedViewers(0);
+      setIsShareActive(false);
+      
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('syns-share-active', 'false');
+        localStorage.removeItem('syns-share-code');
+      }
+    }, []),
+    
+    onSharingError: useCallback((error: string) => {
+      console.error('❌ [HOST] Sharing error:', error);
+      setConnectionError(error);
+    }, []),
+    
+    onConnectedClientsUpdate: useCallback((count: number) => {
+      setConnectedViewers(count);
+    }, []),
+    
+    onViewingStarted: useCallback((code: string) => {
+      console.log('✅ [VIEWER] Viewing started for code:', code);
+      setIsViewer(true);
+      setConnectionError(null);
+    }, []),
+    
+    onViewingStopped: useCallback(() => {
+      console.log('👋 [VIEWER] Viewing stopped');
+      setIsViewer(false);
+      setViewerState(null);
+    }, []),
+    
+    onViewingError: useCallback((error: string) => {
+      console.error('❌ [VIEWER] Viewing error:', error);
+      setConnectionError(error);
+      setIsViewer(false);
+      setViewerState(null);
+    }, []),
+    
+    onSharedStateUpdate: useCallback((state: any) => {
+      // Convert backend state to SharedState format
+      const sharedState: SharedState = {
+        currentTimeMs: state.progress || 0,
+        playbackState: state.trackId ? {
+          trackId: state.trackId,
+          trackName: state.trackName,
+          artistName: state.artistName,
+          albumArt: state.albumArt,
+          duration_ms: state.duration,
+          progress_ms: state.progress,
+          is_playing: state.isPlaying,
+        } : undefined,
+        queue: state.queue,
+        lyrics: state.lyrics,
+        visualizationType: state.visualizationType,
+        visualizationMode: state.visualizationMode,
+      };
+      
+      setViewerState(sharedState);
+    }, []),
+  });
+
+  // Start hosting
   const startHosting = useCallback(() => {
-    if (peerRef.current) {
+    if (isHosting) {
+      console.log('⚠️ Already hosting');
       return;
     }
     
-    // Mark sharing as active in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('syns-share-active', 'true');
-    }
-    setIsShareActive(true);
+    // Check if we have a saved code to reuse
+    const savedCode = typeof window !== 'undefined' 
+      ? localStorage.getItem('syns-share-code') 
+      : null;
     
-    // Try to reuse existing peer ID from localStorage
-    let customPeerId: string;
-    let code: number;
-    
-    const savedPeerId = typeof window !== 'undefined' ? localStorage.getItem('syns-host-peer-id') : null;
-    
-    if (savedPeerId && savedPeerId.startsWith('syns-')) {
-      // Reuse existing peer ID
-      customPeerId = savedPeerId;
-      code = parseInt(savedPeerId.replace('syns-', ''));
-      console.log(`✅ [HOST] Reusing saved peer ID - Code: ${code}`);
+    if (savedCode) {
+      console.log('🔄 Reusing saved share code:', savedCode);
+      lyricsWorker.startSharing(savedCode);
     } else {
-      // Generate new 6-digit code
-      code = Math.floor(100000 + Math.random() * 900000);
-      customPeerId = `syns-${code}`;
-      console.log(`✅ [HOST] Generated new peer ID - Code: ${code}`);
-      
-      // Save to localStorage for future reloads
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('syns-host-peer-id', customPeerId);
-      }
+      console.log('✨ Creating new share session');
+      lyricsWorker.startSharing();
     }
-    
-    // Set connection timeout (15 seconds)
-    hostConnectionTimeoutRef.current = setTimeout(() => {
-      const currentRetry = hostRetryCountRef.current;
-      
-      if (currentRetry < MAX_HOST_RETRIES - 1) {
-        // Retry
-        hostRetryCountRef.current++;
-        console.log(`🔄 [HOST] Connection timeout - retrying (${hostRetryCountRef.current}/${MAX_HOST_RETRIES})...`);
-        
-        // Destroy current peer
-        if (peerRef.current) {
-          peerRef.current.destroy();
-          peerRef.current = null;
-        }
-        
-        // Clear saved ID for fresh attempt
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('syns-host-peer-id');
-        }
-        
-        // Retry after short delay
-        setTimeout(() => {
-          startHosting();
-        }, 1000);
-      } else {
-        // Max retries reached
-        console.error(`❌ [HOST] Connection timeout - failed after ${MAX_HOST_RETRIES} attempts`);
-        setConnectionError(`Failed to connect to signaling server after ${MAX_HOST_RETRIES} attempts`);
-        
-        if (peerRef.current) {
-          peerRef.current.destroy();
-          peerRef.current = null;
-        }
-        
-        // Clear saved ID
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('syns-host-peer-id');
-        }
-        
-        // Reset retry count for next manual attempt
-        hostRetryCountRef.current = 0;
-      }
-    }, 15000);
-    
-    console.log(`🔌 [HOST] Creating PeerJS connection with ID: ${customPeerId}`);
-    
-    const peer = new Peer(customPeerId, {
-      debug: 0,
-    });
-
-    peer.on("open", (id) => {
-      console.log(`✅ [HOST] Hosting active - Code: ${code}, Peer ID: ${id}`);
-      setPeerId(id);
-      setIsHosting(true);
-      
-      // Clear timeout on successful connection
-      if (hostConnectionTimeoutRef.current) {
-        clearTimeout(hostConnectionTimeoutRef.current);
-        hostConnectionTimeoutRef.current = null;
-      }
-      
-      // Reset retry count on success
-      hostRetryCountRef.current = 0;
-      
-      // Clear any connection errors
-      setConnectionError(null);
-    });
-
-    peer.on("connection", (conn) => {
-      // Add to connections list
-      connectionsRef.current.push(conn);
-      setConnectedViewers(connectionsRef.current.length);
-
-      conn.on("open", () => {
-        console.log(`✅ [HOST] Viewer connected: ${conn.peer} (Total: ${connectionsRef.current.length})`);
-      });
-
-      conn.on("close", () => {
-        connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
-        setConnectedViewers(connectionsRef.current.length);
-        console.log(`👋 [HOST] Viewer disconnected: ${conn.peer} (Remaining: ${connectionsRef.current.length})`);
-      });
-
-      conn.on("error", (err) => {
-        console.error(`❌ [HOST] Connection error with ${conn.peer}:`, err.message);
-        connectionsRef.current = connectionsRef.current.filter((c) => c !== conn);
-        setConnectedViewers(connectionsRef.current.length);
-      });
-    });
-
-    peer.on("error", (err) => {
-      console.error("❌ [HOST] Peer error:", err.message, err);
-      setConnectionError(err.message);
-      
-      // Clear timeout on error
-      if (hostConnectionTimeoutRef.current) {
-        clearTimeout(hostConnectionTimeoutRef.current);
-        hostConnectionTimeoutRef.current = null;
-      }
-      
-      // If peer ID is already taken, clear saved ID and retry
-      if (err.message?.includes('already taken') || err.message?.includes('unavailable') || err.message?.includes('ID is taken')) {
-        console.log("🔄 [HOST] Peer ID unavailable, clearing and retrying...");
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('syns-host-peer-id');
-        }
-        // Destroy the peer
-        if (peerRef.current) {
-          peerRef.current.destroy();
-          peerRef.current = null;
-        }
-        // Retry with new ID
-        setTimeout(() => {
-          startHosting();
-        }, 500);
-      }
-    });
-
-    peerRef.current = peer;
-  }, []);
+  }, [isHosting, lyricsWorker]);
 
   // Stop hosting
   const stopHosting = useCallback(() => {
-    // Close all viewer connections
-    connectionsRef.current.forEach((conn) => {
-      conn.close();
-    });
-    connectionsRef.current = [];
-    setConnectedViewers(0);
-
-    // Destroy peer
-    if (peerRef.current) {
-      peerRef.current.destroy();
-      peerRef.current = null;
+    if (!isHosting) {
+      return;
     }
-
-    setPeerId(null);
-    setIsHosting(false);
     
-    // Mark sharing as inactive
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('syns-share-active', 'false');
-    }
-    setIsShareActive(false);
-  }, []);
+    lyricsWorker.stopSharing();
+  }, [isHosting, lyricsWorker]);
 
   // Broadcast state to all connected viewers
   const broadcastState = useCallback((state: SharedState) => {
-    if (!isHosting || connectionsRef.current.length === 0) {
+    if (!isHosting) {
       return;
     }
 
-    const message = {
-      type: "state_update",
-      data: {
-        ...state,
-        timestamp: Date.now() // Add timestamp for latency measurement
-      },
-      timestamp: Date.now(),
+    // Throttle updates
+    const now = Date.now();
+    if (now - lastUpdateRef.current < UPDATE_THROTTLE) {
+      return;
+    }
+    lastUpdateRef.current = now;
+
+    // Convert SharedState to backend format
+    const backendState = {
+      trackId: state.playbackState?.trackId,
+      trackName: state.playbackState?.trackName,
+      artistName: state.playbackState?.artistName,
+      albumArt: state.playbackState?.albumArt,
+      duration: state.playbackState?.duration_ms,
+      progress: state.playbackState?.progress_ms,
+      isPlaying: state.playbackState?.is_playing || false,
+      queue: state.queue,
+      lyrics: state.lyrics,
+      visualizationType: state.visualizationType,
+      visualizationMode: state.visualizationMode,
     };
 
-    connectionsRef.current.forEach((conn) => {
-      try {
-        if (conn.open) {
-          conn.send(message);
-        }
-      } catch (err) {
-        console.error("❌ Failed to send to viewer:", err);
-      }
-    });
-  }, [isHosting]);
+    lyricsWorker.updateShareState(backendState);
+  }, [isHosting, lyricsWorker]);
 
   // Connect to host (viewer mode)
-  const connectToHost = useCallback((hostPeerId: string) => {
-    // Clear any existing connection
-    if (hostConnectionRef.current) {
-      disconnectFromHost();
+  const connectToHost = useCallback((code: string) => {
+    if (isViewer) {
+      console.log('⚠️ Already viewing a session');
+      return;
     }
-
-    setConnectionError(null);
-
-    // Try to reuse existing viewer peer ID from localStorage
-    let viewerPeerId: string | undefined;
-    const savedViewerPeerId = typeof window !== 'undefined' ? localStorage.getItem('syns-viewer-peer-id') : null;
     
-    if (savedViewerPeerId) {
-      viewerPeerId = savedViewerPeerId;
-      console.log(`🔄 [VIEWER] Reusing saved peer ID: ${viewerPeerId}`);
-    } else {
-      // Generate new viewer ID and save it
-      viewerPeerId = `viewer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('syns-viewer-peer-id', viewerPeerId);
-      }
-      console.log(`✅ [VIEWER] Generated new peer ID: ${viewerPeerId}`);
-    }
-
-    // Create peer for viewer with consistent ID
-    const peer = new Peer(viewerPeerId, {
-      debug: 0,
-    });
-
-    // Set connection timeout (30 seconds)
-    connectionTimeoutRef.current = setTimeout(() => {
-      console.error(`⏱️ [VIEWER] Connection timeout to ${hostPeerId}`);
-      setConnectionError("Connection timeout - host may be offline");
-      if (peerRef.current) {
-        peerRef.current.destroy();
-        peerRef.current = null;
-      }
-    }, 30000);
-
-    peer.on("open", (id) => {
-      // Connect to host
-      const conn = peer.connect(hostPeerId, {
-        reliable: true,
-        serialization: 'json',
-      });
-
-      conn.on("open", () => {
-        console.log(`✅ [VIEWER] Connected to host ${hostPeerId} (Viewer ID: ${id})`);
-        setIsViewer(true);
-        hostConnectionRef.current = conn;
-        
-        // Clear timeout on successful connection
-        if (connectionTimeoutRef.current) {
-          clearTimeout(connectionTimeoutRef.current);
-          connectionTimeoutRef.current = null;
-        }
-      });
-
-      conn.on("data", (data: any) => {
-        try {
-          if (data.type === "state_update") {
-            setViewerState(data.data);
-          }
-        } catch (err) {
-          console.error("❌ [VIEWER] Error processing data:", err);
-        }
-      });
-
-      conn.on("close", () => {
-        console.log(`👋 [VIEWER] Disconnected from host ${hostPeerId}`);
-        setIsViewer(false);
-        setViewerState(null);
-        hostConnectionRef.current = null;
-        
-        // Clear timeout if still active
-        if (connectionTimeoutRef.current) {
-          clearTimeout(connectionTimeoutRef.current);
-          connectionTimeoutRef.current = null;
-        }
-      });
-
-      conn.on("error", (err) => {
-        console.error(`❌ [VIEWER] Connection error to ${hostPeerId}:`, err.message, err);
-        setConnectionError(err.message);
-        
-        // Clear timeout on error
-        if (connectionTimeoutRef.current) {
-          clearTimeout(connectionTimeoutRef.current);
-          connectionTimeoutRef.current = null;
-        }
-      });
-    });
-
-    peer.on("error", (err) => {
-      console.error(`❌ [VIEWER] Peer error connecting to ${hostPeerId}:`, err.message, err);
-      
-      // Clear timeout on error
-      if (connectionTimeoutRef.current) {
-        clearTimeout(connectionTimeoutRef.current);
-        connectionTimeoutRef.current = null;
-      }
-      
-      // If peer ID is taken, clear it and automatically retry with new ID
-      if (err.message?.includes('already taken') || err.message?.includes('unavailable') || err.message?.includes('ID is taken')) {
-        console.log("🔄 [VIEWER] Peer ID unavailable, clearing and retrying with new ID...");
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('syns-viewer-peer-id');
-        }
-        
-        // Destroy the current peer
-        if (peerRef.current) {
-          peerRef.current.destroy();
-          peerRef.current = null;
-        }
-        
-        // Automatically retry with a new ID after a short delay
-        setTimeout(() => {
-          connectToHost(hostPeerId);
-        }, 500);
-        return;
-      }
-      
-      // For other errors, set the error message
-      setConnectionError(err.message);
-    });
-
-    peerRef.current = peer;
-  }, []);
+    setConnectionError(null);
+    lyricsWorker.joinSharing(code);
+  }, [isViewer, lyricsWorker]);
 
   // Disconnect from host (viewer mode)
   const disconnectFromHost = useCallback(() => {
-    // Clear timeout if active
-    if (connectionTimeoutRef.current) {
-      clearTimeout(connectionTimeoutRef.current);
-      connectionTimeoutRef.current = null;
+    if (!isViewer) {
+      return;
     }
     
-    if (hostConnectionRef.current) {
-      hostConnectionRef.current.close();
-      hostConnectionRef.current = null;
-    }
-
-    if (peerRef.current) {
-      peerRef.current.destroy();
-      peerRef.current = null;
-    }
-
-    setIsViewer(false);
-    setViewerState(null);
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (isHosting) {
-        stopHosting();
-      } else if (isViewer) {
-        disconnectFromHost();
-      }
-      
-      // Clear timeouts on unmount
-      if (connectionTimeoutRef.current) {
-        clearTimeout(connectionTimeoutRef.current);
-        connectionTimeoutRef.current = null;
-      }
-      if (hostConnectionTimeoutRef.current) {
-        clearTimeout(hostConnectionTimeoutRef.current);
-        hostConnectionTimeoutRef.current = null;
-      }
-    };
-  }, [isHosting, isViewer, stopHosting, disconnectFromHost]);
+    lyricsWorker.leaveSharing();
+  }, [isViewer, lyricsWorker]);
 
   return {
     // Host mode
-    peerId,
+    shareCode,
     isHosting,
     connectedViewers,
     startHosting,

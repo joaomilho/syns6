@@ -234,3 +234,39 @@ model StripeEvent {
   @@index([processed])
   @@map("stripe_events")
 }
+
+// Shared sessions for live syncing
+model SharedSession {
+  id              String   @id @default(cuid())
+  code            String   @unique // 6-digit code for easy sharing
+  hostUserId      String?  // Optional - for authenticated users
+  
+  // Current playback state
+  trackId         String?
+  trackName       String?
+  artistName      String?
+  albumArt        String?
+  duration        Int?     // in ms
+  progress        Int?     // in ms
+  isPlaying       Boolean  @default(false)
+  
+  // Next songs in queue (stored as JSON)
+  queue           String?  @db.Text // JSON array of queue items
+  
+  // Lyrics for current song (stored as JSON)
+  lyrics          String?  @db.Text // JSON array of lyric lines
+  
+  // Visualization settings
+  visualizationType String?
+  visualizationMode String?
+  
+  // Session metadata
+  connectedClients Int     @default(0)
+  lastUpdate       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime // Auto-expire after 24 hours
+  
+  @@index([code])
+  @@index([expiresAt])
+  @@map("shared_sessions")
+}
