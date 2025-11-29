@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import { Group } from "three";
@@ -9,6 +9,18 @@ import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 // Pre-cache common characters for Text component performance
 export const COMMON_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~ ";
+
+/**
+ * Calculate appropriate character limit based on screen width
+ * Uses viewport width breakpoints
+ */
+function getCharacterLimit(viewportWidth: number): number {
+  if (viewportWidth < 640) return 25;        // Mobile
+  if (viewportWidth < 1024) return 35;       // Tablet
+  if (viewportWidth < 1920) return 42;       // Desktop
+  if (viewportWidth < 2560) return 50;       // Large desktop
+  return 60;                                  // Ultrawide
+}
 
 interface Lyrics3DProps {
   lyrics: LyricLine[] | null;
@@ -23,7 +35,7 @@ interface Lyrics3DProps {
  * Split long text into multiple lines at word boundaries
  * Recursively splits text into as many lines as needed
  */
-function splitLongText(text: string, maxLength: number = 60): string[] {
+function splitLongText(text: string, maxLength: number = 42): string[] {
   if (text.length <= maxLength) {
     return [text];
   }
@@ -80,6 +92,7 @@ function LyricText3D({
   showCountdown,
   countdownSeconds,
   micData,
+  maxLength,
 }: {
   text: string;
   position: [number, number, number];
@@ -91,6 +104,7 @@ function LyricText3D({
   showCountdown?: boolean;
   countdownSeconds?: number;
   micData?: MicrophoneData;
+  maxLength: number;
 }) {
   const groupRef = useRef<Group>(null);
   const targetScaleRef = useRef(1);
@@ -143,7 +157,7 @@ function LyricText3D({
   });
 
   // Split text into lines if needed
-  const textLines = useMemo(() => splitLongText(text), [text]);
+  const textLines = useMemo(() => splitLongText(text, maxLength), [text, maxLength]);
   const lineSpacing = 1.3; // Vertical spacing between lines
 
   const textElement = (
@@ -223,6 +237,23 @@ export default function Lyrics3D({
 }: Lyrics3DProps) {
   const groupRef = useRef<Group>(null);
   const targetYRef = useRef(0);
+  
+  // Track viewport width for responsive text wrapping
+  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Calculate dynamic maxLength based on viewport width
+  const maxLength = useMemo(() => getCharacterLimit(viewportWidth), [viewportWidth]);
 
   const currentIndex = useMemo(() => {
     if (!lyrics) return -1;
@@ -241,8 +272,8 @@ export default function Lyrics3D({
     for (let i = 0; i < lyrics.length; i++) {
       positions.push(cumulativeY);
       
-      // Calculate how many lines this lyric will have
-      const textLines = splitLongText(lyrics[i].text);
+      // Calculate how many lines this lyric will have (using dynamic maxLength)
+      const textLines = splitLongText(lyrics[i].text, maxLength);
       const numLines = textLines.length;
       
       // Determine scale factor based on position relative to current
@@ -281,7 +312,7 @@ export default function Lyrics3D({
     }
     
     return positions;
-  }, [lyrics, currentIndex]);
+  }, [lyrics, currentIndex, maxLength]);
 
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
@@ -397,6 +428,7 @@ export default function Lyrics3D({
             showCountdown={showCountdown}
             countdownSeconds={countdownSeconds}
             micData={micData}
+            maxLength={maxLength}
           />
         );
       })}
