@@ -12,6 +12,7 @@ const allVisualizations = [
   'particles',
   'fractal',
   'psychedelic',
+  'kaleidoscope',
   'waves',
   'animated',
   'spectrum3d',

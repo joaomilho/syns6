@@ -6,6 +6,7 @@ import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import OrbitalVisualization from "@/components/OrbitalVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
+import KaleidoscopeVisualization from "@/components/KaleidoscopeVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import LavaLampVisualization from "@/components/LavaLampVisualization";
 import Spectrum3DVisualization from "@/components/Spectrum3DVisualization";
@@ -187,6 +188,13 @@ export default function ScreenshotPage() {
         return (
           <PsychedelicVisualization
             micData={micData}
+          />
+        );
+      case "kaleidoscope":
+        return (
+          <KaleidoscopeVisualization
+            micData={micData}
+            albumArt="/Kaleidoscope/a3fcd0d7e20e42e687962a3d4519f7a7.jpg"
           />
         );
       case "waves":
