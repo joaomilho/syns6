@@ -1168,7 +1168,7 @@ export default function PlayerPage() {
           {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} />}
           {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
           {visualizationType === 'fractal' && <FractalScene micData={micData} />}
-          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
+          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} />}
           {visualizationType === 'animated' && <LavaLampScene micData={micData} />}
           {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
