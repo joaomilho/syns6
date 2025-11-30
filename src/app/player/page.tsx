@@ -1438,60 +1438,58 @@ export default function PlayerPage() {
               
               return (
                 <>
-                  {/* LEFT: Current Song */}
-                  <div className={styles.currentSection}>
-                    {/* Album Art */}
-                    <div className={styles.albumArt}>
-                      {displayTrack.album.images[0] && (
-                        <img
-                          src={displayTrack.album.images[0].url}
-                          alt={displayTrack.album.name}
-                        />
-                      )}
-                      {/* Lyrics Badge */}
-                      <div 
-                        className={`${styles.lyricsBadge} ${lyrics && lyrics.length > 0 ? styles.hasLyrics : styles.noLyrics}`}
-                        title={lyrics && lyrics.length > 0 ? "Has lyrics" : "No lyrics"}
+                  {/* Album Art Column */}
+                  <div className={styles.albumArt}>
+                    {displayTrack.album.images[0] && (
+                      <img
+                        src={displayTrack.album.images[0].url}
+                        alt={displayTrack.album.name}
                       />
+                    )}
+                    {/* Lyrics Badge */}
+                    <div 
+                      className={`${styles.lyricsBadge} ${lyrics && lyrics.length > 0 ? styles.hasLyrics : styles.noLyrics}`}
+                      title={lyrics && lyrics.length > 0 ? "Has lyrics" : "No lyrics"}
+                    />
+                  </div>
+
+                  {/* Track Info + Progress Column */}
+                  <div className={styles.trackInfoContainer}>
+                    <div className={styles.trackInfo}>
+                      <h2 className={styles.trackName}>
+                        {displayTrack.name}
+                        <span className={styles.artistName}>
+                          {" — "}{displayTrack.artists.map((a) => a.name).join(", ")}
+                        </span>
+                      </h2>
                     </div>
 
-                    {/* Track Info & Controls */}
-                    <div className={styles.trackInfoContainer}>
-                      <div className={styles.trackInfo}>
-                        <h2 className={styles.trackName}>{displayTrack.name}</h2>
-                        <p className={styles.artistName}>
-                          {displayTrack.artists.map((a) => a.name).join(", ")}
-                        </p>
+                    {/* Progress Bar */}
+                    <div className={styles.progressContainer}>
+                      <span className={styles.timeText}>
+                        {formatTime(currentProgress)}
+                      </span>
+                      <div className={styles.progressBar}>
+                        <div
+                          className={`${styles.progressFill} ${isNearEnd ? styles.nearEnd : ''}`}
+                          style={{
+                            width: `${
+                              (currentProgress / displayTrack.duration_ms) * 100
+                            }%`,
+                          }}
+                        />
                       </div>
-
-                      {/* Progress Bar */}
-                      <div className={styles.progressContainer}>
-                        <span className={styles.timeText}>
-                          {formatTime(currentProgress)}
-                        </span>
-                        <div className={styles.progressBar}>
-                          <div
-                            className={`${styles.progressFill} ${isNearEnd ? styles.nearEnd : ''}`}
-                            style={{
-                              width: `${
-                                (currentProgress / displayTrack.duration_ms) * 100
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <span className={styles.timeText}>
-                          {formatTime(displayTrack.duration_ms)}
-                        </span>
-                      </div>
-
+                      <span className={styles.timeText}>
+                        {formatTime(displayTrack.duration_ms)}
+                      </span>
                     </div>
                   </div>
 
-                  {/* RIGHT: Next Songs Queue */}
+                  {/* RIGHT: Next Song */}
                   {queue.length > 0 && (
                     <div className={styles.queueSection}>
                       <div className={styles.queueList}>
-                        {queue.slice(0, 2).map((track, index) => (
+                        {queue.slice(0, 1).map((track, index) => (
                           <div 
                             key={track.id} 
                             className={`${styles.queueItem} ${index === 0 && isNearEnd ? styles.upcoming : ''}`}
