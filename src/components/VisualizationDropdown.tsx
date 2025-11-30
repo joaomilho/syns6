@@ -1,6 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { 
+  BarChart3, 
+  Music, 
+  CircleDot, 
+  TreePine, 
+  Sparkles, 
+  Aperture, 
+  Waves, 
+  Droplet, 
+  Box, 
+  Activity, 
+  Video, 
+  Youtube, 
+  Bug 
+} from "lucide-react";
 import styles from "./VisualizationDropdown.module.css";
 import { CustomVisualization } from "@/lib/customVisualizations";
 
@@ -24,7 +39,7 @@ export type VisualizationType =
 interface VisualizationOption {
   id: VisualizationType;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   thumbnail: string; // SVG or emoji representation
 }
 
@@ -37,7 +52,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "fftspectrum",
     name: "FFT Spectrum Grid",
-    icon: "▥",
+    icon: <BarChart3 size={18} />,
     thumbnail: "/viz-thumbnails/fftspectrum-static.webp",
     assets: {
       static: "/viz-thumbnails/fftspectrum-static.webp",
@@ -47,7 +62,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "lyricsonly",
     name: "Lyrics Only",
-    icon: "♪",
+    icon: <Music size={18} />,
     thumbnail: "/viz-thumbnails/lyricsonly.png",
     assets: {
       static: "/viz-thumbnails/lyricsonly.png",
@@ -57,7 +72,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "particles",
     name: "Particles & Rings",
-    icon: "◯",
+    icon: <CircleDot size={18} />,
     thumbnail: "/viz-thumbnails/particles-static.webp",
     assets: {
       static: "/viz-thumbnails/particles-static.webp",
@@ -67,7 +82,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "fractal",
     name: "Fractal Tree",
-    icon: "❋",
+    icon: <TreePine size={18} />,
     thumbnail: "/viz-thumbnails/fractal-static.webp",
     assets: {
       static: "/viz-thumbnails/fractal-static.webp",
@@ -77,7 +92,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "psychedelic",
     name: "Psychedelic",
-    icon: "✧",
+    icon: <Sparkles size={18} />,
     thumbnail: "/viz-thumbnails/psychedelic-static.webp",
     assets: {
       static: "/viz-thumbnails/psychedelic-static.webp",
@@ -87,7 +102,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "kaleidoscope",
     name: "Kaleidoscope",
-    icon: "◈",
+    icon: <Aperture size={18} />,
     thumbnail: "/viz-thumbnails/kaleidoscope-static.webp",
     assets: {
       static: "/viz-thumbnails/kaleidoscope-static.webp",
@@ -97,7 +112,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "waves",
     name: "Wavy Lines",
-    icon: "≋",
+    icon: <Waves size={18} />,
     thumbnail: "/viz-thumbnails/waves-static.webp",
     assets: {
       static: "/viz-thumbnails/waves-static.webp",
@@ -107,7 +122,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "animated",
     name: "Lava Lamp",
-    icon: "⦿",
+    icon: <Droplet size={18} />,
     thumbnail: "/viz-thumbnails/animated-static.webp",
     assets: {
       static: "/viz-thumbnails/animated-static.webp",
@@ -117,7 +132,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "spectrum3d",
     name: "3D Spectrum",
-    icon: "▦",
+    icon: <Box size={18} />,
     thumbnail: "/viz-thumbnails/spectrum3d-static.webp",
     assets: {
       static: "/viz-thumbnails/spectrum3d-static.webp",
@@ -127,7 +142,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "oscilloscope",
     name: "Oscilloscope X-Y",
-    icon: "◉",
+    icon: <Activity size={18} />,
     thumbnail: "/viz-thumbnails/oscilloscope-static.webp",
     assets: {
       static: "/viz-thumbnails/oscilloscope-static.webp",
@@ -137,7 +152,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "camera",
     name: "Camera Effects",
-    icon: "⊡",
+    icon: <Video size={18} />,
     thumbnail: "/viz-thumbnails/camera-static.webp",
     assets: {
       static: "/viz-thumbnails/camera-static.webp",
@@ -147,7 +162,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "youtube",
     name: "YouTube Videos",
-    icon: "▶",
+    icon: <Youtube size={18} />,
     thumbnail: "/viz-thumbnails/youtube-static.webp",
     assets: {
       static: "/viz-thumbnails/youtube-static.webp",
@@ -157,7 +172,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "debug",
     name: "Debug View",
-    icon: "▤",
+    icon: <Bug size={18} />,
     thumbnail: "/viz-thumbnails/debug-static.webp",
     assets: {
       static: "/viz-thumbnails/debug-static.webp",
@@ -222,7 +237,7 @@ export default function VisualizationDropdown({
         title="Select Visualization"
       >
         <span className={styles.icon}>
-          {currentCustom?.icon || currentViz?.icon || "◯"}
+          {currentCustom?.icon || currentViz?.icon || <CircleDot size={18} />}
         </span>
         <span className={styles.label}>
           {currentCustom?.name || currentViz?.name || "Custom"}

@@ -1,0 +1,70 @@
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.iconButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Active state (for toggles like mic/camera) */
+.iconButton.active {
+  background: rgba(29, 185, 84, 0.3);
+  color: #1ed760;
+  border-color: rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+}
+
+.iconButton.active:hover:not(:disabled) {
+  background: rgba(29, 185, 84, 0.4);
+  border-color: rgba(29, 185, 84, 0.6);
+}
+
+/* Playing state */
+.iconButton.playing {
+  color: #1ed760;
+  background: rgba(29, 185, 84, 0.3);
+  border-color: rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 8px rgba(29, 185, 84, 0.3);
+}
+
+/* Paused state */
+.iconButton.paused {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+}
+
+/* Stopped state */
+.iconButton.stopped {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+

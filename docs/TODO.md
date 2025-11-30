@@ -15,7 +15,7 @@
     Perf review EVERYTHING
     [X] First pass
     [ ] Maybe passing the bass/etc instead of micData for compo? Or getting AT compo?
-[ ] LavaLamp holes
+[X] LavaLamp holes
     The LavaLamp seems to have a clipping problem (aka holes) that's related to limits set in the "MarchingSquares" compo. Hard to tweak to perfection.
 [ ] Lyrics download bug
     Verify why some lyrics are not loading, eg Texas BigXtahPlug
