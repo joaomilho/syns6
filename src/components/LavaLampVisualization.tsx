@@ -2,7 +2,6 @@
 
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { MeshPhysicalMaterial, DoubleSide, Sphere, Vector3, PointLight } from "three";
 import { MarchingCubes } from "@/lib/MarchingCubes";
@@ -77,8 +76,8 @@ export function LavaLampBlobs({
       // Initialize on first frame - higher resolution needed to prevent edge clipping
       const resolution = 32; // Higher resolution = more interior cells = less edge clipping
       const effect = new MarchingCubes(resolution, material, false, false, 50000);
-      effect.position.set(0, -8, -35);
-      effect.scale.set(55, 55, 55); // Larger scale so center 70% still covers full screen
+      effect.position.set(0, 0, -60); // Way back behind lyrics - lyrics are at z=5
+      effect.scale.set(70, 70, 70); // Larger scale to compensate for distance
       effect.isolation = 80;
       
       // Fix bounding sphere to prevent frustum culling
@@ -262,14 +261,14 @@ export function LavaLampLighting({
       <ambientLight intensity={0.6} />
       <directionalLight position={[0.5, 0.5, 1]} intensity={2} color="#ffffff" />
       
-      {/* Strong central light to make the blobs luminous */}
+      {/* Strong central light to make the blobs luminous - moved back with blobs */}
       <pointLight
         ref={centralLightRef}
-        position={[0, -5, -20]}
-        intensity={150}
+        position={[0, 0, -45]}
+        intensity={180}
         color="#ff7c00"
         decay={2}
-        distance={100}
+        distance={120}
       />
     </>
   );
@@ -279,21 +278,12 @@ export default function LavaLampVisualization({
   micData,
 }: LavaLampVisualizationProps) {
   // Calculate bloom intensity based on music - subtle glow
-  const bloomIntensity = 0.9 + (micData?.bass || 0) * 9;
+  const bloomIntensity = 0.1 + (micData?.bass || 0) /3;
 
   return (
     <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }} dpr={1}>
-      <OrbitControls
-        target={[0, -8, -25]}
-        enablePan={false}
-        enableDamping
-        dampingFactor={0.05}
-        minDistance={10}
-        maxDistance={60}
-      />
-
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 20, 70]} />
+      <fog attach="fog" args={["#050505", 30, 90]} />
 
       <LavaLampLighting micData={micData} />
 
@@ -304,9 +294,9 @@ export default function LavaLampVisualization({
       <EffectComposer multisampling={0}>
         <Bloom 
           intensity={bloomIntensity}
-          luminanceThreshold={0.5}
+          luminanceThreshold={0.6}
           luminanceSmoothing={2}
-          radius={0.6}
+          radius={0}
           levels={4}
           mipmapBlur={false}
         />
