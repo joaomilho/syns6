@@ -5,26 +5,18 @@
  * Scene content only (no Canvas wrapper) for unified canvas
  */
 
-import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { LavaLampBlobs, LavaLampLighting } from "./LavaLampVisualization";
 
 export default function LavaLampScene({ micData }: { micData?: any }) {
-  const bloomIntensity = 0.5 + (micData?.bass || 0) * 2;
+  const bloomIntensity = 0.4 + (micData?.bass || 0) * 3;
 
   return (
     <>
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 20, 70]} />
+      <fog attach="fog" args={["#050505", 30, 90]} />
 
-      <OrbitControls
-        target={[0, -8, -25]}
-        enablePan={false}
-        enableDamping
-        dampingFactor={0.05}
-        minDistance={10}
-        maxDistance={60}
-      />
+      {/* OrbitControls removed - it was causing skewed lyrics view */}
 
       <LavaLampLighting micData={micData} />
       <LavaLampBlobs micData={micData} />
@@ -32,9 +24,9 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
       <EffectComposer multisampling={0}>
         <Bloom
           intensity={bloomIntensity}
-          luminanceThreshold={0.5}
+          luminanceThreshold={0.6}
           luminanceSmoothing={2}
-          radius={0.6}
+          radius={0.5}
           levels={4}
           mipmapBlur={false}
         />
