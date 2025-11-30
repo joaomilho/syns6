@@ -166,6 +166,100 @@ function TitleArtistGroup({
 }
 
 /**
+ * Next Up group - label and title that scale together
+ */
+function NextUpGroup({
+  trackName,
+  artistName,
+  position,
+  offset,
+  labelToTitleSpacing,
+  font,
+  micData,
+  maxLength,
+}: {
+  trackName: string;
+  artistName: string;
+  position: [number, number, number];
+  offset: number;
+  labelToTitleSpacing: number;
+  font?: string;
+  micData?: MicrophoneData;
+  maxLength: number;
+}) {
+  const groupRef = useRef<Group>(null);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+
+    const time = state.clock.getElapsedTime();
+
+    // OSCILLATING rotation
+    const maxRotation = 0.15;
+    const rotationSpeed = 0.3;
+    groupRef.current.rotation.y = Math.sin(time * rotationSpeed) * maxRotation;
+    groupRef.current.rotation.x = 0;
+    groupRef.current.rotation.z = 0;
+
+    // Calculate target scale based on offset - same as lyrics
+    let targetScale = 1.0;
+    if (offset === 1) {
+      targetScale = 1.8;
+      groupRef.current.position.y = position[1];
+    } else if (offset === 2) {
+      targetScale = 1.0;
+      groupRef.current.position.y = position[1];
+    } else if (offset >= 3) {
+      targetScale = 0.7;
+      groupRef.current.position.y = position[1];
+    } else {
+      targetScale = 0.4;
+      groupRef.current.position.y = position[1];
+    }
+
+    // Smoothly lerp to target scale
+    const currentScale = groupRef.current.scale.x;
+    const scaleLerpFactor = 0.04;
+    const newScale = currentScale + (targetScale - currentScale) * scaleLerpFactor;
+    groupRef.current.scale.set(newScale, newScale, newScale);
+  });
+
+  return (
+    <group ref={groupRef} position={position}>
+      {/* "Next up:" label - smaller */}
+      <group scale={0.8}>
+        <LyricText3D
+          text="Next up:"
+          position={[0, 0, 0]}
+          isCurrent={false}
+          isPast={false}
+          offset={999} // Don't let it scale internally
+          font={font}
+          color="#ffffff"
+          micData={micData}
+          maxLength={maxLength}
+          fontWeight={300}
+        />
+      </group>
+      {/* Next song name and artist - bigger */}
+      <group position={[0, -labelToTitleSpacing, 0]} scale={1.5}>
+        <TitleArtistGroup
+          trackName={trackName}
+          artistName={artistName}
+          position={[0, 0, 0]}
+          isCurrent={false}
+          isPast={false}
+          offset={999} // Don't let it scale internally
+          font={font}
+          micData={micData}
+          maxLength={maxLength}
+        />
+      </group>
+    </group>
+  );
+}
+
+/**
  * Split long text into multiple lines at word boundaries
  * Splits at maxLength intervals for consistent line sizes
  */
@@ -383,7 +477,7 @@ export default function Lyrics3D({
   font,
   color = '#ff0',
   micData,
-  position = [0, 5, 0],
+  position = [0, 0, 0],
   trackName,
   artistName,
   nextTrackName,
@@ -562,41 +656,20 @@ export default function Lyrics3D({
         const nextUpOffset = lyrics.length - currentIndex;
         
         // Position "Next up" below last lyric - close enough to be visible when last lyric is centered
-        const nextUpSpacing = 9; // Spacing from last lyric - visible when last lyric is centered
-        const labelToTitleSpacing = 1.0; // Spacing between "Next up:" and title (adjusted for scale)
+        const nextUpSpacing = 7; // Spacing from last lyric - closer now
+        const labelToTitleSpacing = 1.5; // Spacing between "Next up:" and title (scales with group)
         
         return (
-          <group>
-            {/* "Next up:" label - smaller */}
-            <group position={[0, -(lyricPositions[lyrics.length - 1] || 0) - nextUpSpacing, 5]} scale={0.6}>
-              <LyricText3D
-                text="Next up:"
-                position={[0, 0, 0]}
-                isCurrent={false}
-                isPast={false}
-                offset={nextUpOffset}
-                font={font}
-                color="#ffffff"
-                micData={micData}
-                maxLength={maxLength}
-                fontWeight={300}
-              />
-            </group>
-            {/* Next song name and artist - behave as ONE line - bigger */}
-            <group position={[0, -(lyricPositions[lyrics.length - 1] || 0) - nextUpSpacing - labelToTitleSpacing, 5]} scale={1.2}>
-              <TitleArtistGroup
-                trackName={nextTrackName}
-                artistName={nextArtistName}
-                position={[0, 0, 5]}
-                isCurrent={false}
-                isPast={false}
-                offset={nextUpOffset}
-                font={font}
-                micData={micData}
-                maxLength={maxLength}
-              />
-            </group>
-          </group>
+          <NextUpGroup
+            trackName={nextTrackName}
+            artistName={nextArtistName}
+            position={[0, -(lyricPositions[lyrics.length - 1] || 0) - nextUpSpacing, 5]}
+            offset={nextUpOffset}
+            labelToTitleSpacing={labelToTitleSpacing}
+            font={font}
+            micData={micData}
+            maxLength={maxLength}
+          />
         );
       })()}
       
