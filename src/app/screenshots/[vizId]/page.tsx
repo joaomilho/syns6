@@ -63,17 +63,17 @@ function useAnimatedMicData(): MicrophoneData {
       timeRef.current += 0.016; // ~60fps
       const t = timeRef.current;
 
-      // Create realistic animated frequency data
+      // Create INTENSE animated frequency data
       const frequencyData = new Uint8Array(512);
       for (let i = 0; i < 512; i++) {
-        // Combine multiple sine waves for realistic spectrum
-        const bass = Math.sin(t * 2 + i * 0.01) * 80 + 80;
-        const mid = Math.sin(t * 4 + i * 0.02) * 60 + 60;
-        const treble = Math.sin(t * 6 + i * 0.03) * 40 + 40;
+        // Combine multiple sine waves for dramatic spectrum
+        const bassFreq = Math.sin(t * 3 + i * 0.01) * 120 + 120;
+        const midFreq = Math.sin(t * 5 + i * 0.02) * 100 + 100;
+        const trebleFreq = Math.sin(t * 7 + i * 0.03) * 80 + 80;
         
         // Lower frequencies = more energy (typical music spectrum)
         const falloff = Math.exp(-i / 200);
-        frequencyData[i] = Math.min(255, (bass + mid + treble) * falloff);
+        frequencyData[i] = Math.min(255, (bassFreq + midFreq + trebleFreq) * falloff);
       }
 
       // Create waveform data for oscilloscope (Float32Array in -1 to 1 range)
@@ -95,24 +95,27 @@ function useAnimatedMicData(): MicrophoneData {
         waveformRight[i] = waveform[(i + phaseShift) % waveformSize];
       }
 
-      // Animated values with realistic patterns
-      const kick = Math.abs(Math.sin(t * 2)) * 0.8 + 0.2;
-      const snare = Math.abs(Math.sin(t * 4 + 1)) * 0.6 + 0.1;
-      const hihat = Math.abs(Math.sin(t * 8 + 2)) * 0.5 + 0.3;
+      // INTENSE animated values with dramatic patterns for lava lamp
+      const kick = Math.abs(Math.sin(t * 3)) * 1.0; // More frequent, stronger kicks
+      const snare = Math.abs(Math.sin(t * 5 + 1)) * 0.9;
+      const hihat = Math.abs(Math.sin(t * 10 + 2)) * 0.8;
       
-      const bass = Math.abs(Math.sin(t * 1.5)) * 0.7 + 0.3;
-      const mid = Math.abs(Math.sin(t * 2.5)) * 0.6 + 0.2;
-      const treble = Math.abs(Math.sin(t * 3.5)) * 0.5 + 0.2;
+      const bass = Math.abs(Math.sin(t * 2.5)) * 1.0; // Full range bass
+      const mid = Math.abs(Math.sin(t * 3.5)) * 0.9;
+      const treble = Math.abs(Math.sin(t * 4.5)) * 0.8;
       const volume = (bass + mid + treble) / 3;
+      
+      // Add dramatic bass hits every 2 seconds
+      const bassHit = Math.floor(t * 0.5) % 2 === 0 && (t * 0.5) % 1 < 0.1 ? 1.0 : 0;
 
       setMicData({
         volume,
-        bass,
+        bass: Math.max(bass, bassHit), // Use bass hit for dramatic kicks
         mid,
         treble,
-        subBass: bass * 0.8,
+        subBass: bass * 0.9,
         presence: treble * 0.9,
-        energy: volume * 0.9,
+        energy: volume * 1.2 + bassHit * 0.3, // Higher energy, boost on bass hits
         isLoud: Math.random() > 0.95,
         isVoice: Math.random() > 0.7,
         voiceStrength: Math.abs(Math.sin(t * 3)) * 0.6,
@@ -125,17 +128,17 @@ function useAnimatedMicData(): MicrophoneData {
         instruments: {
           drums: (kick + snare + hihat) / 3,
           drumComponents: {
-            kick,
+            kick: Math.max(kick, bassHit),
             snare,
             hihat,
-            cymbal: Math.abs(Math.sin(t * 6)) * 0.4,
-            toms: Math.abs(Math.sin(t * 3)) * 0.3,
+            cymbal: Math.abs(Math.sin(t * 7)) * 0.8,
+            toms: Math.abs(Math.sin(t * 4)) * 0.6,
           },
-          bass: bass * 0.9,
-          guitar: Math.abs(Math.sin(t * 2.8)) * 0.7,
-          piano: Math.abs(Math.cos(t * 2.2)) * 0.5,
-          brass: Math.abs(Math.sin(t * 3.3)) * 0.4,
-          strings: Math.abs(Math.cos(t * 2.7)) * 0.6,
+          bass: Math.max(bass, bassHit) * 0.95,
+          guitar: Math.abs(Math.sin(t * 3.5)) * 0.9,
+          piano: Math.abs(Math.cos(t * 3.0)) * 0.8,
+          brass: Math.abs(Math.sin(t * 4.0)) * 0.7,
+          strings: Math.abs(Math.cos(t * 3.5)) * 0.8,
         },
         frequencyData,
         waveform,
