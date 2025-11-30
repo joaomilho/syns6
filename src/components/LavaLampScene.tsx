@@ -14,7 +14,7 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
   return (
     <>
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 30, 90]} />
+      <fog attach="fog" args={["#050505", 60, 150]} />
 
       {/* OrbitControls removed - it was causing skewed lyrics view */}
 
