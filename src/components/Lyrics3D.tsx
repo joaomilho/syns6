@@ -29,6 +29,11 @@ interface Lyrics3DProps {
   color?: string; // Optional color, defaults to green
   micData?: MicrophoneData; // Optional microphone data
   position?: [number, number, number]; // Optional position override, defaults to [0, 3, 0]
+  trackName?: string; // Current track name
+  artistName?: string; // Current artist name
+  nextTrackName?: string; // Next track name
+  nextArtistName?: string; // Next artist name
+  timeUntilNextTrack?: number; // Time remaining in current track (when showing next lyrics early)
 }
 
 /**
@@ -108,6 +113,10 @@ function LyricText3D({
 }) {
   const groupRef = useRef<Group>(null);
   const targetScaleRef = useRef(1);
+  
+  // Check if text is short (less than 75% of max length)
+  const isReallyShortText = text.length < maxLength * 0.5;
+  const isShortText = text.length < maxLength * 0.75;
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -125,7 +134,9 @@ function LyricText3D({
     let targetScale = 1.0;
     if (isCurrent) {
       const voiceStrength = 1 + (micData?.voiceStrength || 0) / 1.6;
-      targetScale = 2 * voiceStrength; // Reduced from 2.0 to 1.7
+      // Make short text bigger when current (2.5x instead of 2x)
+      const baseScale = isReallyShortText ? 3.5 : isShortText ? 2.5 : 1.8;
+      targetScale = baseScale * voiceStrength;
       groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
     } else if (isPast) {
       targetScale = 1.0;
@@ -234,9 +245,14 @@ export default function Lyrics3D({
   color = '#ff0',
   micData,
   position = [0, 5, 0],
+  trackName,
+  artistName,
+  nextTrackName,
+  nextArtistName,
+  timeUntilNextTrack = 0,
 }: Lyrics3DProps) {
   const groupRef = useRef<Group>(null);
-  const targetYRef = useRef(0);
+  const targetYRef = useRef(-8); // Start with lyrics visible at bottom
   
   // Track viewport width for responsive text wrapping
   const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920);
@@ -265,9 +281,12 @@ export default function Lyrics3D({
     if (!lyrics) return [];
     
     const positions: number[] = [];
-    let cumulativeY = 0;
+    
     const baseSpacing = 6; // Base spacing between lyrics
     const lineSpacing = 1.3; // Spacing between split lines within same lyric
+    
+    // No headerSpacing needed - header is positioned separately at fixed y=8
+    let cumulativeY = 0;
     
     for (let i = 0; i < lyrics.length; i++) {
       positions.push(cumulativeY);
@@ -312,7 +331,7 @@ export default function Lyrics3D({
     }
     
     return positions;
-  }, [lyrics, currentIndex, maxLength]);
+  }, [lyrics, currentIndex, maxLength, trackName, artistName]);
 
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
@@ -320,15 +339,30 @@ export default function Lyrics3D({
     return getVisibleLines(lyrics, currentIndex, 1, 3);
   }, [lyrics, currentIndex]);
 
+  // Track previous lyrics to detect song changes
+  const prevLyricsRef = useRef<LyricLine[] | null>(null);
+  
   // Update target position when current line changes
   useEffect(() => {
     // Use the pre-calculated cumulative position for the current line
     if (currentIndex >= 0 && currentIndex < lyricPositions.length) {
       targetYRef.current = lyricPositions[currentIndex];
     } else {
-      targetYRef.current = 0;
+      // Keep lyrics visible at bottom when no current line (before song starts)
+      targetYRef.current = -8;
     }
   }, [currentIndex, lyricPositions]);
+  
+  // Initialize group position at bottom when new song starts
+  useEffect(() => {
+    if (groupRef.current && lyrics && lyrics !== prevLyricsRef.current) {
+      // New song started - reset position to bottom (visible but low)
+      groupRef.current.position.y = -8;
+      targetYRef.current = -8;
+      prevLyricsRef.current = lyrics;
+      console.log('🎵 New song - lyrics starting at bottom, will rise to center');
+    }
+  }, [lyrics]);
 
   // Smooth animation to keep current line centered
   useFrame(() => {
@@ -377,6 +411,36 @@ export default function Lyrics3D({
       <ambientLight intensity={1.5} />
       <directionalLight position={[0, 0, 10]} intensity={1.0} />
       
+      {/* Header - scrolls and scales like lyrics, only visible near the start */}
+      {trackName && artistName && lyrics && lyrics.length > 0 && currentIndex <= 1 && (
+        <LyricText3D
+          text={`${artistName} - ${trackName}`}
+          position={[0, 10, 5]}
+          isCurrent={currentIndex === -1}
+          isPast={currentIndex >= 0}
+          offset={currentIndex === -1 ? 0 : -1}
+          font={font}
+          color="#ffffff"
+          micData={micData}
+          maxLength={maxLength}
+        />
+      )}
+      
+      {/* Footer - scrolls and scales like lyrics, only visible near the end */}
+      {nextTrackName && nextArtistName && lyrics && lyrics.length > 0 && currentIndex >= lyrics.length - 4 && (
+        <LyricText3D
+          text={`Next up: ${nextArtistName} - ${nextTrackName}`}
+          position={[0, -(lyricPositions[lyrics.length - 1] || 0) - 10, 5]}
+          isCurrent={false}
+          isPast={false}
+          offset={lyrics.length - currentIndex}
+          font={font}
+          color="#ffffff"
+          micData={micData}
+          maxLength={maxLength}
+        />
+      )}
+      
       {visibleLines.map(({ line, index, isAdjacent }, i) => {
         const isPast = index < currentIndex;
         const offset = index - currentIndex;
@@ -385,6 +449,8 @@ export default function Lyrics3D({
         const yPos = -(lyricPositions[index] || 0);
 
         const isCurrent = index === currentIndex;
+        
+        const lineColor = color;
 
         // Check if next line has a long wait (>10s)
         let showCountdown = false;
@@ -397,7 +463,8 @@ export default function Lyrics3D({
 
           if (waitTime > 0 && firstLine.time > 10000) {
             showCountdown = true;
-            countdownSeconds = waitTime / 1000;
+            // Add time remaining in current track if showing next lyrics early
+            countdownSeconds = (waitTime / 1000) + (timeUntilNextTrack / 1000);
           }
         }
         // Normal case: Next line after current
@@ -410,7 +477,8 @@ export default function Lyrics3D({
 
             if (gap > 10000 && timeUntilNext > 0) {
               showCountdown = true;
-              countdownSeconds = timeUntilNext / 1000;
+              // Add time remaining in current track if showing next lyrics early
+              countdownSeconds = (timeUntilNext / 1000) + (timeUntilNextTrack / 1000);
             }
           }
         }
@@ -424,7 +492,7 @@ export default function Lyrics3D({
             isPast={isPast}
             offset={offset}
             font={font}
-            color={color}
+            color={lineColor}
             showCountdown={showCountdown}
             countdownSeconds={countdownSeconds}
             micData={micData}
