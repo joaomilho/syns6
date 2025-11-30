@@ -9,7 +9,7 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 import VisualizationDropdown, { VisualizationType } from "@/components/VisualizationDropdown";
 import NowPlayingFooter from "@/components/NowPlayingFooter";
 import { Logo } from "@/components/ds";
-import ToolsMenu from "@/components/ToolsMenu";
+import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import OrbitalVisualization from "@/components/OrbitalVisualization";
 import FractalVisualization from "@/components/FractalVisualization";
@@ -866,16 +866,26 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             </span>
           </div>
 
-          {/* Tools Menu - shared component */}
-          <ToolsMenu
+          {/* Playback Status */}
+          <PlaybackStatusButton
             isPlaying={playbackState ? playbackState.is_playing : null}
-            isMicEnabled={isMicEnabled}
-            isCameraEnabled={isCameraEnabled}
-            onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
-            onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
-            showMic={!webglUnavailable}
-            showCamera={!webglUnavailable}
           />
+
+          {/* Microphone Toggle */}
+          {!webglUnavailable && (
+            <MicrophoneButton
+              enabled={isMicEnabled}
+              onToggle={() => (isMicEnabled ? disableMic() : enableMic())}
+            />
+          )}
+
+          {/* Camera Toggle */}
+          {!webglUnavailable && (
+            <CameraButton
+              enabled={isCameraEnabled}
+              onToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+            />
+          )}
 
           {/* Visualization Dropdown - allow viewer to override master's viz */}
           {!webglUnavailable && (

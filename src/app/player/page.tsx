@@ -22,9 +22,9 @@ import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
   VisualizationType,
 } from "@/components/VisualizationDropdown";
-import ModeDropdown, { VisualizationMode } from "@/components/ModeDropdown";
-import TypographyDropdown, { LyricsFont, LyricsColor, getFontPath } from "@/components/TypographyDropdown";
+import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
+import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -65,7 +65,6 @@ import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
 import ShareButton from "@/components/ShareButton";
 import { Logo } from "@/components/ds";
-import ToolsMenu from "@/components/ToolsMenu";
 
 interface Track {
   id: string;
@@ -153,6 +152,11 @@ export default function PlayerPage() {
   const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
   const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
+  const [shaderControls, setShaderControls] = useState({
+    rgbSplit: 0.01,
+    distortion: 0.02,
+    colorShift: 0.5,
+  });
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1115,6 +1119,14 @@ export default function PlayerPage() {
             key="camera"
           videoElement={videoElement}
           micData={micData}
+          shaderControls={{
+            rgbSplitAmount: shaderControls.rgbSplit,
+            distortionAmount: shaderControls.distortion,
+            colorShiftR: shaderControls.colorShift,
+            colorShiftB: shaderControls.colorShift,
+            pixelThreshold: 0.7,
+            waveFrequency: 20.0,
+          }}
         />
         );
       case "debug":
@@ -1301,7 +1313,45 @@ export default function PlayerPage() {
         <Logo loading={subscriptionLoading} />
 
         <div className={styles.controlGroups}>
-        {/* Share Controls (leftmost) */}
+        {/* Playback Status */}
+        <PlaybackStatusButton
+          isPlaying={
+            !playbackState?.item && !lastKnownTrack?.item
+              ? null
+              : playbackState?.is_playing ?? false
+          }
+        />
+
+        {/* Microphone Toggle */}
+        {micAvailable && (
+          <MicrophoneButton
+            enabled={isMicEnabled}
+            onToggle={() => (isMicEnabled ? disableMic() : enableMic())}
+          />
+        )}
+
+        {/* Camera Toggle */}
+        {webglAvailable && (
+          <CameraButton
+            enabled={isCameraEnabled}
+            onToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+          />
+        )}
+
+        {/* Hue Dropdown */}
+        <HueDropdown hue={hue} />
+
+        {/* AI Create Button */}
+        <button
+          className={styles.aiButton}
+          onClick={handleCreateNew}
+          title="Create AI Visualization"
+        >
+          <span className={styles.sparkles}>✦</span>
+          <span>AI</span>
+        </button>
+
+        {/* Share Controls */}
         {!shareManager.isShareActive ? (
           // Not sharing yet - show Share button
           <ShareButton onStartSharing={() => {
@@ -1327,31 +1377,6 @@ export default function PlayerPage() {
             <span>Connecting...</span>
           </div>
         )}
-        
-        {/* Tools Menu */}
-        <ToolsMenu
-          isPlaying={
-            !playbackState?.item && !lastKnownTrack?.item
-              ? null
-              : playbackState?.is_playing ?? false
-          }
-          isMicEnabled={isMicEnabled}
-          isCameraEnabled={isCameraEnabled}
-          onMicToggle={() => (isMicEnabled ? disableMic() : enableMic())}
-          onCameraToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
-          showMic={micAvailable}
-          showCamera={webglAvailable}
-        />
-
-        {/* AI Create Button */}
-        <button
-          className={styles.aiButton}
-          onClick={handleCreateNew}
-          title="Create AI Visualization"
-        >
-          <span className={styles.sparkles}>✦</span>
-          <span>AI</span>
-        </button>
 
         {/* Visualization Dropdown */}
         <VisualizationDropdown
@@ -1360,22 +1385,18 @@ export default function PlayerPage() {
           customVisualizations={customVisualizations}
         />
 
-        {/* Mode Dropdown */}
-        <ModeDropdown
-          value={visualizationMode}
-          onChange={setVisualizationMode}
-        />
-
-        {/* Typography Dropdown */}
-        <TypographyDropdown
+        {/* Config Dropdown (Mode + Typography + Viz Config) */}
+        <ConfigDropdown
+          mode={visualizationMode}
           font={lyricsFont}
           color={lyricsColor}
+          shaderControls={shaderControls}
+          currentVisualization={visualizationType}
+          onModeChange={setVisualizationMode}
           onFontChange={setLyricsFont}
           onColorChange={setLyricsColor}
+          onShaderControlsChange={setShaderControls}
         />
-
-        {/* Hue Dropdown */}
-        <HueDropdown hue={hue} />
 
         {/* User Profile */}
         {session?.user && (

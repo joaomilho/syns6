@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ScreenShare } from "lucide-react";
 import QRCode from "react-qr-code";
 import styles from "./ShareQRCode.module.css";
 
@@ -39,7 +40,7 @@ export default function ShareQRCode({ peerId, connectedViewers, autoExpand = fal
         onClick={() => setIsExpanded(!isExpanded)}
         title={`Screen sharing: ${connectedViewers} ${connectedViewers === 1 ? 'viewer' : 'viewers'}`}
       >
-        <span className={styles.icon}>⧉</span>
+        <ScreenShare size={16} className={styles.icon} />
         <span className={styles.shareCode}>{shareCode}</span>
         <span className={styles.viewerCount}>{connectedViewers}</span>
       </div>
