@@ -37,48 +37,186 @@ interface Lyrics3DProps {
 }
 
 /**
+ * Title and Artist as a single animated group
+ */
+function TitleArtistGroup({
+  trackName,
+  artistName,
+  position,
+  isCurrent,
+  isPast,
+  offset,
+  font,
+  micData,
+  maxLength,
+}: {
+  trackName: string;
+  artistName: string;
+  position: [number, number, number];
+  isCurrent: boolean;
+  isPast: boolean;
+  offset: number;
+  font?: string;
+  micData?: MicrophoneData;
+  maxLength: number;
+}) {
+  const groupRef = useRef<Group>(null);
+  const targetScaleRef = useRef(1);
+  
+  const isReallyShortText = trackName.length < maxLength * 0.5;
+  const isShortText = trackName.length < maxLength * 0.75;
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+
+    const time = state.clock.getElapsedTime();
+
+    // OSCILLATING rotation
+    const maxRotation = 0.15;
+    const rotationSpeed = 0.3;
+    groupRef.current.rotation.y = Math.sin(time * rotationSpeed) * maxRotation;
+    groupRef.current.rotation.x = 0;
+    groupRef.current.rotation.z = 0;
+
+    // Calculate target scale based on position - same logic as LyricText3D
+    let targetScale = 1.0;
+    if (isCurrent) {
+      const voiceStrength = 1 + (micData?.voiceStrength || 0) / 1.6;
+      const baseScale = isReallyShortText ? 3.5 : isShortText ? 2.5 : 1.8;
+      targetScale = baseScale * voiceStrength;
+      groupRef.current.position.y = position[1] + Math.sin(time * 2) * 0.01;
+    } else if (isPast) {
+      targetScale = 1.0;
+      groupRef.current.position.y = position[1];
+    } else if (offset === 1) {
+      targetScale = 1.8;
+      groupRef.current.position.y = position[1];
+    } else if (offset === 2) {
+      targetScale = 1.0;
+      groupRef.current.position.y = position[1];
+    } else if (offset >= 3) {
+      targetScale = 0.7;
+      groupRef.current.position.y = position[1];
+    } else {
+      targetScale = 0.4;
+      groupRef.current.position.y = position[1];
+    }
+
+    // Smoothly lerp to target scale
+    const currentScale = groupRef.current.scale.x;
+    const scaleLerpFactor = 0.04;
+    const newScale = currentScale + (targetScale - currentScale) * scaleLerpFactor;
+    groupRef.current.scale.set(newScale, newScale, newScale);
+  });
+
+  return (
+    <group ref={groupRef} position={position}>
+      {/* Song title - bold */}
+      <Text
+        position={[0, 0.6, 0]}
+        fontSize={1}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+        font='/fonts/Poppins/Poppins-Bold.ttf'
+        outlineWidth={isCurrent ? 0.1 : 0.05}
+        outlineColor="black"
+        letterSpacing={0}
+        characters={COMMON_CHARS}
+      >
+        {trackName}
+        <meshStandardMaterial
+          color="#ffffff"
+          emissive="#000000"
+          emissiveIntensity={0}
+          metalness={0}
+          roughness={1}
+          transparent
+          opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
+        />
+      </Text>
+      
+      {/* Artist name - light, smaller, below */}
+      <group position={[0, -0.3, 0]} scale={0.6}>
+        <Text
+          fontSize={1}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          font='/fonts/Poppins/Poppins-Light.ttf'
+          outlineWidth={isCurrent ? 0.1 : 0.05}
+          outlineColor="black"
+          letterSpacing={0}
+          characters={COMMON_CHARS}
+        >
+          {artistName}
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#000000"
+            emissiveIntensity={0}
+            metalness={0}
+            roughness={1}
+            transparent
+            opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
+          />
+        </Text>
+      </group>
+    </group>
+  );
+}
+
+/**
  * Split long text into multiple lines at word boundaries
- * Recursively splits text into as many lines as needed
+ * Splits at maxLength intervals for consistent line sizes
  */
 function splitLongText(text: string, maxLength: number = 42): string[] {
   if (text.length <= maxLength) {
     return [text];
   }
 
-  // Find best break point (space) near maxLength
-  let bestBreak = -1;
+  // For 2-line splits only, try to balance by splitting near the middle
+  // This makes 2-line lyrics look more balanced
+  const numLinesNeeded = Math.ceil(text.length / maxLength);
+  const useBalancedSplit = numLinesNeeded === 2;
   
-  // Look for the last space before maxLength
-  for (let i = Math.min(maxLength, text.length - 1); i >= 0; i--) {
+  // Find the ideal split point
+  const idealSplit = useBalancedSplit 
+    ? Math.floor(text.length / 2)  // Middle for 2 lines
+    : maxLength;                    // maxLength for 3+ lines
+  
+  // Find all spaces in the text
+  const spaces: number[] = [];
+  for (let i = 0; i < text.length; i++) {
     if (text[i] === " ") {
-      bestBreak = i;
-      break;
+      spaces.push(i);
     }
   }
-
-  // If no space found in reasonable range, try to find first space after maxLength
-  if (bestBreak === -1) {
-    for (let i = maxLength; i < text.length; i++) {
-      if (text[i] === " ") {
-        bestBreak = i;
-        break;
-      }
-    }
-  }
-
-  // Use the break point if found
-  if (bestBreak > 0) {
-    const firstLine = text.substring(0, bestBreak).trim();
-    const remaining = text.substring(bestBreak + 1).trim();
-    
-    // Recursively split the remaining text if it's still too long
+  
+  // If no spaces found, split at maxLength
+  if (spaces.length === 0) {
+    const firstLine = text.substring(0, maxLength).trim();
+    const remaining = text.substring(maxLength).trim();
+    if (remaining.length === 0) return [firstLine];
     return [firstLine, ...splitLongText(remaining, maxLength)];
   }
-
-  // Otherwise split at maxLength (fallback for text without spaces)
-  const firstLine = text.substring(0, maxLength).trim();
-  const remaining = text.substring(maxLength).trim();
   
+  // Find the space closest to the ideal split point
+  let bestBreak = spaces[0];
+  let minDistance = Math.abs(idealSplit - spaces[0]);
+  
+  for (const spacePos of spaces) {
+    const distance = Math.abs(idealSplit - spacePos);
+    if (distance < minDistance) {
+      minDistance = distance;
+      bestBreak = spacePos;
+    }
+  }
+  
+  // Split at the best break point
+  const firstLine = text.substring(0, bestBreak).trim();
+  const remaining = text.substring(bestBreak + 1).trim();
+  
+  // Recursively split the remaining text if it's still too long
   if (remaining.length === 0) {
     return [firstLine];
   }
@@ -98,6 +236,7 @@ function LyricText3D({
   countdownSeconds,
   micData,
   maxLength,
+  fontWeight = 400,
 }: {
   text: string;
   position: [number, number, number];
@@ -110,6 +249,7 @@ function LyricText3D({
   countdownSeconds?: number;
   micData?: MicrophoneData;
   maxLength: number;
+  fontWeight?: number;
 }) {
   const groupRef = useRef<Group>(null);
   const targetScaleRef = useRef(1);
@@ -181,9 +321,8 @@ function LyricText3D({
             color={color}
             anchorX="center"
             anchorY="middle"
-            font={font}
-            fontWeight={400}
-            outlineWidth={isCurrent ? 0.1 : isPast? 0 : 0.05 }
+            font={fontWeight === 700 ? '/fonts/Poppins/Poppins-Bold.ttf' : fontWeight === 300 ? '/fonts/Poppins/Poppins-Light.ttf' : font}
+            outlineWidth={isCurrent ? 0.1 : 0.05}
             outlineColor="black"
             letterSpacing={0}
             characters={COMMON_CHARS}
@@ -276,7 +415,8 @@ export default function Lyrics3D({
     return getCurrentLyricIndex(lyrics, currentTimeMs);
   }, [lyrics, currentTimeMs]);
 
-  // Calculate cumulative positions for each lyric, accounting for line breaks AND scale
+  // Calculate cumulative positions for each lyric, accounting for line breaks
+  // Use a constant scale factor to avoid position jumps when currentIndex changes
   const lyricPositions = useMemo(() => {
     if (!lyrics) return [];
     
@@ -284,6 +424,7 @@ export default function Lyrics3D({
     
     const baseSpacing = 6; // Base spacing between lyrics
     const lineSpacing = 1.3; // Spacing between split lines within same lyric
+    const constantScaleFactor = 1.5; // Use a constant scale for spacing calculations
     
     let cumulativeY = 0;
     
@@ -294,34 +435,19 @@ export default function Lyrics3D({
       const textLines = splitLongText(lyrics[i].text, maxLength);
       const numLines = textLines.length;
       
-      // Determine scale factor based on position relative to current
-      let scaleFactor = 1.0;
-      const offset = i - currentIndex;
-      if (i === currentIndex) {
-        scaleFactor = 2.0; // Current line is scaled to 2x
-      } else if (offset === 1) {
-        scaleFactor = 1.8; // Next line is scaled to 1.8x
-      } else if (offset === 2) {
-        scaleFactor = 1.0;
-      } else if (offset >= 3) {
-        scaleFactor = 0.7;
-      } else {
-        scaleFactor = 0.4; // Past lines
-      }
-      
-      // Calculate actual height needed for this lyric
+      // Calculate actual height needed for this lyric using constant scale
       const fontSize = 1; // Base font size
       
       // Height = (number of lines * scaled font size) + (gaps between lines * scaled spacing)
-      const textHeight = numLines * fontSize * scaleFactor;
-      const gapHeight = (numLines - 1) * lineSpacing * scaleFactor;
+      const textHeight = numLines * fontSize * constantScaleFactor;
+      const gapHeight = (numLines - 1) * lineSpacing * constantScaleFactor;
       const totalHeight = textHeight + gapHeight;
       
       // Base spacing + extra space for the actual scaled height
       let spacing = baseSpacing;
       
-      // For multi-line or scaled lyrics, add the extra height beyond a single line
-      const singleLineHeight = fontSize * 1.0; // Normal single line height
+      // For multi-line lyrics, add the extra height beyond a single line
+      const singleLineHeight = fontSize * constantScaleFactor;
       if (totalHeight > singleLineHeight) {
         spacing += (totalHeight - singleLineHeight);
       }
@@ -330,12 +456,12 @@ export default function Lyrics3D({
     }
     
     return positions;
-  }, [lyrics, currentIndex, maxLength]);
+  }, [lyrics, maxLength]);
 
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
-    // Show fewer lines for better performance: 1 before, current, 3 after = 5 total
-    return getVisibleLines(lyrics, currentIndex, 1, 3);
+    // Show fewer lines for better performance: 1 before, current, 5 after = 7 total
+    return getVisibleLines(lyrics, currentIndex, 1, 5);
   }, [lyrics, currentIndex]);
 
   // Track previous lyrics to detect song changes
@@ -343,14 +469,19 @@ export default function Lyrics3D({
   
   // Update target position when current line changes
   useEffect(() => {
-    // Use the pre-calculated cumulative position for the current line
+    if (!lyrics || lyrics.length === 0) {
+      targetYRef.current = -8;
+      return;
+    }
+
     if (currentIndex >= 0 && currentIndex < lyricPositions.length) {
+      // Use the pre-calculated cumulative position for the current line
       targetYRef.current = lyricPositions[currentIndex];
     } else {
       // Keep lyrics visible at bottom when no current line (before song starts)
       targetYRef.current = -8;
     }
-  }, [currentIndex, lyricPositions]);
+  }, [currentIndex, lyricPositions, lyrics]);
   
   // Initialize group position at bottom when new song starts
   useEffect(() => {
@@ -410,35 +541,64 @@ export default function Lyrics3D({
       <ambientLight intensity={1.5} />
       <directionalLight position={[0, 0, 10]} intensity={1.0} />
       
-      {/* Header - visible only before song starts and during first lyric */}
-      {trackName && artistName && lyrics && lyrics.length > 0 && currentIndex <= 0 && (
-        <LyricText3D
-          text={`${artistName} - ${trackName}`}
+      {/* Header - visible only before song starts and during first lyric - both title and artist behave as ONE line */}
+      {trackName && artistName && lyrics && lyrics.length > 0 && currentIndex < 1 && (
+        <TitleArtistGroup
+          trackName={trackName}
+          artistName={artistName}
           position={[0, 8, 5]}
           isCurrent={currentIndex === -1}
           isPast={currentIndex >= 0}
-          offset={currentIndex === -1 ? 0 : -1}
+          offset={-1 - currentIndex}
           font={font}
-          color="#ffffff"
           micData={micData}
           maxLength={maxLength}
         />
       )}
       
-      {/* Footer - positioned one spacing below last lyric */}
-      {nextTrackName && nextArtistName && lyrics && lyrics.length > 0 && currentIndex >= lyrics.length - 4 && (
-        <LyricText3D
-          text={`Next up: ${nextArtistName} - ${nextTrackName}`}
-          position={[0, -(lyricPositions[lyrics.length - 1] || 0) - 6, 5]}
-          isCurrent={false}
-          isPast={false}
-          offset={lyrics.length - currentIndex}
-          font={font}
-          color="#ffffff"
-          micData={micData}
-          maxLength={maxLength}
-        />
-      )}
+      {/* Footer - positioned below last lyric */}
+      {nextTrackName && nextArtistName && lyrics && lyrics.length > 0 && (() => {
+        // Calculate offset - behave like the NEXT line after current
+        const nextUpOffset = lyrics.length - currentIndex;
+        
+        // Position "Next up" below last lyric - close enough to be visible when last lyric is centered
+        const nextUpSpacing = 9; // Spacing from last lyric - visible when last lyric is centered
+        const labelToTitleSpacing = 1.0; // Spacing between "Next up:" and title (adjusted for scale)
+        
+        return (
+          <group>
+            {/* "Next up:" label - smaller */}
+            <group position={[0, -(lyricPositions[lyrics.length - 1] || 0) - nextUpSpacing, 5]} scale={0.6}>
+              <LyricText3D
+                text="Next up:"
+                position={[0, 0, 0]}
+                isCurrent={false}
+                isPast={false}
+                offset={nextUpOffset}
+                font={font}
+                color="#ffffff"
+                micData={micData}
+                maxLength={maxLength}
+                fontWeight={300}
+              />
+            </group>
+            {/* Next song name and artist - behave as ONE line - bigger */}
+            <group position={[0, -(lyricPositions[lyrics.length - 1] || 0) - nextUpSpacing - labelToTitleSpacing, 5]} scale={1.2}>
+              <TitleArtistGroup
+                trackName={nextTrackName}
+                artistName={nextArtistName}
+                position={[0, 0, 5]}
+                isCurrent={false}
+                isPast={false}
+                offset={nextUpOffset}
+                font={font}
+                micData={micData}
+                maxLength={maxLength}
+              />
+            </group>
+          </group>
+        );
+      })()}
       
       {visibleLines.map(({ line, index, isAdjacent }, i) => {
         const isPast = index < currentIndex;
