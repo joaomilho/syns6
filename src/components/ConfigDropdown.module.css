@@ -1,0 +1,351 @@
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdownButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.dropdownButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: rgba(10, 10, 10, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 16px 0;
+}
+
+/* Mode Options */
+.modeList {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.modeOption {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.modeOption:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modeOption.active {
+  background: rgba(29, 185, 84, 0.2);
+  border-color: rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+}
+
+.modeOption.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeTitle {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.comingSoonBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 4px;
+  background: rgba(255, 165, 0, 0.9);
+  border: 1px solid rgba(255, 165, 0, 1);
+  border-radius: 4px;
+  color: #000;
+  z-index: 1;
+}
+
+.modeDescription {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.3;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Font Options */
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  text-align: left;
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.option.active {
+  background: rgba(29, 185, 84, 0.2);
+  border-color: rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+}
+
+.optionName {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Color Selection */
+.colorList {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  flex-wrap: nowrap;
+}
+
+.colorOption {
+  position: relative;
+  flex: 1;
+  height: 44px;
+  padding: 1px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.colorOption:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.colorOption.active {
+  border-color: #1ed760;
+  border-width: 3px;
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.5);
+}
+
+.colorSwatch {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Slider Controls */
+.sliderControl {
+  margin-bottom: 12px;
+}
+
+.sliderControl:last-child {
+  margin-bottom: 0;
+}
+
+.sliderLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 6px;
+}
+
+.sliderValue {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1ed760;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1ed760;
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #1fdf67;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(29, 185, 84, 0.5);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1ed760;
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #1fdf67;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(29, 185, 84, 0.5);
+}
+
+.slider::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  height: 4px;
+}
+
+.slider::-moz-range-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  height: 4px;
+}
+
+/* Reset Button */
+.resetButton {
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resetButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+}
+

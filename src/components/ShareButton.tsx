@@ -1,5 +1,6 @@
 "use client";
 
+import { ScreenShare } from "lucide-react";
 import styles from "./ShareButton.module.css";
 
 interface ShareButtonProps {
@@ -14,7 +15,7 @@ export default function ShareButton({ onStartSharing }: ShareButtonProps) {
         onClick={onStartSharing}
         title="Start sharing your screen"
       >
-        <span className={styles.icon}>⧉</span>
+        <ScreenShare size={16} className={styles.icon} />
         <span className={styles.label}>Share</span>
       </button>
     </div>

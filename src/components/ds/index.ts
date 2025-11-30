@@ -11,6 +11,9 @@ export type { LogoProps } from './Logo';
 export { default as Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 
+export { default as IconButton } from './IconButton';
+export type { IconButtonProps } from './IconButton';
+
 // Demo Components (for development/documentation)
 export { default as ButtonDemo } from './ButtonDemo';
 
