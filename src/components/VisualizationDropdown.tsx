@@ -195,7 +195,15 @@ export default function VisualizationDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentViz = visualizations.find((v) => v.id === value);
+  // Filter visualizations based on environment
+  const isDev = process.env.NODE_ENV === 'development';
+  const availableVisualizations = visualizations.filter((viz) => {
+    // Only show debug visualization in development
+    if (viz.id === 'debug') return isDev;
+    return true;
+  });
+
+  const currentViz = availableVisualizations.find((v) => v.id === value);
   const currentCustom = customVisualizations.find((v) => v.id === value);
 
   // Debug: Log when custom visualizations change
@@ -249,7 +257,7 @@ export default function VisualizationDropdown({
         <div className={styles.dropdownMenu}>
           {/* Built-in Visualizations */}
           <div className={styles.visualizationGrid}>
-            {visualizations.map((viz) => (
+            {availableVisualizations.map((viz) => (
               <button
                 key={viz.id}
                 className={`${styles.vizOption} ${

@@ -1650,6 +1650,7 @@ export default function PlayerPage() {
           isGenerating={isGenerating}
           hasCode={!!generatedCode}
           error={generationError}
+          disabled={true}
         />
       )}
     </div>
