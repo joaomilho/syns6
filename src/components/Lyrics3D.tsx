@@ -285,7 +285,6 @@ export default function Lyrics3D({
     const baseSpacing = 6; // Base spacing between lyrics
     const lineSpacing = 1.3; // Spacing between split lines within same lyric
     
-    // No headerSpacing needed - header is positioned separately at fixed y=8
     let cumulativeY = 0;
     
     for (let i = 0; i < lyrics.length; i++) {
@@ -331,7 +330,7 @@ export default function Lyrics3D({
     }
     
     return positions;
-  }, [lyrics, currentIndex, maxLength, trackName, artistName]);
+  }, [lyrics, currentIndex, maxLength]);
 
   const visibleLines = useMemo(() => {
     if (!lyrics) return [];
@@ -411,11 +410,11 @@ export default function Lyrics3D({
       <ambientLight intensity={1.5} />
       <directionalLight position={[0, 0, 10]} intensity={1.0} />
       
-      {/* Header - scrolls and scales like lyrics, only visible near the start */}
-      {trackName && artistName && lyrics && lyrics.length > 0 && currentIndex <= 1 && (
+      {/* Header - visible only before song starts and during first lyric */}
+      {trackName && artistName && lyrics && lyrics.length > 0 && currentIndex <= 0 && (
         <LyricText3D
           text={`${artistName} - ${trackName}`}
-          position={[0, 10, 5]}
+          position={[0, 8, 5]}
           isCurrent={currentIndex === -1}
           isPast={currentIndex >= 0}
           offset={currentIndex === -1 ? 0 : -1}
@@ -426,11 +425,11 @@ export default function Lyrics3D({
         />
       )}
       
-      {/* Footer - scrolls and scales like lyrics, only visible near the end */}
+      {/* Footer - positioned one spacing below last lyric */}
       {nextTrackName && nextArtistName && lyrics && lyrics.length > 0 && currentIndex >= lyrics.length - 4 && (
         <LyricText3D
           text={`Next up: ${nextArtistName} - ${nextTrackName}`}
-          position={[0, -(lyricPositions[lyrics.length - 1] || 0) - 10, 5]}
+          position={[0, -(lyricPositions[lyrics.length - 1] || 0) - 6, 5]}
           isCurrent={false}
           isPast={false}
           offset={lyrics.length - currentIndex}
