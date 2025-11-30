@@ -6,10 +6,10 @@
  */
 
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { LavaLampBlobs, LavaLampLighting } from "./LavaLampVisualization";
+import { LavaLampBlobs } from "./LavaLampVisualization";
 
 export default function LavaLampScene({ micData }: { micData?: any }) {
-  const bloomIntensity = 0.4 + (micData?.bass || 0) * 3;
+  const bloomIntensity = 0.1 + (micData?.bass || 0) * 5;
 
   return (
     <>
@@ -18,17 +18,17 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
 
       {/* OrbitControls removed - it was causing skewed lyrics view */}
 
-      <LavaLampLighting micData={micData} />
+      
       <LavaLampBlobs micData={micData} />
 
       <EffectComposer multisampling={0}>
         <Bloom
           intensity={bloomIntensity}
           luminanceThreshold={0.6}
-          luminanceSmoothing={2}
-          radius={0.5}
-          levels={4}
-          mipmapBlur={false}
+          luminanceSmoothing={0.9}
+          radius={0}
+          levels={6}
+          mipmapBlur={true}
         />
       </EffectComposer>
     </>
