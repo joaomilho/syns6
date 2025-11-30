@@ -29,15 +29,14 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
       <LavaLampLighting micData={micData} />
       <LavaLampBlobs micData={micData} />
 
-      <EffectComposer multisampling={4}>
+      <EffectComposer multisampling={0}>
         <Bloom
           intensity={bloomIntensity}
-          luminanceThreshold={0.35}
-          luminanceSmoothing={6}
-          radius={0.8}
-          levels={6}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={2}
+          radius={0.6}
+          levels={4}
           mipmapBlur={false}
-          
         />
       </EffectComposer>
     </>
