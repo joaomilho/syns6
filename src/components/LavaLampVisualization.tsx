@@ -44,11 +44,11 @@ export function LavaLampBlobs({
       color: 0xff6644, // Warm orange-red
       roughness: 0.3,
       metalness: 0.7,
-      emissive: 0xff3300,
-      emissiveIntensity: 2.0,
+      emissive: 0x000000,
+      emissiveIntensity: 1, // Increased from 2.0 for visibility at distance
       clearcoat: 0.6, // Reduced from 1.0 for performance
       clearcoatRoughness: 0.2,
-      reflectivity: 0.8, // Reduced from 1.0
+      reflectivity: 0.5, // Reduced from 1.0
       side: DoubleSide,
       toneMapped: false,
     });
@@ -76,14 +76,14 @@ export function LavaLampBlobs({
       // Initialize on first frame - higher resolution needed to prevent edge clipping
       const resolution = 32; // Higher resolution = more interior cells = less edge clipping
       const effect = new MarchingCubes(resolution, material, false, false, 50000);
-      effect.position.set(0, 0, -60); // Way back behind lyrics - lyrics are at z=5
-      effect.scale.set(70, 70, 70); // Larger scale to compensate for distance
+      effect.position.set(0, 0, -120); // FAR back behind lyrics - lyrics are at z=5
+      effect.scale.set(90, 90, 90); // Much larger scale to fill screen from far away
       effect.isolation = 80;
       
-      // Fix bounding sphere to prevent frustum culling
+      // Fix bounding sphere to prevent frustum culling - match larger scale
       effect.geometry.boundingSphere = new Sphere(
         new Vector3(0, 0, 0),
-        100
+        150
       );
       effect.frustumCulled = false;
       
@@ -229,7 +229,7 @@ export function LavaLampBlobs({
       material.emissive.setHSL(hue, 1.0, 0.4 + energy * 0.3);
     }
     
-    material.emissiveIntensity = 1.5 + energy * 2.0 + bass * 1.2; // Strong emissive for bloom
+    material.emissiveIntensity = 0.4 + bass * 2; // Strong emissive for visibility at distance
   });
 
   return null;
@@ -248,28 +248,28 @@ export function LavaLampLighting({
     const energy = micData?.energy || 0;
     const bass = micData?.bass || 0;
 
-    // Central light that gives the blobs luminosity - BRIGHTER with music
+    // Central light that gives the blobs luminosity - MUCH BRIGHTER for distance
     if (centralLightRef.current) {
       const hue = (time * 0.1 + energy * 0.3) % 1;
       centralLightRef.current.color.setHSL(hue, 1.0, 0.5);
-      centralLightRef.current.intensity = 150 + bass * 150 + energy * 100;
+      centralLightRef.current.intensity = 500 + bass * 400 + energy * 300;
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[0.5, 0.5, 1]} intensity={2} color="#ffffff" />
+      {/* <ambientLight intensity={1.5} /> */}
+      {/* <directionalLight position={[0, 0, -100]} intensity={0} color="#ffffff" /> */}
       
-      {/* Strong central light to make the blobs luminous - moved back with blobs */}
-      <pointLight
+      {/* Strong central light to make the blobs luminous - positioned near blobs */}
+      {/* <pointLight
         ref={centralLightRef}
-        position={[0, 0, -45]}
-        intensity={180}
+        position={[0, 0, -100]}
+        intensity={500}
         color="#ff7c00"
-        decay={2}
-        distance={120}
-      />
+        decay={1.2}
+        distance={250}
+      /> */}
     </>
   );
 }
@@ -278,20 +278,20 @@ export default function LavaLampVisualization({
   micData,
 }: LavaLampVisualizationProps) {
   // Calculate bloom intensity based on music - subtle glow
-  const bloomIntensity = 0.1 + (micData?.bass || 0) /3;
+  // const bloomIntensity = 0.1 + (micData?.bass || 0) /3;
 
   return (
-    <Canvas camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }} dpr={1}>
+    <Canvas camera={{ position: [0, 0, 30], fov: 275, near: 0.1, far: 1000 }} dpr={1}>
       <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 30, 90]} />
+      <fog attach="fog" args={["#050505", 60, 120]} />
 
-      <LavaLampLighting micData={micData} />
+      
 
       {/* Morphing blobs using marching cubes - includes central sphere */}
       <LavaLampBlobs micData={micData} />
 
       {/* Post-processing for refined GLOW effect - heavily optimized */}
-      <EffectComposer multisampling={0}>
+      {/* <EffectComposer multisampling={0}>
         <Bloom 
           intensity={bloomIntensity}
           luminanceThreshold={0.6}
@@ -300,7 +300,7 @@ export default function LavaLampVisualization({
           levels={4}
           mipmapBlur={false}
         />
-      </EffectComposer>
+      </EffectComposer> */}
     </Canvas>
   );
 }
