@@ -1149,8 +1149,8 @@ export default function PlayerPage() {
       case 'particles': return { position: [0, 3, 40] as [number, number, number], fov: 80 };
       case 'animated': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
       case 'waves': return { position: [0, 3, 25] as [number, number, number], fov: 75 };
-      case 'kaleidoscope': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
-      default: return { position: [0, 3, 30] as [number, number, number], fov: 75 };
+      case 'kaleidoscope': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+      default: return { position: [0, 0, 30] as [number, number, number], fov: 75 };
     }
   };
 
