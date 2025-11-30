@@ -38,21 +38,18 @@ export function LavaLampBlobs({
   const particlesRef = useRef<Particle[]>([]);
   const frameCountRef = useRef(0); // For throttling updates
 
-  // Initialize marching cubes with premium GLOWING material
+  // Initialize marching cubes with optimized glowing material
   const material = useMemo(() => {
-    // Create a MeshPhysicalMaterial for advanced effects
+    // Create a MeshPhysicalMaterial - simplified for performance
     const mat = new MeshPhysicalMaterial({
       color: 0xff6644, // Warm orange-red
-      roughness: 0.2,
-      metalness: 0.8,
+      roughness: 0.3,
+      metalness: 0.7,
       emissive: 0xff3300,
       emissiveIntensity: 2.0,
-      clearcoat: 1.0, // Glass-like coating
-      clearcoatRoughness: 0.1,
-      reflectivity: 1.0,
-      ior: 1.5, // Index of refraction
-      thickness: 1.0,
-      transmission: 0.0, // Adjust for transparency
+      clearcoat: 0.6, // Reduced from 1.0 for performance
+      clearcoatRoughness: 0.2,
+      reflectivity: 0.8, // Reduced from 1.0
       side: DoubleSide,
       toneMapped: false,
     });
@@ -74,22 +71,20 @@ export function LavaLampBlobs({
   }, []);
 
   useFrame((state, delta) => {
-    // Throttle updates to every 2nd frame for +2-3 FPS boost
     frameCountRef.current++;
     
-    
     if (!effectRef.current) {
-      // Initialize on first frame - optimized resolution for performance
-      const resolution = 28; // Balanced resolution for performance
-      const effect = new MarchingCubes(resolution, material, false, false, 100000);
-      effect.position.set(0, -8, -35); // Moved further back and down to avoid lyrics
-      effect.scale.set(30,30,30);
-      effect.isolation = 80; // Back to original
+      // Initialize on first frame - higher resolution needed to prevent edge clipping
+      const resolution = 32; // Higher resolution = more interior cells = less edge clipping
+      const effect = new MarchingCubes(resolution, material, false, false, 50000);
+      effect.position.set(0, -8, -35);
+      effect.scale.set(55, 55, 55); // Larger scale so center 70% still covers full screen
+      effect.isolation = 80;
       
       // Fix bounding sphere to prevent frustum culling
       effect.geometry.boundingSphere = new Sphere(
         new Vector3(0, 0, 0),
-        50
+        100
       );
       effect.frustumCulled = false;
       
@@ -97,23 +92,23 @@ export function LavaLampBlobs({
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      const numParticles = 18; // Reduced for better performance
+      const numParticles = 16; // More particles to compensate for smaller ball size
       particlesRef.current = Array.from({ length: numParticles }, () => {
-        // Start particles inside/near the center blob
+        // Start particles spread across safe zone
         const angle1 = Math.random() * Math.PI * 2;
         const angle2 = Math.random() * Math.PI;
-        const radius = 0.08 + Math.random() * 0.12; // Tighter starting positions
+        const radius = 0.1 + Math.random() * 0.25; // Spread them out
         
         const x = 0.5 + Math.cos(angle1) * Math.sin(angle2) * radius;
         const y = 0.5 + Math.sin(angle1) * Math.sin(angle2) * radius;
         const z = 0.5 + Math.cos(angle2) * radius;
         
-        // Very gentle initial velocity - let bass do the kicking
+        // Ultra gentle initial velocity - calm start
         return {
           x, y, z,
-          vx: (Math.random() - 0.5) * 0.005,
-          vy: (Math.random() - 0.5) * 0.005,
-          vz: (Math.random() - 0.5) * 0.005,
+          vx: (Math.random() - 0.5) * 0.002,
+          vy: (Math.random() - 0.5) * 0.002,
+          vz: (Math.random() - 0.5) * 0.002,
         };
       });
     }
@@ -130,18 +125,17 @@ export function LavaLampBlobs({
     // Reset the field
     effect.reset();
 
-    // Add large central ball that PULSES with BASS - creates pressure on small blobs
-    const centralStrength = 6.0 + bass * 10.0 + energy * 1.5;
-    const centralSubtract = 2;
-    effect.addBall(0.5, 0.5, 0.5, centralStrength, centralSubtract);
+    // No central ball - pure newtonian liquid of individual blobs (better performance too!)
 
     // Physics constants for BASS-REACTIVE LAVA LAMP effect
+    // Scale movement with energy - calm when chill, active when energetic
+    const energyFactor = Math.max(0.3, energy); // Minimum 0.3 to keep some movement
     const centerX = 0.5, centerY = 0.5, centerZ = 0.5;
-    const gravityStrength = 0.36; // Constant gentle pull towards center
-    const repulsionStrength = bass * 4 ; // BASS KICKS THEM OUT!
-    const repulsionDistance = 0.16 + bass * 0.16; // Larger repulsion zone when bass hits
-    const damping = 0.995; // Less friction for smoother movement
-    const maxSpeed = 0.05 + bass * 0.08; // Faster movement when bass hits
+    const gravityStrength = 0.2 * energyFactor; // Scales with energy
+    const repulsionStrength = bass * 6; // STRONG bass kicks - doesn't scale with energy!
+    const repulsionDistance = 0.14 + bass * 0.15; // Larger repulsion zone when bass hits
+    const damping = 0.992 + (1 - energyFactor) * 0.005; // More damping when chill (0.997 when calm)
+    const maxSpeed = (0.03 + bass * 0.12) * energyFactor; // Faster movement on bass hits
     const maxSpeedSq = maxSpeed * maxSpeed; // Precompute for optimization
 
     // Update particle physics
@@ -179,10 +173,11 @@ export function LavaLampBlobs({
         }
       }
 
-      // Subtle random perturbations for organic movement
-      p.vx += (Math.random() - 0.5) * 0.0003;
-      p.vy += (Math.random() - 0.5) * 0.0003;
-      p.vz += (Math.random() - 0.5) * 0.0003;
+      // Subtle random perturbations for organic movement - scales with energy
+      const perturbation = 0.0002 * energyFactor;
+      p.vx += (Math.random() - 0.5) * perturbation;
+      p.vy += (Math.random() - 0.5) * perturbation;
+      p.vz += (Math.random() - 0.5) * perturbation;
 
       // Apply damping
       p.vx *= damping;
@@ -204,18 +199,20 @@ export function LavaLampBlobs({
       p.y += p.vy;
       p.z += p.vz;
 
-      // Keep particles in bounds [0.05, 0.95] with gentle bounce
-      if (p.x < 0.05) { p.x = 0.05; p.vx *= -0.7; }
-      if (p.x > 0.95) { p.x = 0.95; p.vx *= -0.7; }
-      if (p.y < 0.05) { p.y = 0.05; p.vy *= -0.7; }
-      if (p.y > 0.95) { p.y = 0.95; p.vy *= -0.7; }
-      if (p.z < 0.05) { p.z = 0.05; p.vz *= -0.7; }
-      if (p.z > 0.95) { p.z = 0.95; p.vz *= -0.7; }
+      // Hard bounce at safe boundaries - keeps balls ALWAYS in processable zone
+      // For resolution 32, cells 1-30 are processed = ~0.06 to 0.94 in normalized coords
+      // Use 0.15-0.85 as SAFE zone to account for ball radius
+      const bounceStrength = 0.8;
+      if (p.x < 0.15) { p.x = 0.15; p.vx = Math.abs(p.vx) * bounceStrength; }
+      if (p.x > 0.85) { p.x = 0.85; p.vx = -Math.abs(p.vx) * bounceStrength; }
+      if (p.y < 0.15) { p.y = 0.15; p.vy = Math.abs(p.vy) * bounceStrength; }
+      if (p.y > 0.85) { p.y = 0.85; p.vy = -Math.abs(p.vy) * bounceStrength; }
+      if (p.z < 0.15) { p.z = 0.15; p.vz = Math.abs(p.vz) * bounceStrength; }
+      if (p.z > 0.85) { p.z = 0.85; p.vz = -Math.abs(p.vz) * bounceStrength; }
 
-      // Add particle to marching cubes - size based on distance from center
-      const normalizedDist = Math.min(dist / 0.3, 1.0); // 0.3 is max distance for size variation
-      const strength = 0.8 - normalizedDist * 0.5; // 0.8 when inside, 0.3 when far
-      const subtract = 13 + normalizedDist * 3; // 13 when inside, 16 when far
+      // Small balls that stay fully within safe zone
+      const strength = 0.6;
+      const subtract = 12;
       
       effect.addBall(p.x, p.y, p.z, strength, subtract);
     }
@@ -224,32 +221,27 @@ export function LavaLampBlobs({
     effect.update();
 
     // Update material with beautiful color cycling and balanced glow
-    const hue = (time * 0.1 + energy * 0.3) % 1;
+    // Only update every 4th frame for performance
+    if (frameCountRef.current % 4 === 0) {
+      const hue = (time * 0.1 + energy * 0.3) % 1;
+      
+      // Use warmer, more saturated colors
+      material.color.setHSL(hue, 0.9, 0.5 + energy * 0.1);
+      material.emissive.setHSL(hue, 1.0, 0.4 + energy * 0.3);
+    }
     
-    // Use warmer, more saturated colors
-    material.color.setHSL(hue, 0.9, 0.5 + energy * 0.1);
-    material.emissive.setHSL(hue, 1.0, 0.4 + energy * 0.3);
     material.emissiveIntensity = 1.5 + energy * 2.0 + bass * 1.2; // Strong emissive for bloom
-    
-    // Dynamic surface properties for interesting reflections
-    material.roughness = 0.15 + Math.sin(time * 0.5) * 0.05;
-    material.metalness = 0.8 + Math.cos(time * 0.3) * 0.1;
-    
-    // Clearcoat creates a glass-like shine
-    material.clearcoat = 0.9 + energy * 0.1;
-    material.clearcoatRoughness = 0.1 - energy * 0.05;
   });
 
   return null;
 }
 
-// Lighting that reacts to music - optimized
+// Lighting that reacts to music - heavily optimized
 export function LavaLampLighting({
   micData,
 }: {
   micData: LavaLampVisualizationProps["micData"];
 }) {
-  const pointLightRef = useRef<PointLight>(null);
   const centralLightRef = useRef<PointLight>(null);
 
   useFrame((state) => {
@@ -257,31 +249,20 @@ export function LavaLampLighting({
     const energy = micData?.energy || 0;
     const bass = micData?.bass || 0;
 
-    if (pointLightRef.current) {
-      // Orbit light around scene
-      pointLightRef.current.position.x = Math.cos(time) * 15;
-      pointLightRef.current.position.z = Math.sin(time) * 15;
-      pointLightRef.current.intensity = 2 + energy * 3;
-
-      // Change color
-      const hue = (time * 0.2) % 1;
-      pointLightRef.current.color.setHSL(hue, 0.8, 0.6);
-    }
-
-    // Central light that gives the main blob its luminosity - BRIGHTER with music
+    // Central light that gives the blobs luminosity - BRIGHTER with music
     if (centralLightRef.current) {
       const hue = (time * 0.1 + energy * 0.3) % 1;
       centralLightRef.current.color.setHSL(hue, 1.0, 0.5);
-      centralLightRef.current.intensity = 150 + bass * 150 + energy * 100; // Much brighter!
+      centralLightRef.current.intensity = 150 + bass * 150 + energy * 100;
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[0.5, 0.5, 1]} intensity={2.5} color="#ffffff" />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[0.5, 0.5, 1]} intensity={2} color="#ffffff" />
       
-      {/* Strong central light to make the main blob luminous */}
+      {/* Strong central light to make the blobs luminous */}
       <pointLight
         ref={centralLightRef}
         position={[0, -5, -20]}
@@ -289,15 +270,6 @@ export function LavaLampLighting({
         color="#ff7c00"
         decay={2}
         distance={100}
-      />
-      
-      {/* Single accent light for material definition */}
-      <pointLight
-        ref={pointLightRef}
-        position={[0, 15, 0]}
-        intensity={3}
-        distance={60}
-        decay={2}
       />
     </>
   );
@@ -328,15 +300,15 @@ export default function LavaLampVisualization({
       {/* Morphing blobs using marching cubes - includes central sphere */}
       <LavaLampBlobs micData={micData} />
 
-      {/* Post-processing for refined GLOW effect */}
-      <EffectComposer multisampling={4}>
+      {/* Post-processing for refined GLOW effect - heavily optimized */}
+      <EffectComposer multisampling={0}>
         <Bloom 
           intensity={bloomIntensity}
-          luminanceThreshold={0.35}
-          luminanceSmoothing={6}
-          radius={0.8}
-          levels={6}
-          mipmapBlur={true}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={2}
+          radius={0.6}
+          levels={4}
+          mipmapBlur={false}
         />
       </EffectComposer>
     </Canvas>
