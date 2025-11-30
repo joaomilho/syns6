@@ -1145,11 +1145,12 @@ export default function PlayerPage() {
   // Get camera settings for each visualization
   const getCameraSettings = () => {
     switch(visualizationType) {
-      case 'fftspectrum': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
-      case 'particles': return { position: [0, 0, 40] as [number, number, number], fov: 80 };
-      case 'animated': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
-      case 'waves': return { position: [0, 0, 25] as [number, number, number], fov: 75 };
-      default: return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+      case 'fftspectrum': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
+      case 'particles': return { position: [0, 3, 40] as [number, number, number], fov: 80 };
+      case 'animated': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
+      case 'waves': return { position: [0, 3, 25] as [number, number, number], fov: 75 };
+      case 'kaleidoscope': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
+      default: return { position: [0, 3, 30] as [number, number, number], fov: 75 };
     }
   };
 
@@ -1249,7 +1250,7 @@ export default function PlayerPage() {
           {/* Separate lyrics canvas ONLY for special visualizations */}
           {lyrics && lyrics.length > 0 && (
             <Canvas
-              camera={{ position: [0, 0, 30] as [number, number, number], fov: 75 }}
+              camera={{ position: [0, 3, 30] as [number, number, number], fov: 75 }}
               style={{
                 position: 'fixed',
                 top: 0,
