@@ -87,7 +87,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
   {
     id: "kaleidoscope",
     name: "Kaleidoscope",
-    icon: "🔮",
+    icon: "◈",
     thumbnail: "/viz-thumbnails/kaleidoscope-static.webp",
     assets: {
       static: "/viz-thumbnails/kaleidoscope-static.webp",
