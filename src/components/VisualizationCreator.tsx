@@ -10,6 +10,7 @@ interface VisualizationCreatorProps {
   isGenerating: boolean;
   hasCode: boolean;
   error: string | null;
+  disabled?: boolean;
 }
 
 export default function VisualizationCreator({
@@ -19,6 +20,7 @@ export default function VisualizationCreator({
   isGenerating,
   hasCode,
   error,
+  disabled = false,
 }: VisualizationCreatorProps) {
   const [showNameInput, setShowNameInput] = useState(false);
   const [vizName, setVizName] = useState("");
@@ -26,6 +28,7 @@ export default function VisualizationCreator({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (disabled) return;
     if (promptText.trim()) {
       onGenerate(promptText.trim());
       setPromptText(""); // Clear input after submitting
@@ -57,9 +60,9 @@ export default function VisualizationCreator({
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
             className={styles.textarea}
-            placeholder={hasCode ? "Refine your visualization... (e.g., 'make it faster', 'add more colors', 'increase size')" : "Describe your visualization..."}
+            placeholder={disabled ? "AI visualization generation coming soon..." : (hasCode ? "Refine your visualization... (e.g., 'make it faster', 'add more colors', 'increase size')" : "Describe your visualization...")}
             rows={4}
-            disabled={isGenerating}
+            disabled={isGenerating || disabled}
             required
           />
           
@@ -76,9 +79,9 @@ export default function VisualizationCreator({
             <button
               type="submit"
               className={styles.generateButton}
-              disabled={isGenerating}
+              disabled={isGenerating || disabled}
             >
-              {isGenerating ? "Generating..." : hasCode ? "Improve" : "Generate"}
+              {disabled ? "Coming Soon" : (isGenerating ? "Generating..." : hasCode ? "Improve" : "Generate")}
             </button>
             
             {hasCode && !showNameInput && (
