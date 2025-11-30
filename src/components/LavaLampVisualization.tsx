@@ -2,9 +2,9 @@
 
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { MeshPhysicalMaterial, DoubleSide, Sphere, Vector3, PointLight } from "three";
+import { MeshPhysicalMaterial, DoubleSide, Sphere, Vector3 } from "three";
 import { MarchingCubes } from "@/lib/MarchingCubes";
+import LavaLampScene from './LavaLampScene';
 
 interface LavaLampVisualizationProps {
   micData: {
@@ -127,14 +127,14 @@ export function LavaLampBlobs({
     // No central ball - pure newtonian liquid of individual blobs (better performance too!)
 
     // Physics constants for BASS-REACTIVE LAVA LAMP effect
-    // Scale movement with energy - calm when chill, active when energetic
-    const energyFactor = Math.max(0.3, energy); // Minimum 0.3 to keep some movement
+    // Scale movement with energy - VERY calm in silence, active when energetic
+    const energyFactor = Math.max(0.1, energy); // Lower minimum for calmer silence
     const centerX = 0.5, centerY = 0.5, centerZ = 0.5;
-    const gravityStrength = 0.2 * energyFactor; // Scales with energy
+    const gravityStrength = 0.08 * energyFactor; // Much weaker gravity - less pull
     const repulsionStrength = bass * 6; // STRONG bass kicks - doesn't scale with energy!
     const repulsionDistance = 0.14 + bass * 0.15; // Larger repulsion zone when bass hits
-    const damping = 0.992 + (1 - energyFactor) * 0.005; // More damping when chill (0.997 when calm)
-    const maxSpeed = (0.03 + bass * 0.12) * energyFactor; // Faster movement on bass hits
+    const damping = 0.985 + (1 - energyFactor) * 0.012; // Much more damping in silence (0.997 when calm)
+    const maxSpeed = (0.015 + bass * 0.12) * energyFactor; // Lower base speed for calmer movement
     const maxSpeedSq = maxSpeed * maxSpeed; // Precompute for optimization
 
     // Update particle physics
@@ -173,7 +173,7 @@ export function LavaLampBlobs({
       }
 
       // Subtle random perturbations for organic movement - scales with energy
-      const perturbation = 0.0002 * energyFactor;
+      const perturbation = 0.00005 * energyFactor; // Much lower - almost still in silence
       p.vx += (Math.random() - 0.5) * perturbation;
       p.vy += (Math.random() - 0.5) * perturbation;
       p.vz += (Math.random() - 0.5) * perturbation;
@@ -216,6 +216,18 @@ export function LavaLampBlobs({
       effect.addBall(p.x, p.y, p.z, strength, subtract);
     }
 
+    // Add central sphere - slightly moves with music
+    const centralOffset = energy * 0.02;
+    const centralX = 0.5 + Math.sin(time * 0.3) * centralOffset;
+    const centralY = 0.5 + Math.cos(time * 0.2) * centralOffset;
+    const centralZ = 0.5;
+    
+    // Larger strength = bigger sphere, larger subtract = sharper edges
+    const centralStrength = 1.2 + bass * 0.3; // Pulses with bass
+    const centralSubtract = 8;
+    
+    effect.addBall(centralX, centralY, centralZ, centralStrength, centralSubtract);
+
     // Update the mesh
     effect.update();
 
@@ -235,72 +247,12 @@ export function LavaLampBlobs({
   return null;
 }
 
-// Lighting that reacts to music - heavily optimized
-export function LavaLampLighting({
-  micData,
-}: {
-  micData: LavaLampVisualizationProps["micData"];
-}) {
-  const centralLightRef = useRef<PointLight>(null);
-
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime();
-    const energy = micData?.energy || 0;
-    const bass = micData?.bass || 0;
-
-    // Central light that gives the blobs luminosity - MUCH BRIGHTER for distance
-    if (centralLightRef.current) {
-      const hue = (time * 0.1 + energy * 0.3) % 1;
-      centralLightRef.current.color.setHSL(hue, 1.0, 0.5);
-      centralLightRef.current.intensity = 500 + bass * 400 + energy * 300;
-    }
-  });
-
-  return (
-    <>
-      {/* <ambientLight intensity={1.5} /> */}
-      {/* <directionalLight position={[0, 0, -100]} intensity={0} color="#ffffff" /> */}
-      
-      {/* Strong central light to make the blobs luminous - positioned near blobs */}
-      {/* <pointLight
-        ref={centralLightRef}
-        position={[0, 0, -100]}
-        intensity={500}
-        color="#ff7c00"
-        decay={1.2}
-        distance={250}
-      /> */}
-    </>
-  );
-}
-
 export default function LavaLampVisualization({
   micData,
 }: LavaLampVisualizationProps) {
-  // Calculate bloom intensity based on music - subtle glow
-  // const bloomIntensity = 0.1 + (micData?.bass || 0) /3;
-
   return (
     <Canvas camera={{ position: [0, 0, 30], fov: 275, near: 0.1, far: 1000 }} dpr={1}>
-      <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 60, 120]} />
-
-      
-
-      {/* Morphing blobs using marching cubes - includes central sphere */}
-      <LavaLampBlobs micData={micData} />
-
-      {/* Post-processing for refined GLOW effect - heavily optimized */}
-      {/* <EffectComposer multisampling={0}>
-        <Bloom 
-          intensity={bloomIntensity}
-          luminanceThreshold={0.6}
-          luminanceSmoothing={2}
-          radius={0}
-          levels={4}
-          mipmapBlur={false}
-        />
-      </EffectComposer> */}
+      <LavaLampScene micData={micData} />
     </Canvas>
   );
 }
