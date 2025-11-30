@@ -66,29 +66,28 @@
 }
 
 .expandedPanel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.95);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 20px;
   z-index: 1000;
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  animation: fadeIn 0.2s ease-out;
-  min-width: 350px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  animation: slideDown 0.2s ease-out;
+  min-width: 320px;
 }
 
-@keyframes fadeIn {
+@keyframes slideDown {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -96,14 +95,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 16px;
 }
 
 .header h3 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 12px;
   font-weight: 600;
-  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .closeButton {
@@ -128,42 +129,44 @@
 .qrContainer {
   display: flex;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 16px;
   background: #fff;
   border-radius: 12px;
-  margin-top: 1rem;
+  margin-top: 12px;
 }
 
 .info {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .instruction {
   text-align: center;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
+  font-size: 13px;
+  margin: 0;
 }
 
 .viewers {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  gap: 8px;
+  padding: 10px;
+  background: rgba(29, 185, 84, 0.2);
+  border: 1px solid rgba(29, 185, 84, 0.4);
   border-radius: 8px;
 }
 
 .viewersIcon {
-  font-size: 1.25rem;
+  font-size: 16px;
 }
 
 .viewersText {
-  font-size: 0.875rem;
+  font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: #1ed760;
 }
 
 .codeDisplay {
@@ -173,17 +176,17 @@
   justify-content: center;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  margin-bottom: 1rem;
+  padding: 16px;
+  margin-bottom: 12px;
 }
 
 .code {
-  padding-top: 2rem;
-  font-size: 3rem;
-  line-height: 1rem;
+  font-size: 32px;
+  line-height: 1;
   font-weight: 700;
   font-family: 'Monaco', 'Courier New', monospace;
-  letter-spacing: 0.5rem;
-  color: #00ff88;
+  letter-spacing: 8px;
+  color: #1ed760;
   cursor: pointer;
 }
 
