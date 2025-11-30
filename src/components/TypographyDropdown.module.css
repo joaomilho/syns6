@@ -39,7 +39,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(10, 10, 10, 0.98);
+  background: transparent;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
