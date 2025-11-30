@@ -6,11 +6,6 @@ import { BufferAttribute, BufferGeometry, LinearFilter, Mesh, Points, RGBFormat,
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 
-interface CameraVisualizationProps {
-  videoElement?: HTMLVideoElement | null;
-  micData?: MicrophoneData;
-}
-
 interface ShaderControls {
   rgbSplitAmount: number;
   distortionAmount: number;
@@ -18,6 +13,12 @@ interface ShaderControls {
   colorShiftB: number;
   pixelThreshold: number;
   waveFrequency: number;
+}
+
+interface CameraVisualizationProps {
+  videoElement?: HTMLVideoElement | null;
+  micData?: MicrophoneData;
+  shaderControls?: ShaderControls;
 }
 
 function CameraPlane({
@@ -289,8 +290,9 @@ function CameraParticles({ micData }: { micData?: MicrophoneData }) {
 export default function CameraVisualization({
   videoElement,
   micData,
+  shaderControls: externalControls,
 }: CameraVisualizationProps) {
-  const [controls, setControls] = useState<ShaderControls>({
+  const [localControls, setLocalControls] = useState<ShaderControls>({
     rgbSplitAmount: 0.025,
     distortionAmount: 0.02,
     colorShiftR: 0.2,
@@ -299,7 +301,8 @@ export default function CameraVisualization({
     waveFrequency: 20.0,
   });
 
-  const [showControls, setShowControls] = useState(false);
+  // Use external controls if provided, otherwise use local state
+  const controls = externalControls || localControls;
 
   return (
     <div
@@ -333,192 +336,6 @@ export default function CameraVisualization({
         {/* Particles floating around */}
         <CameraParticles micData={micData} />
       </Canvas>
-
-      {/* Shader Controls Panel */}
-      <div
-        style={{
-          position: "fixed",
-          top: "100px",
-          right: "20px",
-          zIndex: 9999,
-          background: "rgba(255, 0, 0, 0.9)",
-          backdropFilter: "blur(10px)",
-          padding: "20px",
-          borderRadius: "12px",
-          border: "2px solid rgba(255, 255, 255, 0.8)",
-          maxHeight: showControls ? "600px" : "60px",
-          overflow: "auto",
-          transition: "max-height 0.3s ease",
-          minWidth: "280px",
-        }}
-      >
-        <button
-          onClick={() => setShowControls(!showControls)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "rgba(255, 255, 255, 0.1)",
-            border: "none",
-            borderRadius: "8px",
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: "14px",
-            fontWeight: "500",
-          }}
-        >
-          {showControls ? "Hide" : "Show"} Shader Controls
-        </button>
-
-        {showControls && (
-          <div style={{ marginTop: "15px", color: "#fff", fontSize: "13px" }}>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                RGB Split: {controls.rgbSplitAmount.toFixed(3)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="0.05"
-                step="0.001"
-                value={controls.rgbSplitAmount}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    rgbSplitAmount: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                Distortion: {controls.distortionAmount.toFixed(3)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="0.1"
-                step="0.001"
-                value={controls.distortionAmount}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    distortionAmount: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                Red Shift: {controls.colorShiftR.toFixed(2)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={controls.colorShiftR}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    colorShiftR: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                Blue Shift: {controls.colorShiftB.toFixed(2)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={controls.colorShiftB}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    colorShiftB: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                Pixel Threshold: {controls.pixelThreshold.toFixed(2)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={controls.pixelThreshold}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    pixelThreshold: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "5px" }}>
-                Wave Frequency: {controls.waveFrequency.toFixed(1)}
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="50"
-                step="0.5"
-                value={controls.waveFrequency}
-                onChange={(e) =>
-                  setControls({
-                    ...controls,
-                    waveFrequency: parseFloat(e.target.value),
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            <button
-              onClick={() =>
-                setControls({
-                  rgbSplitAmount: 0.01,
-                  distortionAmount: 0.02,
-                  colorShiftR: 0.2,
-                  colorShiftB: 0.2,
-                  pixelThreshold: 0.7,
-                  waveFrequency: 20.0,
-                })
-              }
-              style={{
-                width: "100%",
-                padding: "8px",
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                borderRadius: "6px",
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: "12px",
-                marginTop: "10px",
-              }}
-            >
-              Reset to Defaults
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

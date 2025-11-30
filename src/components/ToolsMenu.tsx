@@ -1,67 +1,72 @@
 "use client";
 
-import styles from "./ToolsMenu.module.css";
+import { Play, Pause, Square, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { IconButton } from "@/components/ds";
 
-interface ToolsMenuProps {
+// Play/Pause Status Button
+interface PlaybackStatusButtonProps {
   isPlaying: boolean | null;
-  isMicEnabled: boolean;
-  isCameraEnabled: boolean;
-  onMicToggle: () => void;
-  onCameraToggle: () => void;
-  showMic?: boolean;
-  showCamera?: boolean;
 }
 
-export default function ToolsMenu({
-  isPlaying,
-  isMicEnabled,
-  isCameraEnabled,
-  onMicToggle,
-  onCameraToggle,
-  showMic = true,
-  showCamera = true,
-}: ToolsMenuProps) {
-  const getStatusClass = () => {
-    if (isPlaying === null) return styles.stopped;
-    if (isPlaying) return styles.playing;
-    return styles.paused;
+export function PlaybackStatusButton({ isPlaying }: PlaybackStatusButtonProps) {
+  const getVariant = () => {
+    if (isPlaying === null) return "stopped";
+    if (isPlaying) return "playing";
+    return "paused";
+  };
+
+  const getIcon = () => {
+    if (isPlaying === null) return <Square size={18} />;
+    if (isPlaying) return <Play size={18} />;
+    return <Pause size={18} />;
+  };
+
+  const getTitle = () => {
+    if (isPlaying === null) return "No song playing";
+    if (isPlaying) return "Playing";
+    return "Paused";
   };
 
   return (
-    <div className={styles.toolsMenu}>
-      {/* Play/Pause Status Indicator */}
-      <div className={`${styles.statusIcon} ${getStatusClass()}`}>
-        {isPlaying === null ? (
-          <span title="No song playing">⏹︎</span>
-        ) : isPlaying ? (
-          <span title="Playing">▶︎</span>
-        ) : (
-          <span title="Paused">⏸︎</span>
-        )}
-      </div>
+    <IconButton variant={getVariant()} title={getTitle()}>
+      {getIcon()}
+    </IconButton>
+  );
+}
 
-      {/* Microphone Toggle */}
-      {showMic && (
-        <button
-          className={`${styles.toolButton} ${isMicEnabled ? styles.active : ""}`}
-          onClick={onMicToggle}
-          title={isMicEnabled ? "Disable Microphone" : "Enable Microphone"}
-        >
-          ⦿
-        </button>
-      )}
+// Microphone Toggle Button
+interface MicrophoneButtonProps {
+  enabled: boolean;
+  onToggle: () => void;
+}
 
-      {/* Camera Toggle */}
-      {showCamera && (
-        <button
-          className={`${styles.toolButton} ${isCameraEnabled ? styles.active : ""}`}
-          onClick={onCameraToggle}
-          title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
-        >
-          ⊡
-        </button>
-      )}
-    </div>
+export function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
+  return (
+    <IconButton
+      active={enabled}
+      onClick={onToggle}
+      title={enabled ? "Disable Microphone" : "Enable Microphone"}
+    >
+      {enabled ? <Mic size={18} /> : <MicOff size={18} />}
+    </IconButton>
+  );
+}
+
+// Camera Toggle Button
+interface CameraButtonProps {
+  enabled: boolean;
+  onToggle: () => void;
+}
+
+export function CameraButton({ enabled, onToggle }: CameraButtonProps) {
+  return (
+    <IconButton
+      active={enabled}
+      onClick={onToggle}
+      title={enabled ? "Disable Camera" : "Enable Camera"}
+    >
+      {enabled ? <Video size={18} /> : <VideoOff size={18} />}
+    </IconButton>
   );
 }
 
