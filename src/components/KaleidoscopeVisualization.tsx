@@ -5,6 +5,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { DoubleSide, ShaderMaterial, Vector2, Vector4, Mesh, TextureLoader } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
+import { EffectComposer, Bloom, ChromaticAberration, Vignette } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 
 interface AudioFeatures {
   energy: number;
@@ -68,7 +70,36 @@ void main() {
   vec2 tileIndex = floor(aspectCorrectedUV);
   vec2 oddTile = mod(tileIndex, 2.0);
   vec2 mirroredUV = mix(fract(aspectCorrectedUV), 1.0 - fract(aspectCorrectedUV), oddTile);
+  
+  // Sample base color
   vec4 color = texture2D(uTexture, mirroredUV);
+  
+  // Add chromatic aberration (RGB split) for trippy effect
+  float aberration = 0.1;
+  vec4 colorR = texture2D(uTexture, mirroredUV + vec2(aberration, 0.0));
+  vec4 colorB = texture2D(uTexture, mirroredUV - vec2(aberration, 0.0));
+  color.r = colorR.r;
+  color.b = colorB.b;
+  
+  // Strong vignette effect
+  vec2 vignetteCenter = vUv - 0.5;
+  float vignette = 1.0 - dot(vignetteCenter, vignetteCenter) * 4.5;
+  vignette = smoothstep(0.0, 1.0, vignette);
+  color.rgb *= vignette;
+  
+  // Boost brightness significantly
+  color.rgb *= 1.8;
+  
+  // Add glow to bright areas
+  float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+  if (luminance > 0.4) {
+    color.rgb *= 1.0 + (luminance - 0.4) * 3.0;
+  }
+  
+  // Boost saturation
+  // float gray = (color.r + color.g + color.b) / 3.0;
+  // color.rgb = mix(vec3(gray), color.rgb, 1.4);
+  
   color.a *= uOpacity;
   gl_FragColor = color;
 }
@@ -194,6 +225,7 @@ export default function KaleidoscopeVisualization({
   micData,
   albumArt,
 }: VisualizationProps) {
+  
   return (
     <div
       style={{
@@ -216,6 +248,8 @@ export default function KaleidoscopeVisualization({
         gl={{ antialias: true }}
       >
         <KaleidoscopeShader audioFeatures={audioFeatures} syncedData={syncedData} micData={micData} albumArt={albumArt} />
+        
+
       </Canvas>
     </div>
   );
