@@ -18,6 +18,8 @@ const KEYS = {
   VISUALIZATION_MODE: 'visualizationMode',
   MICROPHONE_ENABLED: 'microphoneEnabled',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
+  LYRICS_FONT: 'lyricsFont',
+  LYRICS_COLOR: 'lyricsColor',
 } as const;
 
 // Visualization type
@@ -54,6 +56,24 @@ export async function saveHueControlsVisible(visible: boolean): Promise<void> {
 
 export async function getHueControlsVisible(): Promise<boolean | null> {
   return await localforage.getItem<boolean>(KEYS.HUE_CONTROLS_VISIBLE);
+}
+
+// Lyrics font
+export async function saveLyricsFont(font: string): Promise<void> {
+  await localforage.setItem(KEYS.LYRICS_FONT, font);
+}
+
+export async function getLyricsFont(): Promise<string | null> {
+  return await localforage.getItem<string>(KEYS.LYRICS_FONT);
+}
+
+// Lyrics color
+export async function saveLyricsColor(color: string): Promise<void> {
+  await localforage.setItem(KEYS.LYRICS_COLOR, color);
+}
+
+export async function getLyricsColor(): Promise<string | null> {
+  return await localforage.getItem<string>(KEYS.LYRICS_COLOR);
 }
 
 // Clear all preferences

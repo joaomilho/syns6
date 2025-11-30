@@ -343,9 +343,12 @@ export default function PlayerPage() {
   // Load saved visualization type and mode on mount
   useEffect(() => {
     const loadPreferences = async () => {
-      const { getVisualizationType, getVisualizationMode } = await import('@/lib/storage');
+      const { getVisualizationType, getVisualizationMode, getLyricsFont, getLyricsColor } = await import('@/lib/storage');
       const savedType = await getVisualizationType();
       const savedMode = await getVisualizationMode();
+      const savedFont = await getLyricsFont();
+      const savedColor = await getLyricsColor();
+      
       if (savedType) {
         console.log(`🎨 Restoring visualization: ${savedType}`);
         setVisualizationType(savedType as VisualizationType);
@@ -353,6 +356,14 @@ export default function PlayerPage() {
       if (savedMode) {
         console.log(`🎯 Restoring mode: ${savedMode}`);
         setVisualizationMode(savedMode as VisualizationMode);
+      }
+      if (savedFont) {
+        console.log(`🔤 Restoring lyrics font: ${savedFont}`);
+        setLyricsFont(savedFont as LyricsFont);
+      }
+      if (savedColor) {
+        console.log(`🎨 Restoring lyrics color: ${savedColor}`);
+        setLyricsColor(savedColor as LyricsColor);
       }
     };
     loadPreferences();
@@ -385,6 +396,24 @@ export default function PlayerPage() {
     };
     saveMode();
   }, [visualizationMode]);
+
+  // Save lyrics font when it changes
+  useEffect(() => {
+    const saveFont = async () => {
+      const { saveLyricsFont } = await import('@/lib/storage');
+      await saveLyricsFont(lyricsFont);
+    };
+    saveFont();
+  }, [lyricsFont]);
+
+  // Save lyrics color when it changes
+  useEffect(() => {
+    const saveColor = async () => {
+      const { saveLyricsColor } = await import('@/lib/storage');
+      await saveLyricsColor(lyricsColor);
+    };
+    saveColor();
+  }, [lyricsColor]);
 
   // Handle RANDOM mode - change visualization when track changes
   useEffect(() => {
@@ -1200,6 +1229,11 @@ export default function PlayerPage() {
                 micData={micData}
                 font={getFontPath(lyricsFont)}
                 color={lyricsColor}
+                trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
+                artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
+                nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
+                nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
+                timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
               />
             </group>
           )}
@@ -1244,6 +1278,11 @@ export default function PlayerPage() {
                 micData={micData}
                 font={getFontPath(lyricsFont)}
                 color={lyricsColor}
+                trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
+                artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
+                nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
+                nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
+                timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
               />
             </Canvas>
           )}

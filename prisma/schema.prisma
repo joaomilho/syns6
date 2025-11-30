@@ -88,6 +88,10 @@ model UserPreferences {
   preferredVisualization String?  @default("spectrum")
   visualizationIntensity Float?   @default(1.0)
   
+  // Lyrics preferences
+  lyricsFont            String?  @default("Poppins")
+  lyricsColor           String?  @default("#ff0")
+  
   // Hue light preferences
   hueMaxIntensity       Float?   @default(1.0)
   hueBridgeIp           String?
