@@ -49,13 +49,14 @@
 .dropdownMenu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0;
   background: transparent;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   padding: 16px;
-  min-width: 400px;
+  width: 800px;
+  max-width: calc(100vw - 32px);
   max-height: 600px;
   overflow-y: auto;
   z-index: 1000;
@@ -86,9 +87,21 @@
 
 .visualizationGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+  .visualizationGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .visualizationGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .vizOption {
