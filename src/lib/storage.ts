@@ -25,6 +25,7 @@ const KEYS = {
   ORBITAL_CONTROLS: 'orbitalControls',
   WAVY_LINES_CONTROLS: 'wavyLinesControls',
   SPECTRUM3D_CONTROLS: 'spectrum3DControls',
+  YOUTUBE_CONTROLS: 'youtubeControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -127,6 +128,15 @@ export async function saveSpectrum3DControls(controls: { shape: string; neonInte
 
 export async function getSpectrum3DControls(): Promise<{ shape: string; neonIntensity: number; colorPalette: string } | null> {
   return await localforage.getItem<{ shape: string; neonIntensity: number; colorPalette: string }>(KEYS.SPECTRUM3D_CONTROLS);
+}
+
+// YouTube controls
+export async function saveYouTubeControls(controls: { effect: string }): Promise<void> {
+  await localforage.setItem(KEYS.YOUTUBE_CONTROLS, controls);
+}
+
+export async function getYouTubeControls(): Promise<{ effect: string } | null> {
+  return await localforage.getItem<{ effect: string }>(KEYS.YOUTUBE_CONTROLS);
 }
 
 // Hue controls visibility

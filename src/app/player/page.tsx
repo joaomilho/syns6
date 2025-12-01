@@ -26,7 +26,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
-import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls } from "@/lib/storage";
+import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -239,6 +239,12 @@ export default function PlayerPage() {
     neonIntensity: 2.5,
     colorPalette: 'default',
   });
+  const [youtubeControls, setYouTubeControls] = useState<{
+    effect: 'none' | '3d-flip' | 'black-white' | 'glitch' | 'bloom';
+  }>({
+    effect: 'none',
+  });
+  const [currentYouTubeVideoId, setCurrentYouTubeVideoId] = useState<string | null>(null);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -359,6 +365,21 @@ export default function PlayerPage() {
   useEffect(() => {
     saveSpectrum3DControls(spectrum3DControls).catch(console.error);
   }, [spectrum3DControls]);
+  
+  // Load YouTube controls on mount
+  useEffect(() => {
+    getYouTubeControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("🎬 Restoring YouTube controls:", savedControls);
+        setYouTubeControls(savedControls as any);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save YouTube controls whenever they change
+  useEffect(() => {
+    saveYouTubeControls(youtubeControls).catch(console.error);
+  }, [youtubeControls]);
   
   // Auto-switch to video mode when Kaleidoscope is selected and camera is on
   useEffect(() => {
@@ -1376,6 +1397,8 @@ export default function PlayerPage() {
           artistName={playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name}
           spotifyId={(playbackState?.item as any)?.id || (lastKnownTrack?.item as any)?.id}
           micData={micData}
+          effect={youtubeControls.effect}
+          onVideoIdChange={setCurrentYouTubeVideoId}
         />
         );
       default:
@@ -1626,10 +1649,12 @@ export default function PlayerPage() {
           orbitalControls={orbitalControls}
           wavyLinesControls={wavyLinesControls}
           spectrum3DControls={spectrum3DControls}
+          youtubeControls={youtubeControls}
           currentVisualization={visualizationType}
           albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url}
           videoElement={videoElement}
           isCameraEnabled={isCameraEnabled}
+          currentYouTubeUrl={currentYouTubeVideoId ? `https://www.youtube.com/watch?v=${currentYouTubeVideoId}` : null}
           onModeChange={setVisualizationMode}
           onFontChange={setLyricsFont}
           onColorChange={setLyricsColor}
@@ -1640,6 +1665,7 @@ export default function PlayerPage() {
           onOrbitalControlsChange={setOrbitalControls}
           onWavyLinesControlsChange={setWavyLinesControls}
           onSpectrum3DControlsChange={setSpectrum3DControls}
+          onYouTubeControlsChange={setYouTubeControls}
         />
 
         {/* User Profile */}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { getWorkingVideo, saveWorkingVideo } from "@/lib/storage";
 
@@ -10,6 +9,8 @@ interface YouTubeVisualizationProps {
   artistName?: string;
   spotifyId?: string;
   micData?: MicrophoneData;
+  effect?: 'none' | '3d-flip' | 'black-white' | 'glitch' | 'bloom';
+  onVideoIdChange?: (videoId: string | null) => void;
 }
 
 export default function YouTubeVisualization({
@@ -17,6 +18,8 @@ export default function YouTubeVisualization({
   artistName,
   spotifyId: spotifyIdProp,
   micData,
+  effect = 'none',
+  onVideoIdChange,
 }: YouTubeVisualizationProps) {
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [workingVideoId, setWorkingVideoId] = useState<string | null>(null); // Confirmed working video
@@ -51,6 +54,7 @@ export default function YouTubeVisualization({
       setSearchQuery(query);
       setVideoError(false);
       setWorkingVideoId(null);
+      onVideoIdChange?.(null);
       hasWorkingVideoRef.current = false;
       setIsLoading(true);
       setUsingCachedVideo(false);
@@ -148,6 +152,7 @@ export default function YouTubeVisualization({
                 event.target.setPlaybackQuality('hd1080');
                 console.log(`[YouTube] 🎬 Set quality to HD1080`);
                 setWorkingVideoId(videoId);
+                onVideoIdChange?.(videoId);
                 hasWorkingVideoRef.current = true;
                 setIsLoading(false);
                 setVideoError(false);
@@ -210,6 +215,7 @@ export default function YouTubeVisualization({
                 console.log(`[YouTube] 🎬 Set quality to HD1080`);
                 hasWorkingVideoRef.current = true;
                 setWorkingVideoId(vid);
+                onVideoIdChange?.(vid);
                 setIsLoading(false);
                 setVideoError(false);
                 
@@ -285,48 +291,42 @@ export default function YouTubeVisualization({
     };
   }, [videoIds, trackName, artistName, usingCachedVideo]);
 
-  // Apply audio-reactive effects
-  useEffect(() => {
-    if (!videoContainerRef.current) return;
-
-    const animate = () => {
-      if (!videoContainerRef.current) return;
+  // Get CSS effect styles based on current effect and audio data
+  const getEffectStyles = (): React.CSSProperties => {
+    const bass = micData?.bass || 0;
+    
+    switch (effect) {
+      case '3d-flip':
+        return {
+          transform: `rotateY(${bass * 30}deg) rotateX(${Math.sin(Date.now() * 0.001) * 10}deg)`,
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease-out',
+        };
       
-      if (micData) {
-        const bass = micData.bass || 0;
-        const mid = micData.mid || 0;
-        const treble = micData.treble || 0;
-        
-        // Apply filters based on audio
-        const hueRotate = mid * 360;
-        const saturate = 100 + bass * 200;
-        const brightness = 100 + treble * 50;
-        const contrast = 100 + bass * 50;
-        const blur = bass > 0.7 ? (bass - 0.7) * 5 : 0;
-        
-        videoContainerRef.current.style.filter = `
-          hue-rotate(${hueRotate}deg)
-          saturate(${saturate}%)
-          brightness(${brightness}%)
-          contrast(${contrast}%)
-          blur(${blur}px)
-        `;
-        
-        // Scale effect on bass
-        const scale = 1 + bass * 0.1;
-        videoContainerRef.current.style.transform = `scale(${scale})`;
-      } else {
-        // No audio data - no effects
-        videoContainerRef.current.style.filter = 'none';
-        videoContainerRef.current.style.transform = 'scale(1)';
+      case 'black-white':
+        return {
+          filter: `grayscale(100%) contrast(${Math.pow(1+bass, bass*8)})`,
+        };
+      
+      case 'glitch':
+        const glitchIntensity = bass > 0.6 ? bass : 0;
+        return {
+          filter: `hue-rotate(${glitchIntensity * 180}deg) saturate(${1 + glitchIntensity * 2})`,
+          transform: `translate(${Math.random() * glitchIntensity * 10 - 5}px, ${Math.random() * glitchIntensity * 10 - 5}px)`,
+          transition: 'none',
+        };
+
+      case 'bloom': {
+        const bloomIntensity = 20 + bass * 40;
+        return {
+          filter: `contrast(${Math.pow(bass*2, 6)}) saturate(${Math.pow(bass*2, 20)})`
+        };
       }
       
-      requestAnimationFrame(animate);
-    };
-
-    const rafId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafId);
-  }, [micData]);
+      default:
+        return {};
+    }
+  };
 
 
   return (
@@ -339,21 +339,20 @@ export default function YouTubeVisualization({
         height: "100vh",
         zIndex: 0,
         background: "#000000",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {/* Video layer - full screen cover */}
       <div
         ref={videoContainerRef}
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          zIndex: 1,
+          position: "relative",
+          width: "100%",
+          height: "100%",
         }}
       >
-        {/* YouTube player wrapper - controls visibility */}
+        {/* YouTube player wrapper with CSS effects */}
         <div
           style={{
             width: "100%",
@@ -361,6 +360,7 @@ export default function YouTubeVisualization({
             overflow: "hidden",
             opacity: workingVideoId ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
+            ...getEffectStyles(),
           }}
         >
           {/* YouTube replaces this div with iframe - don't touch it after creation */}
@@ -467,28 +467,7 @@ export default function YouTubeVisualization({
           </div>
         )}
       </div>
-      
-      {/* Lyrics layer - in front of video */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          zIndex: 2,
-        }}
-      >
-        <Canvas
-          camera={{ position: [0, 0, 30], fov: 75 }}
-          dpr={1}
-          style={{
-            background: "transparent",
-          }}
-        >
-        </Canvas>
-      </div>
+
     </div>
   );
 }
