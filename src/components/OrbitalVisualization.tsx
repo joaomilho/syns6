@@ -5,12 +5,20 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
 import { Vector3, Mesh, PointLight, MeshStandardMaterial, CylinderGeometry, Color, InstancedMesh, Object3D, Group } from "three";
 
+interface OrbitalControls {
+  intensity: number;
+  numOrbits: number;
+  colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+  orbitDistance: number;
+}
+
 interface VisualizationProps {
   bass?: number;
   energy?: number;
   treble?: number;
   frequencyData?: Uint8Array;
   fps?: number;
+  orbitalControls?: OrbitalControls;
 }
 
 // Frequency band circle - follows its orbital ring
@@ -19,13 +27,15 @@ function FrequencyCircle({
   total, 
   frequencyData,
   ringPositions,
-  useDistortion = true
+  useDistortion = true,
+  paletteHues,
 }: { 
   index: number; 
   total: number; 
   frequencyData?: Uint8Array;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   useDistortion?: boolean;
+  paletteHues: number[];
 }) {
   const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<any>(null);
@@ -78,8 +88,13 @@ function FrequencyCircle({
     const size = 0.8 + intensity * 2;
     meshRef.current.scale.set(size, size, size);
     
-    // Color shifts based on frequency band and intensity
-    const hue = (index / total);
+    // Color shifts based on frequency band and intensity using palette
+    const progress = index / Math.max(1, total - 1);
+    const paletteIndex = progress * (paletteHues.length - 1);
+    const lowerIndex = Math.floor(paletteIndex);
+    const upperIndex = Math.min(lowerIndex + 1, paletteHues.length - 1);
+    const blend = paletteIndex - lowerIndex;
+    const hue = paletteHues[lowerIndex] * (1 - blend) + paletteHues[upperIndex] * blend;
     const saturation = 0.8 + intensity * 0.2;
     const lightness = 0.3 + intensity * 0.5;
     
@@ -122,13 +137,18 @@ function FrequencyCircle({
 export function FrequencyCircles({ 
   frequencyData,
   ringPositions,
-  fps = 60
+  fps = 60,
+  numOrbits = 16,
+  colorPalette = 'default',
 }: { 
   frequencyData?: Uint8Array;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   fps?: number;
+  numOrbits?: number;
+  colorPalette?: string;
 }) {
-  const circleCount = 16; // Number of frequency bands
+  const circleCount = numOrbits; // Number of frequency bands
+  const paletteHues = getPaletteColors(colorPalette);
   
   // Disable distortion if FPS is low
   const useDistortion = fps > 50;
@@ -143,6 +163,7 @@ export function FrequencyCircles({
           frequencyData={frequencyData}
           ringPositions={ringPositions}
           useDistortion={useDistortion}
+          paletteHues={paletteHues}
         />
       ))}
     </group>
@@ -211,7 +232,8 @@ function OrbitalRing({
   frequencyData,
   bandHistory,
   ringPositions,
-  segments
+  segments,
+  paletteHues,
 }: { 
   index: number; 
   total: number; 
@@ -220,6 +242,7 @@ function OrbitalRing({
   bandHistory: React.MutableRefObject<number[][]>;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   segments: number;
+  paletteHues: number[];
 }) {
   
   // Store positions for each point around the circle
@@ -236,7 +259,13 @@ function OrbitalRing({
   // Create instanced mesh for cylinders
   const instancedMesh = useMemo(() => {
     const geometry = new CylinderGeometry(0.08, 0.08, 1, 8); // Thicker cylinders
-    const hue = index / total;
+    // Map index to palette colors
+    const progress = index / Math.max(1, total - 1);
+    const paletteIndex = progress * (paletteHues.length - 1);
+    const lowerIndex = Math.floor(paletteIndex);
+    const upperIndex = Math.min(lowerIndex + 1, paletteHues.length - 1);
+    const blend = paletteIndex - lowerIndex;
+    const hue = paletteHues[lowerIndex] * (1 - blend) + paletteHues[upperIndex] * blend;
     const color = new Color().setHSL(hue, 0.8, 0.5);
     const material = new MeshStandardMaterial({
       color,
@@ -247,7 +276,7 @@ function OrbitalRing({
     });
     const mesh = new InstancedMesh(geometry, material, segments);
     return mesh;
-  }, [index, total, segments]);
+  }, [index, total, segments, paletteHues]);
 
   const dummy = useRef(new Object3D());
   const tempColor = useRef(new Color());
@@ -364,20 +393,40 @@ function OrbitalRing({
   return <primitive object={instancedMesh} />;
 }
 
+// Get color palette colors
+// Default palette preserves original rainbow gradient
+function getPaletteColors(palette: string): number[] {
+  const palettes: Record<string, number[]> = {
+    default: [0, 0.17, 0.5, 0.67, 0.83, 1.0], // ORIGINAL: Full rainbow spectrum (0-360° mapped to 0-1)
+    vaporwave: [0.9, 0.55, 0.4, 0.75], // Pink to cyan to green to purple
+    sunset: [0.02, 0.08, 0.13, 0.12], // Red to orange to yellow to orange
+    fire: [0, 0.03, 0.1, 0.15], // Red to red-orange to orange to yellow
+    neon: [0.33, 0.5, 0.83, 0.17], // Green to cyan to magenta to yellow
+  };
+  return palettes[palette] || palettes.default;
+}
+
 // Orbital paths visualization - shows frequency band history in circles
 export function OrbitalPaths({ 
   frequencyData,
   treble = 0,
   ringPositions,
-  fps = 60
+  fps = 60,
+  numOrbits = 16,
+  colorPalette = 'default',
+  orbitDistance = 1.5,
 }: { 
   frequencyData?: Uint8Array;
   treble?: number;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   fps?: number;
+  numOrbits?: number;
+  colorPalette?: string;
+  orbitDistance?: number;
 }) {
   const groupRef = useRef<Group>(null);
-  const circleCount = 16; // Number of frequency bands
+  const circleCount = numOrbits; // Number of frequency bands
+  const paletteHues = getPaletteColors(colorPalette);
   
   // Dynamic segments based on FPS
   const [segments, setSegments] = React.useState(64); // Start moderate
@@ -468,7 +517,8 @@ export function OrbitalPaths({
   return (
     <group ref={groupRef}>
       {Array.from({ length: circleCount }).map((_, i) => {
-        const radius = 8 + (i / circleCount) * 30; // Increased spacing: 8-38 instead of 5-20
+        const baseSpacing = 30;
+        const radius = 8 + (i / circleCount) * baseSpacing * orbitDistance;
         return (
           <OrbitalRing
             key={`${i}-${segments}`} // Re-create when segments change
@@ -479,6 +529,7 @@ export function OrbitalPaths({
             bandHistory={bandHistory}
             ringPositions={ringPositions}
             segments={segments}
+            paletteHues={paletteHues}
           />
         );
       })}
@@ -492,7 +543,13 @@ export function SceneContent({
   treble,
   frequencyData,
   fps = 60,
+  orbitalControls,
 }: VisualizationProps) {
+  // Default controls
+  const intensity = orbitalControls?.intensity ?? 2.0;
+  const numOrbits = orbitalControls?.numOrbits ?? 16;
+  const colorPalette = orbitalControls?.colorPalette ?? 'default';
+  const orbitDistance = orbitalControls?.orbitDistance ?? 1.5;
   // Store props in refs so useFrame sees latest values (fix closure issue)
   const bassRef = useRef(bass);
   const energyRef = useRef(energy);
@@ -522,9 +579,9 @@ export function SceneContent({
     // Smooth shake intensity with more dampening
     shakeIntensity.current = shakeIntensity.current * 0.1 + currentBass * 0.15;
     
-    // Apply shake to the group, not the camera
+    // Apply shake to the group, not the camera - scaled by intensity control
     if (shakeIntensity.current > 0.01) {
-      const shake = shakeIntensity.current * 2.0; // Noticeable shake
+      const shake = shakeIntensity.current * intensity; // Use intensity control
       orbitalsGroupRef.current.position.x = (Math.random() - 0.5) * shake;
       orbitalsGroupRef.current.position.y = (Math.random() - 0.5) * shake;
       orbitalsGroupRef.current.position.z = (Math.random() - 0.5) * shake * 0.5;
@@ -549,14 +606,19 @@ export function SceneContent({
           frequencyData={frequencyDataRef.current} 
           treble={trebleRef.current}
           ringPositions={ringPositions} 
-          fps={fps} 
+          fps={fps}
+          numOrbits={numOrbits}
+          colorPalette={colorPalette}
+          orbitDistance={orbitDistance}
         />
         
         {/* Frequency circles orbiting - follow the rings */}
         <FrequencyCircles 
           frequencyData={frequencyDataRef.current}
           ringPositions={ringPositions} 
-          fps={fps} 
+          fps={fps}
+          numOrbits={numOrbits}
+          colorPalette={colorPalette}
         />
         
         {/* Center core */}

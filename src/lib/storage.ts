@@ -22,6 +22,8 @@ const KEYS = {
   LAVALAMP_CONTROLS: 'lavaLampControls',
   FFT_CONTROLS: 'fftControls',
   KALEIDOSCOPE_CONTROLS: 'kaleidoscopeControls',
+  ORBITAL_CONTROLS: 'orbitalControls',
+  WAVY_LINES_CONTROLS: 'wavyLinesControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -97,6 +99,24 @@ export async function saveKaleidoscopeControls(controls: { mode: string; rgbDist
 
 export async function getKaleidoscopeControls(): Promise<{ mode: string; rgbDistance: number; reactivity: number } | null> {
   return await localforage.getItem<{ mode: string; rgbDistance: number; reactivity: number }>(KEYS.KALEIDOSCOPE_CONTROLS);
+}
+
+// Orbital controls
+export async function saveOrbitalControls(controls: { intensity: number; numOrbits: number; colorPalette: string; orbitDistance: number }): Promise<void> {
+  await localforage.setItem(KEYS.ORBITAL_CONTROLS, controls);
+}
+
+export async function getOrbitalControls(): Promise<{ intensity: number; numOrbits: number; colorPalette: string; orbitDistance: number } | null> {
+  return await localforage.getItem<{ intensity: number; numOrbits: number; colorPalette: string; orbitDistance: number }>(KEYS.ORBITAL_CONTROLS);
+}
+
+// Wavy Lines controls
+export async function saveWavyLinesControls(controls: { numLines: number; colorPalette: string; particleCount: number }): Promise<void> {
+  await localforage.setItem(KEYS.WAVY_LINES_CONTROLS, controls);
+}
+
+export async function getWavyLinesControls(): Promise<{ numLines: number; colorPalette: string; particleCount: number } | null> {
+  return await localforage.getItem<{ numLines: number; colorPalette: string; particleCount: number }>(KEYS.WAVY_LINES_CONTROLS);
 }
 
 // Hue controls visibility
