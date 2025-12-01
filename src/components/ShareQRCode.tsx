@@ -9,12 +9,44 @@ interface ShareQRCodeProps {
   peerId: string;
   connectedViewers: number;
   autoExpand?: boolean; // Auto-expand on first connect
+  onDisconnect?: () => void; // Callback when host closes session
 }
 
-export default function ShareQRCode({ peerId, connectedViewers, autoExpand = false }: ShareQRCodeProps) {
+export default function ShareQRCode({ peerId, connectedViewers, autoExpand = false, onDisconnect }: ShareQRCodeProps) {
   const [shareUrl, setShareUrl] = useState<string>("");
   const [shareCode, setShareCode] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState(autoExpand);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleDisconnect = async () => {
+    if (!shareCode || isClosing) return;
+    
+    const confirmed = confirm("Close this sharing session? All viewers will be disconnected.");
+    if (!confirmed) return;
+    
+    setIsClosing(true);
+    
+    try {
+      const response = await fetch("/api/share/close", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: shareCode }),
+      });
+      
+      if (response.ok) {
+        console.log("✅ Session closed successfully");
+        onDisconnect?.();
+      } else {
+        console.error("❌ Failed to close session");
+        alert("Failed to close session. Please try again.");
+      }
+    } catch (error) {
+      console.error("❌ Error closing session:", error);
+      alert("Error closing session. Please try again.");
+    } finally {
+      setIsClosing(false);
+    }
+  };
 
   useEffect(() => {
     // peerId is now just the 6-digit code (e.g., "123456")
@@ -92,6 +124,16 @@ export default function ShareQRCode({ peerId, connectedViewers, autoExpand = fal
                 level="M"
               />
             </div>
+
+            {/* Disconnect Button */}
+            <button
+              className={styles.disconnectButton}
+              onClick={handleDisconnect}
+              disabled={isClosing}
+              title="Close sharing session"
+            >
+              {isClosing ? "Closing..." : "End Sharing Session"}
+            </button>
           </div>
         </div>
       )}
