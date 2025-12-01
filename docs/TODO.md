@@ -5,19 +5,20 @@
     [ ] Improved images: https://www.producthunt.com/products/welltory
 [ ] Synthwave viz
     https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
-[ ] Perf review
-    Perf review EVERYTHING
-    [X] First pass
-    [ ] Maybe passing the bass/etc instead of micData for compo? Or getting AT compo?
-
+compo? Or getting AT compo?
+[ ] Viz config basics
+    Add some basic configs for views
 
 Question:
-    - Should I allow customization of views?
     - Should I ask people what they want instead?
     - Should viewers also log with Spotify?
 
 # Done:
 
+[X] Perf review
+    Perf review EVERYTHING
+    [X] First pass
+    [X] Maybe passing the bass/etc instead of micData for 
 [X] Pre-lyrics download
     We can check which songs will play next and pre-download lyrics in the client
 [X] Mobile web view
@@ -84,3 +85,5 @@ intense. Allow setting max.
     I've set DPR to 1, but let's consider 2 for really good machines
 [ ] HUE lights intensity
     When I'm in my dark bedroom with the projector they interfere in the image when too 
+[ ] Lyrics title improvement
+    When lyrics have parenthesis (e.g. STILL IN THE PAINT (with LAZER DIM 700 & Bktherula) — Denzel Curry, LAZER DIM 700, Bktherula) we can either SHOW IT DIFFERENTLY (smaller dim) or if it's already part of the artist like this one, not show.

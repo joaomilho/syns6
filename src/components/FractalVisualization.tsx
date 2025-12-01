@@ -6,7 +6,6 @@ import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { DoubleSide, Mesh, ShaderMaterial, Vector2 } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface AudioFeatures {
   energy: number;
@@ -19,7 +18,8 @@ interface AudioFeatures {
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   syncedData?: SyncedAudioData | null;
-  micData?: MicrophoneData;
+  energy?: number;  // Only needs these two scalars
+  bass?: number;
   fps?: number;
 }
 
@@ -109,7 +109,8 @@ const mandelbrotFragmentShader = `
 export function MandelbrotPlane({
   audioFeatures,
   syncedData,
-  micData,
+  energy = 0,
+  bass = 0,
 }: VisualizationProps) {
   const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<ShaderMaterial>(null);
@@ -175,8 +176,8 @@ export function MandelbrotPlane({
     );
 
     // AGGRESSIVE MICROPHONE REACTIVITY - always update
-    materialRef.current.uniforms.micEnergy.value = micData?.energy || 0;
-    materialRef.current.uniforms.micBass.value = micData?.bass || 0;
+    materialRef.current.uniforms.micEnergy.value = energy;
+    materialRef.current.uniforms.micBass.value = bass;
 
     if (audioFeatures) {
       const energy = audioFeatures.energy || 0.5;
@@ -214,7 +215,8 @@ export function MandelbrotPlane({
 export default function FractalVisualization({
   audioFeatures,
   syncedData,
-  micData,
+  energy,
+  bass,
   fps = 60,
 }: VisualizationProps) {
   return (
@@ -245,7 +247,8 @@ export default function FractalVisualization({
         <MandelbrotPlane
           audioFeatures={audioFeatures || null}
           syncedData={syncedData || null}
-          micData={micData}
+          energy={energy}
+          bass={bass}
           fps={fps}
         />
 

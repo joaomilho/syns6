@@ -178,56 +178,71 @@ export default function ScreenshotPage() {
       case "particles":
         return (
           <OrbitalVisualization
-            micData={micData}
+            bass={micData.bass}
+            energy={micData.energy}
+            treble={micData.treble}
+            frequencyData={micData.frequencyData}
           />
         );
       case "fractal":
         return (
           <FractalVisualization
-            micData={micData}
+            energy={micData.energy}
+            bass={micData.bass}
           />
         );
       case "psychedelic":
         return (
           <PsychedelicVisualization
-            micData={micData}
+            // Note: This viz doesn't need micData at all!
           />
         );
       case "kaleidoscope":
         return (
           <KaleidoscopeVisualization
-            micData={micData}
+            bass={micData.bass}
             albumArt="/Kaleidoscope/a3fcd0d7e20e42e687962a3d4519f7a7.jpg"
           />
         );
       case "waves":
         return (
           <WavyLinesVisualization
-            micData={micData}
+            energy={micData.energy}
+            volume={micData.volume}
+            bass={micData.bass}
+            drums={micData.instruments.drums}
+            vocalStrength={micData.vocal.strength}
           />
         );
       case "animated":
         return (
           <LavaLampVisualization
-            micData={micData}
+            energy={micData.energy}
+            bass={micData.bass}
+            mid={micData.mid}
+            treble={micData.treble}
+            volume={micData.volume}
           />
         );
       case "spectrum3d":
         return (
           <Spectrum3DVisualization
-            micData={micData}
+            frequencyData={micData.frequencyData}
+            sampleRate={micData.sampleRate}
           />
         );
       case "fftspectrum":
         return (
           <FFTSpectrumVisualization
-            micData={micData}
+            frequencyData={micData.frequencyData}
           />
         );
       case "camera":
         return (
           <CameraVisualization
-            micData={micData}
+            bass={micData.bass}
+            mid={micData.mid}
+            treble={micData.treble}
           />
         );
       case "debug":
@@ -245,7 +260,13 @@ export default function ScreenshotPage() {
       case "oscilloscope":
         return (
           <OscilloscopeVisualization
-            micData={micData}
+            waveform={micData.waveform}
+            waveformLeft={micData.waveformLeft}
+            waveformRight={micData.waveformRight}
+            bass={micData.bass}
+            energy={micData.energy}
+            volume={micData.volume}
+            treble={micData.treble}
           />
         );
       default:

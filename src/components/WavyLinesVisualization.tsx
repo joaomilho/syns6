@@ -5,7 +5,6 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Points, PointsMaterial, Vector3 } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 // Camera shake component
 function CameraShake({ micData }: { micData?: MicrophoneData }) {
@@ -44,7 +43,11 @@ interface AudioFeatures {
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   syncedData?: SyncedAudioData | null;
-  micData?: MicrophoneData;
+  energy?: number;
+  volume?: number;
+  bass?: number;
+  drums?: number;
+  vocalStrength?: number;
 }
 
 function WavyLine({
@@ -53,7 +56,11 @@ function WavyLine({
   audioFeatures,
   syncedData,
   offset,
-  micData,
+  energy = 0,
+  volume = 0,
+  bass = 0,
+  drums = 0,
+  vocalStrength = 0,
   instrumentType = "bass",
 }: {
   yPosition: number;
@@ -61,7 +68,11 @@ function WavyLine({
   audioFeatures: AudioFeatures | null;
   syncedData: SyncedAudioData | null;
   offset: number;
-  micData?: MicrophoneData;
+  energy?: number;
+  volume?: number;
+  bass?: number;
+  drums?: number;
+  vocalStrength?: number;
   instrumentType?: "bass" | "vocal" | "drums";
 }) {
   const lineRef = useRef<Line | null>(null);
@@ -109,12 +120,7 @@ function WavyLine({
     const timbreEnergy = syncedData?.timbreEnergy || 0.5;
     const anticipation = syncedData?.anticipation || 0;
 
-    // MIC DATA - instrument-specific
-    const micEnergy = micData?.energy || 0;
-    const micVolume = micData?.volume || 0;
-    const micBass = micData?.bass || 0;
-    const micDrums = micData?.instruments?.drums || 0;
-    const micVocal = micData?.vocal?.strength || 0;
+    // MIC DATA - instrument-specific (now passed as props)
 
     // Get instrument-specific intensity
     let instrumentIntensity = 0;
@@ -123,16 +129,16 @@ function WavyLine({
     switch (instrumentType) {
       case "bass":
         // Bass reacts to OVERALL energy + bass specifically
-        instrumentIntensity = micEnergy + micBass;
-        micBoost = micBass + micVolume;
+        instrumentIntensity = energy + bass;
+        micBoost = bass + volume;
         break;
       case "drums":
-        instrumentIntensity = micDrums;
-        micBoost = micDrums;
+        instrumentIntensity = drums;
+        micBoost = drums;
         break;
       case "vocal":
-        instrumentIntensity = micVocal;
-        micBoost = micVocal;
+        instrumentIntensity = vocalStrength;
+        micBoost = vocalStrength;
         break;
     }
 
@@ -185,15 +191,15 @@ function WavyLine({
         clampedIntensity = Math.min(1, intensity);
         
         // MIC DOMINATES COLOR - when mic hits, GO RED! (ORIGINAL WORKING LOGIC)
-        const micRedForce = micVolume * 3;
+        const micRedForce = volume * 3;
         const baseHue = 0.7 - clampedIntensity * 0.7; // Music intensity: Blue to Red
-        hue = micVolume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES!
-        saturation = 0.7 + clampedIntensity * 0.3 + micEnergy * 0.3;
-        lightness = 0.35 + clampedIntensity * 0.45 + micVolume * 0.4;
+        hue = volume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES!
+        saturation = 0.7 + clampedIntensity * 0.3 + energy * 0.3;
+        lightness = 0.35 + clampedIntensity * 0.45 + volume * 0.4;
         break;
       case "vocal":
         // Blue to Dark Blue gradient
-        intensity = (micVocal + energy * 0.3) * loudness;
+        intensity = (vocalStrength + energy * 0.3) * loudness;
         clampedIntensity = Math.min(1, intensity);
         hue = 0.6 + clampedIntensity * 0.05; // Light blue to darker blue
         saturation = 0.8 + clampedIntensity * 0.2;
@@ -201,7 +207,7 @@ function WavyLine({
         break;
       case "drums":
         // Blue to Yellow to Orange gradient
-        intensity = (micDrums + energy * 0.3) * loudness * beatPulse;
+        intensity = (drums + energy * 0.3) * loudness * beatPulse;
         clampedIntensity = Math.min(1, intensity);
         hue = 0.6 - clampedIntensity * 0.45; // Blue (0.6) to Orange (0.15)
         saturation = 0.8 + clampedIntensity * 0.2;
@@ -216,7 +222,15 @@ function WavyLine({
   return <primitive object={line} />;
 }
 
-export function WavyLineField({ audioFeatures, syncedData, micData }: VisualizationProps) {
+export function WavyLineField({ 
+  audioFeatures, 
+  syncedData, 
+  energy,
+  volume,
+  bass,
+  drums,
+  vocalStrength,
+}: VisualizationProps) {
   const linesPerSet = 60; // 5x more lines (was 12)
   
   // Original bass-reactive waves (Blue → Red) - main layer
@@ -264,7 +278,11 @@ export function WavyLineField({ audioFeatures, syncedData, micData }: Visualizat
           audioFeatures={audioFeatures || null}
           syncedData={syncedData || null}
           offset={line.offset}
-          micData={micData}
+          energy={energy}
+          volume={volume}
+          bass={bass}
+          drums={drums}
+          vocalStrength={vocalStrength}
           instrumentType={line.type}
         />
       ))}
@@ -355,7 +373,11 @@ export function FlowingParticles({ audioFeatures, syncedData }: VisualizationPro
 export default function WavyLinesVisualization({
   audioFeatures,
   syncedData,
-  micData,
+  energy,
+  volume,
+  bass,
+  drums,
+  vocalStrength,
 }: VisualizationProps) {
   return (
     <div
@@ -376,7 +398,15 @@ export default function WavyLinesVisualization({
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
 
-        <WavyLineField audioFeatures={audioFeatures || null} syncedData={syncedData || null} micData={micData} />
+        <WavyLineField 
+          audioFeatures={audioFeatures || null} 
+          syncedData={syncedData || null}
+          energy={energy}
+          volume={volume}
+          bass={bass}
+          drums={drums}
+          vocalStrength={vocalStrength}
+        />
         <FlowingParticles audioFeatures={audioFeatures || null} syncedData={syncedData || null} />
 
         <OrbitControls
