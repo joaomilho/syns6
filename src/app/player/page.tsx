@@ -1366,6 +1366,11 @@ export default function PlayerPage() {
             peerId={shareManager.shareCode}
             connectedViewers={shareManager.connectedViewers}
             autoExpand={showQRCodeOnConnect}
+            onDisconnect={() => {
+              console.log("🛑 [PLAYER] User ended sharing session");
+              shareManager.stopHosting();
+              setShowQRCodeOnConnect(false);
+            }}
           />
         ) : (
           // Sharing but connecting - show connecting badge

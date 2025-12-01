@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // Check for 30-minute inactivity TTL (only if no clients connected)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (session.connectedClients === 0 && session.lastActivity < thirtyMinutesAgo) {
+      console.log(`[Share] Session ${code} inactive for 30+ minutes, marking as expired`);
+      return NextResponse.json(
+        { exists: false, error: "Session expired due to inactivity" },
+        { status: 200 }
+      );
+    }
+    
     return NextResponse.json({
       exists: true,
       code: session.code,

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * POST /api/share/disconnect
- * Disconnect from a shared session and decrement connected clients
+ * POST /api/share/close
+ * Close and delete a shared session (host only)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,21 +26,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
     
-    // Decrement connected clients (but not below 0)
-    // Update lastActivity when disconnecting (starts the 30min inactivity timer)
-    await prisma.sharedSession.update({
+    // Delete the session
+    await prisma.sharedSession.delete({
       where: { code },
-      data: {
-        connectedClients: Math.max(0, session.connectedClients - 1),
-        lastActivity: new Date(),
-      },
     });
+    
+    console.log(`[Share] Session ${code} closed by host`);
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error disconnecting from shared session:", error);
+    console.error("Error closing shared session:", error);
     return NextResponse.json(
-      { error: "Failed to disconnect" },
+      { error: "Failed to close session" },
       { status: 500 }
     );
   }

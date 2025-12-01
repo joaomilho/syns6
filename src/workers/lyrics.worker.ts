@@ -304,6 +304,13 @@ async function updateShareState(state: SharedSessionState) {
       }),
     });
     
+    if (response.status === 410) {
+      // Session expired or closed - stop sharing
+      console.log('[Worker] Session expired or closed by server');
+      stopSharing();
+      return;
+    }
+    
     if (!response.ok) {
       throw new Error(`Failed to update session: ${response.status}`);
     }
@@ -331,6 +338,13 @@ async function checkConnectedClients() {
   try {
     const apiUrl = `${self.location.origin}/api/share/poll?code=${shareCode}`;
     const response = await fetch(apiUrl);
+    
+    if (response.status === 410 || response.status === 404) {
+      // Session expired, closed, or not found - stop sharing
+      console.log('[Worker] Session no longer available');
+      stopSharing();
+      return;
+    }
     
     if (response.ok) {
       const data = await response.json();

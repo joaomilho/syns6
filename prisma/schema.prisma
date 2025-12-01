@@ -267,6 +267,7 @@ model SharedSession {
   // Session metadata
   connectedClients Int     @default(0)
   lastUpdate       DateTime @default(now())
+  lastActivity     DateTime @default(now()) // Last time clients were connected (for TTL)
   createdAt        DateTime @default(now())
   expiresAt        DateTime // Auto-expire after 24 hours
   

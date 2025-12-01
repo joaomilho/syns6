@@ -36,13 +36,24 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Increment connected clients
+    // Check for 30-minute inactivity TTL (only if no clients connected)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (session.connectedClients === 0 && session.lastActivity < thirtyMinutesAgo) {
+      console.log(`[Share] Session ${code} inactive for 30+ minutes, cannot join`);
+      return NextResponse.json(
+        { error: "Session expired due to inactivity" },
+        { status: 410 }
+      );
+    }
+    
+    // Increment connected clients and update lastActivity
     const updatedSession = await prisma.sharedSession.update({
       where: { code },
       data: {
         connectedClients: {
           increment: 1,
         },
+        lastActivity: new Date(),
       },
     });
     
