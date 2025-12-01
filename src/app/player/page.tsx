@@ -175,6 +175,7 @@ export default function PlayerPage() {
     useState<VisualizationMode>("STATIC");
   const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
   const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [customVisualizations, setCustomVisualizations] = useState<CustomVizType[]>([]);
   const [shaderControls, setShaderControls] = useState({
     rgbSplit: 0.01,
@@ -581,6 +582,8 @@ export default function PlayerPage() {
       const savedFont = await getLyricsFont();
       const savedColor = await getLyricsColor();
       
+      console.log(`📥 Loading preferences - Type: ${savedType}, Mode: ${savedMode}`);
+      
       if (savedType) {
         console.log(`🎨 Restoring visualization: ${savedType}`);
         setVisualizationType(savedType as VisualizationType);
@@ -597,6 +600,9 @@ export default function PlayerPage() {
         console.log(`🎨 Restoring lyrics color: ${savedColor}`);
         setLyricsColor(savedColor as LyricsColor);
       }
+      
+      // Mark preferences as loaded
+      setPreferencesLoaded(true);
     };
     loadPreferences();
   }, []);
@@ -620,14 +626,18 @@ export default function PlayerPage() {
     saveVisualizationType();
   }, [visualizationType]);
 
-  // Save visualization mode when it changes
+  // Save visualization mode when it changes (only after initial load)
   useEffect(() => {
+    if (!preferencesLoaded) return; // Don't save until we've loaded preferences
+    
     const saveMode = async () => {
       const { saveVisualizationMode } = await import('@/lib/storage');
+      console.log(`💾 Saving visualization mode: ${visualizationMode}`);
       await saveVisualizationMode(visualizationMode);
+      console.log(`✅ Visualization mode saved: ${visualizationMode}`);
     };
     saveMode();
-  }, [visualizationMode]);
+  }, [visualizationMode, preferencesLoaded]);
 
   // Save lyrics font when it changes
   useEffect(() => {
@@ -647,37 +657,118 @@ export default function PlayerPage() {
     saveColor();
   }, [lyricsColor]);
 
-  // Handle RANDOM mode - change visualization when track changes
+  // Randomize visualization config
+  const randomizeConfig = (vizType: VisualizationType) => {
+    const random = (min: number, max: number) => Math.random() * (max - min) + min;
+    const randomInt = (min: number, max: number) => Math.floor(random(min, max));
+    const randomChoice = <T,>(arr: T[]): T => arr[randomInt(0, arr.length)];
+    
+    console.log(`🎲 Randomizing config for ${vizType}`);
+    
+    switch (vizType) {
+      case 'particles':
+        setShaderControls({
+          rgbSplit: random(0.005, 0.05),
+          distortion: random(0.01, 0.1),
+          colorShift: random(0, 1),
+        });
+        break;
+      
+      case 'fractal':
+        setLavaLampControls({
+          resolution: randomChoice([32, 64, 128]),
+          blobCount: randomInt(3, 8),
+          globSize: random(0.5, 2),
+          reactivity: random(0.5, 2),
+        });
+        break;
+      
+      case 'fftspectrum':
+        setFFTControls({
+          neonIntensity: random(1, 4),
+          colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
+          lineWidth: random(1, 5),
+        });
+        break;
+      
+      case 'psychedelic':
+        setKaleidoscopeControls({
+          mode: randomChoice(['album', 'video']),
+          rgbDistance: random(0, 0.3),
+          reactivity: random(0.5, 3),
+        });
+        break;
+      
+      case 'oscilloscope':
+        setOrbitalControls({
+          intensity: random(0.5, 2),
+          numOrbits: randomInt(3, 8),
+          colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
+          orbitDistance: random(1, 3),
+        });
+        break;
+      
+      case 'waves':
+        setWavyLinesControls({
+          numLines: randomInt(3, 8),
+          colorPalette: randomChoice(['default', 'neon', 'sunset', 'forest', 'candy']),
+          particleCount: randomChoice([50, 100, 200, 300]),
+        });
+        break;
+      
+      case 'spectrum3d':
+        setSpectrum3DControls({
+          shape: randomChoice(['circle', 'row']),
+          neonIntensity: random(1, 4),
+          colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
+        });
+        break;
+      
+      case 'youtube':
+        setYouTubeControls({
+          effect: randomChoice(['none', '3d-flip', 'black-white', 'glitch', 'bloom']),
+        });
+        break;
+    }
+  };
+
+  // Handle RANDOM mode - change visualization when track changes OR when mode is set to RANDOM
   useEffect(() => {
     const currentTrackId = playbackState?.item?.id;
     
-    if (
-      visualizationMode === "RANDOM" &&
-      currentTrackId &&
-      currentTrackId !== lastRandomTrackId.current
-    ) {
-      const visualizations: VisualizationType[] = [
-        "fftspectrum",
-        "lyricsonly",
-        "particles",
-        "fractal",
-        "psychedelic",
-        "waves",
-        "animated",
-        "spectrum3d",
-        "oscilloscope",
-        "camera",
-        "youtube",
-      ];
+    if (visualizationMode === "RANDOM") {
+      // Check if we should randomize: either new track OR just switched to RANDOM mode
+      const isNewTrack = currentTrackId && currentTrackId !== lastRandomTrackId.current;
+      const justSwitchedToRandom = lastRandomTrackId.current === null;
       
-      // Pick a random visualization
-      const randomIndex = Math.floor(Math.random() * visualizations.length);
-      const newVisualization = visualizations[randomIndex];
-      
-      console.log(`🎲 RANDOM mode: Switching to ${newVisualization} for new track`);
-      setVisualizationType(newVisualization);
-      lastRandomTrackId.current = currentTrackId;
-    } else if (visualizationMode !== "RANDOM") {
+      if (isNewTrack || justSwitchedToRandom) {
+        const visualizations: VisualizationType[] = [
+          "fftspectrum",
+          "lyricsonly",
+          "particles",
+          "fractal",
+          "psychedelic",
+          "waves",
+          "animated",
+          "spectrum3d",
+          "oscilloscope",
+          "camera",
+          "youtube",
+        ];
+        
+        // Pick a random visualization
+        const randomIndex = Math.floor(Math.random() * visualizations.length);
+        const newVisualization = visualizations[randomIndex];
+        
+        console.log(`🎲 RANDOM mode: Switching to ${newVisualization}${justSwitchedToRandom ? ' (mode activated)' : ' for new track'}`);
+        setVisualizationType(newVisualization);
+        
+        // Randomize the config for this visualization
+        randomizeConfig(newVisualization);
+        
+        lastRandomTrackId.current = currentTrackId || 'random-init';
+      }
+    } else {
       // Reset tracking when mode changes away from RANDOM
       lastRandomTrackId.current = null;
     }

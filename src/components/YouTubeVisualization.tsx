@@ -319,7 +319,7 @@ export default function YouTubeVisualization({
       case 'bloom': {
         const bloomIntensity = 20 + bass * 40;
         return {
-          filter: `contrast(${Math.pow(bass*2, 6)}) saturate(${Math.pow(bass*2, 20)})`
+          filter: `contrast(${Math.pow(1+bass, bass*4)}) saturate(${Math.pow(bass*2, 20)})`
         };
       }
       
