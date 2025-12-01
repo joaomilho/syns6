@@ -409,8 +409,8 @@
 }
 
 .smoothnessSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   appearance: none;
+  -webkit-appearance: none;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -463,6 +463,12 @@
   font-size: 18px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.comingSoonHint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
 }
 

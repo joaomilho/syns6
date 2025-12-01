@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+    </filter>
+  </defs>
+  
+  <!-- Black background -->
+  <rect width="64" height="64" fill="#000000"/>
+  
+  <!-- Hollow green circle (ring) with glow -->
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#00ff00" stroke-width="4" opacity="0.6" filter="url(#outerGlow)"/>
+  
+  <!-- Black circle to cover inner glow -->
+  <circle cx="32" cy="32" r="18" fill="#000000"/>
+  
+  <!-- Hollow green circle (ring) on top -->
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#00ff00" stroke-width="4"/>
+</svg>
+
