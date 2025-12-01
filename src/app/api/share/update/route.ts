@@ -50,7 +50,17 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Update the session
+    // Check for 30-minute inactivity TTL (only if no clients connected)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (session.connectedClients === 0 && session.lastActivity < thirtyMinutesAgo) {
+      console.log(`[Share] Session ${code} inactive for 30+ minutes, cannot update`);
+      return NextResponse.json(
+        { error: "Session expired due to inactivity" },
+        { status: 410 }
+      );
+    }
+    
+    // Update the session and lastActivity if clients are connected
     const updatedSession = await prisma.sharedSession.update({
       where: { code },
       data: {
@@ -66,6 +76,8 @@ export async function POST(request: NextRequest) {
         visualizationType,
         visualizationMode,
         lastUpdate: new Date(),
+        // Update lastActivity if there are connected clients
+        ...(session.connectedClients > 0 && { lastActivity: new Date() }),
       },
     });
     
