@@ -11,12 +11,16 @@ import { LavaLampBlobs } from "./LavaLampVisualization";
 interface LavaLampControls {
   resolution: number;
   blobCount: number;
+  globSize: number;
+  reactivity: number;
 }
 
 export default function LavaLampScene({ micData, lavaLampControls }: { micData?: any; lavaLampControls?: LavaLampControls }) {
   const bloomIntensity = 0.1 + (micData?.bass || 0) * 5;
   const resolution = lavaLampControls?.resolution ?? 32;
-  const blobCount = lavaLampControls?.blobCount ?? 5;
+  const blobCount = lavaLampControls?.blobCount ?? 18;
+  const globSize = lavaLampControls?.globSize ?? 1.0;
+  const reactivity = lavaLampControls?.reactivity ?? 1.0;
 
   return (
     <>
@@ -32,6 +36,8 @@ export default function LavaLampScene({ micData, lavaLampControls }: { micData?:
         mid={micData?.mid}
         resolution={resolution}
         blobCount={blobCount}
+        globSize={globSize}
+        reactivity={reactivity}
       />
 
       <EffectComposer multisampling={0}>
