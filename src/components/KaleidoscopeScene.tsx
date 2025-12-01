@@ -6,14 +6,32 @@
 
 import { KaleidoscopeShader } from "./KaleidoscopeVisualization";
 
-export default function KaleidoscopeScene({ micData, albumArt }: { micData?: any; albumArt?: string }) {
+interface KaleidoscopeControls {
+  mode: 'album' | 'video' | 'still' | 'continuous';
+  rgbDistance: number;
+  reactivity: number;
+}
+
+export default function KaleidoscopeScene({ 
+  micData, 
+  albumArt, 
+  videoElement,
+  kaleidoscopeControls 
+}: { 
+  micData?: any; 
+  albumArt?: string;
+  videoElement?: HTMLVideoElement | null;
+  kaleidoscopeControls?: KaleidoscopeControls;
+}) {
   return (
     <>
       <KaleidoscopeShader 
         audioFeatures={null} 
         syncedData={null} 
         bass={micData?.bass}
-        albumArt={albumArt} 
+        albumArt={albumArt}
+        videoElement={videoElement}
+        kaleidoscopeControls={kaleidoscopeControls}
       />
     </>
   );

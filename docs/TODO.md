@@ -1,5 +1,7 @@
 # Soft launch checklist
 
+[ ] Fix Spotify's login
+    Still getting 401s fairly often
 [ ] Product Hunt
     [ ] Animated icon e.g https://www.producthunt.com/products/calk-ai
     [ ] Improved images: https://www.producthunt.com/products/welltory

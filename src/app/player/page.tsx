@@ -25,7 +25,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
-import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls } from "@/lib/storage";
+import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -158,7 +158,12 @@ export default function PlayerPage() {
     distortion: 0.02,
     colorShift: 0.5,
   });
-  const [lavaLampControls, setLavaLampControls] = useState({
+  const [lavaLampControls, setLavaLampControls] = useState<{
+    resolution: number;
+    blobCount: number;
+    globSize?: number;
+    reactivity?: number;
+  }>({
     resolution: 32,
     blobCount: 18,
     globSize: 1.0,
@@ -172,6 +177,15 @@ export default function PlayerPage() {
     neonIntensity: 1.6,
     colorPalette: 'default',
     lineWidth: 0.04,
+  });
+  const [kaleidoscopeControls, setKaleidoscopeControls] = useState<{
+    mode: 'album' | 'video';
+    rgbDistance: number;
+    reactivity: number;
+  }>({
+    mode: 'album',
+    rgbDistance: 0.1,
+    reactivity: 1.0,
   });
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
@@ -233,6 +247,41 @@ export default function PlayerPage() {
   useEffect(() => {
     saveFFTControls(fftControls).catch(console.error);
   }, [fftControls]);
+
+  // Restore kaleidoscope controls from storage on mount
+  useEffect(() => {
+    getKaleidoscopeControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("🔮 Restoring kaleidoscope controls:", savedControls);
+        setKaleidoscopeControls(savedControls as any);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save kaleidoscope controls whenever they change
+  useEffect(() => {
+    saveKaleidoscopeControls(kaleidoscopeControls).catch(console.error);
+  }, [kaleidoscopeControls]);
+  
+  // Auto-switch to video mode when Kaleidoscope is selected and camera is on
+  useEffect(() => {
+    if (visualizationType === 'kaleidoscope' && isCameraEnabled && kaleidoscopeControls.mode === 'album') {
+      setKaleidoscopeControls(prev => ({
+        ...prev,
+        mode: 'video'
+      }));
+    }
+  }, [visualizationType, isCameraEnabled]);
+  
+  // Auto-switch back to album mode when camera is turned off
+  useEffect(() => {
+    if (!isCameraEnabled && kaleidoscopeControls.mode === 'video') {
+      setKaleidoscopeControls(prev => ({
+        ...prev,
+        mode: 'album'
+      }));
+    }
+  }, [isCameraEnabled]);
   
   // Reset auto-expand flag after QR code is shown
   useEffect(() => {
@@ -1303,7 +1352,7 @@ export default function PlayerPage() {
           {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
           {visualizationType === 'fractal' && <FractalScene micData={micData} />}
           {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
-          {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} />}
+          {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} videoElement={videoElement} kaleidoscopeControls={kaleidoscopeControls} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} />}
           {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
           {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
@@ -1472,13 +1521,18 @@ export default function PlayerPage() {
           shaderControls={shaderControls}
           lavaLampControls={lavaLampControls}
           fftControls={fftControls}
+          kaleidoscopeControls={kaleidoscopeControls}
           currentVisualization={visualizationType}
+          albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url}
+          videoElement={videoElement}
+          isCameraEnabled={isCameraEnabled}
           onModeChange={setVisualizationMode}
           onFontChange={setLyricsFont}
           onColorChange={setLyricsColor}
           onShaderControlsChange={setShaderControls}
           onLavaLampControlsChange={setLavaLampControls}
           onFFTControlsChange={setFFTControls}
+          onKaleidoscopeControlsChange={setKaleidoscopeControls}
         />
 
         {/* User Profile */}

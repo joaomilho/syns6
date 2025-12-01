@@ -125,6 +125,12 @@ export interface FFTControls {
   lineWidth: number;
 }
 
+export interface KaleidoscopeControls {
+  mode: 'album' | 'video';
+  rgbDistance: number;
+  reactivity: number;
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
@@ -132,13 +138,18 @@ interface ConfigDropdownProps {
   shaderControls: ShaderControls;
   lavaLampControls: LavaLampControls;
   fftControls: FFTControls;
+  kaleidoscopeControls: KaleidoscopeControls;
   currentVisualization: string; // Current viz type to show relevant controls
+  albumArt?: string; // For kaleidoscope thumbnails
+  videoElement?: HTMLVideoElement | null; // For video thumbnail
+  isCameraEnabled?: boolean; // To show/hide video option
   onModeChange: (mode: VisualizationMode) => void;
   onFontChange: (font: LyricsFont) => void;
   onColorChange: (color: LyricsColor) => void;
   onShaderControlsChange: (controls: ShaderControls) => void;
   onLavaLampControlsChange: (controls: LavaLampControls) => void;
   onFFTControlsChange: (controls: FFTControls) => void;
+  onKaleidoscopeControlsChange: (controls: KaleidoscopeControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -148,16 +159,51 @@ export default function ConfigDropdown({
   shaderControls,
   lavaLampControls,
   fftControls,
+  kaleidoscopeControls,
   currentVisualization,
+  albumArt,
+  videoElement,
+  isCameraEnabled,
   onModeChange,
   onFontChange,
   onColorChange,
   onShaderControlsChange,
   onLavaLampControlsChange,
   onFFTControlsChange,
+  onKaleidoscopeControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const videoCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  
+  // Update video thumbnail periodically when camera is enabled
+  useEffect(() => {
+    if (!isCameraEnabled || !videoElement || videoElement.readyState < videoElement.HAVE_CURRENT_DATA) {
+      setVideoThumbnail(null);
+      return;
+    }
+    
+    const updateThumbnail = () => {
+      if (!videoCanvasRef.current) {
+        videoCanvasRef.current = document.createElement('canvas');
+        videoCanvasRef.current.width = 80;
+        videoCanvasRef.current.height = 80;
+      }
+      
+      const canvas = videoCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        setVideoThumbnail(canvas.toDataURL());
+      }
+    };
+    
+    // Update thumbnail every 200ms
+    updateThumbnail();
+    const interval = setInterval(updateThumbnail, 200);
+    return () => clearInterval(interval);
+  }, [isCameraEnabled, videoElement]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -634,6 +680,138 @@ export default function ConfigDropdown({
                     neonIntensity: 1.6,
                     colorPalette: 'default',
                     lineWidth: 0.04,
+                  });
+                }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* Kaleidoscope Config */}
+          {currentVisualization === "kaleidoscope" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Kaleidoscope</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Mode
+                  </label>
+                  <div className={styles.colorList}>
+                    <button
+                      className={`${styles.colorOption} ${
+                        kaleidoscopeControls.mode === 'album' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onKaleidoscopeControlsChange({
+                          ...kaleidoscopeControls,
+                          mode: 'album',
+                        })
+                      }
+                      title="Album Cover"
+                    >
+                      <div className={styles.colorSwatch}>
+                        {albumArt ? (
+                          <img src={albumArt} alt="Album" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '7px' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', background: '#333', borderRadius: '7px' }} />
+                        )}
+                      </div>
+                    </button>
+                    <button
+                      className={`${styles.colorOption} ${
+                        kaleidoscopeControls.mode === 'video' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onKaleidoscopeControlsChange({
+                          ...kaleidoscopeControls,
+                          mode: 'video',
+                        })
+                      }
+                      title="Video"
+                      disabled={!isCameraEnabled}
+                      style={{ opacity: !isCameraEnabled ? 0.5 : 1, cursor: !isCameraEnabled ? 'not-allowed' : 'pointer' }}
+                    >
+                      <div className={styles.colorSwatch}>
+                        {isCameraEnabled && videoThumbnail ? (
+                          <img src={videoThumbnail} alt="Video" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '7px' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', background: '#222', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>📹</div>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    RGB Distance
+                    <span className={styles.sliderValue}>{kaleidoscopeControls.rgbDistance.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="0.3"
+                    step="0.01"
+                    value={kaleidoscopeControls.rgbDistance}
+                    onChange={(e) =>
+                      onKaleidoscopeControlsChange({
+                        ...kaleidoscopeControls,
+                        rgbDistance: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Reactivity
+                    <span className={styles.sliderValue}>{kaleidoscopeControls.reactivity.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="3"
+                    step="0.1"
+                    value={kaleidoscopeControls.reactivity}
+                    onChange={(e) =>
+                      onKaleidoscopeControlsChange({
+                        ...kaleidoscopeControls,
+                        reactivity: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+              </div>
+
+              {!isCameraEnabled && kaleidoscopeControls.mode === 'video' && (
+                <div style={{ 
+                  padding: '8px 12px', 
+                  background: 'rgba(255, 165, 0, 0.1)', 
+                  border: '1px solid rgba(255, 165, 0, 0.3)', 
+                  borderRadius: '8px', 
+                  fontSize: '11px', 
+                  color: 'rgba(255, 165, 0, 0.9)',
+                  marginTop: '12px'
+                }}>
+                  ⚠️ Enable camera to use video mode
+                </div>
+              )}
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onKaleidoscopeControlsChange({
+                    mode: 'album',
+                    rgbDistance: 0.1,
+                    reactivity: 1.0,
                   });
                 }}
               >

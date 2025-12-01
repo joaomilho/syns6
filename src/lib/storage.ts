@@ -21,6 +21,7 @@ const KEYS = {
   SHADER_CONTROLS: 'shaderControls',
   LAVALAMP_CONTROLS: 'lavaLampControls',
   FFT_CONTROLS: 'fftControls',
+  KALEIDOSCOPE_CONTROLS: 'kaleidoscopeControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -87,6 +88,15 @@ export async function saveFFTControls(controls: { neonIntensity: number; colorPa
 
 export async function getFFTControls(): Promise<{ neonIntensity: number; colorPalette: string; lineWidth: number } | null> {
   return await localforage.getItem<{ neonIntensity: number; colorPalette: string; lineWidth: number }>(KEYS.FFT_CONTROLS);
+}
+
+// Kaleidoscope controls
+export async function saveKaleidoscopeControls(controls: { mode: string; rgbDistance: number; reactivity: number }): Promise<void> {
+  await localforage.setItem(KEYS.KALEIDOSCOPE_CONTROLS, controls);
+}
+
+export async function getKaleidoscopeControls(): Promise<{ mode: string; rgbDistance: number; reactivity: number } | null> {
+  return await localforage.getItem<{ mode: string; rgbDistance: number; reactivity: number }>(KEYS.KALEIDOSCOPE_CONTROLS);
 }
 
 // Hue controls visibility
