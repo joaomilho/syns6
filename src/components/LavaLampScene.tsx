@@ -11,8 +11,8 @@ import { LavaLampBlobs } from "./LavaLampVisualization";
 interface LavaLampControls {
   resolution: number;
   blobCount: number;
-  globSize: number;
-  reactivity: number;
+  globSize?: number;
+  reactivity?: number;
 }
 
 export default function LavaLampScene({ micData, lavaLampControls }: { micData?: any; lavaLampControls?: LavaLampControls }) {
