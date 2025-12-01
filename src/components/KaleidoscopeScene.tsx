@@ -7,7 +7,7 @@
 import { KaleidoscopeShader } from "./KaleidoscopeVisualization";
 
 interface KaleidoscopeControls {
-  mode: 'album' | 'video' | 'still' | 'continuous';
+  mode: 'album' | 'video';
   rgbDistance: number;
   reactivity: number;
 }
