@@ -1136,9 +1136,7 @@ export default function PlayerPage() {
         <CameraVisualization
             key="camera"
           videoElement={videoElement}
-          bass={micData.bass}
-          mid={micData.mid}
-          treble={micData.treble}
+          micData={micData}
           shaderControls={{
             rgbSplitAmount: shaderControls.rgbSplit,
             distortionAmount: shaderControls.distortion,
