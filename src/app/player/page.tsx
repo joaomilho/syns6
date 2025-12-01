@@ -160,7 +160,9 @@ export default function PlayerPage() {
   });
   const [lavaLampControls, setLavaLampControls] = useState({
     resolution: 32,
-    blobCount: 5,
+    blobCount: 18,
+    globSize: 1.0,
+    reactivity: 1.0,
   });
   const [fftControls, setFFTControls] = useState<{
     neonIntensity: number;

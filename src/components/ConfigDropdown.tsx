@@ -115,6 +115,8 @@ export interface ShaderControls {
 export interface LavaLampControls {
   resolution: number;
   blobCount: number;
+  globSize?: number;
+  reactivity?: number;
 }
 
 export interface FFTControls {
@@ -365,7 +367,7 @@ export default function ConfigDropdown({
           )}
 
           {/* LavaLamp Config */}
-          {currentVisualization === "lavalamp" && (
+          {currentVisualization === "animated" && (
             <>
               {/* Divider */}
               <div className={styles.divider} />
@@ -401,14 +403,58 @@ export default function ConfigDropdown({
                   </label>
                   <input
                     type="range"
-                    min="2"
-                    max="10"
+                    min="0"
+                    max="5"
                     step="1"
-                    value={lavaLampControls.blobCount}
+                    value={[6, 12, 18, 24, 36, 62].indexOf(lavaLampControls.blobCount)}
+                    onChange={(e) => {
+                      const counts = [6, 12, 18, 24, 36, 62];
+                      onLavaLampControlsChange({
+                        ...lavaLampControls,
+                        blobCount: counts[parseInt(e.target.value)],
+                      });
+                    }}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Glob Size
+                    <span className={styles.sliderValue}>{(lavaLampControls.globSize ?? 1.0).toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="9"
+                    step="1"
+                    value={[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0].indexOf(lavaLampControls.globSize ?? 1.0)}
+                    onChange={(e) => {
+                      const sizes = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
+                      onLavaLampControlsChange({
+                        ...lavaLampControls,
+                        globSize: sizes[parseInt(e.target.value)],
+                      });
+                    }}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Reactivity
+                    <span className={styles.sliderValue}>{(lavaLampControls.reactivity ?? 1.0).toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.2"
+                    max="3"
+                    step="0.2"
+                    value={lavaLampControls.reactivity ?? 1.0}
                     onChange={(e) =>
                       onLavaLampControlsChange({
                         ...lavaLampControls,
-                        blobCount: parseInt(e.target.value),
+                        reactivity: parseFloat(e.target.value),
                       })
                     }
                     className={styles.slider}
@@ -422,7 +468,9 @@ export default function ConfigDropdown({
                 onClick={() => {
                   onLavaLampControlsChange({
                     resolution: 32,
-                    blobCount: 5,
+                    blobCount: 18,
+                    globSize: 1.0,
+                    reactivity: 1.0,
                   });
                 }}
               >

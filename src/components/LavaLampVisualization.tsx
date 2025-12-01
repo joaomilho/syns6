@@ -30,13 +30,17 @@ export function LavaLampBlobs({
   bass = 0,
   mid = 0,
   resolution = 32,
-  blobCount = 5,
+  blobCount = 18,
+  globSize = 1.0,
+  reactivity = 1.0,
 }: {
   energy?: number;
   bass?: number;
   mid?: number;
   resolution?: number;
   blobCount?: number;
+  globSize?: number;
+  reactivity?: number;
 }) {
   const effectRef = useRef<MarchingCubes | null>(null);
   const timeRef = useRef(0);
@@ -62,18 +66,24 @@ export function LavaLampBlobs({
     return mat;
   }, []);
 
-  // Cleanup marching cubes when component unmounts
+  // Cleanup and recreate marching cubes when resolution or blobCount changes
   useEffect(() => {
+    // Force recreation on next frame by clearing the ref
+    if (effectRef.current) {
+      effectRef.current.parent?.remove(effectRef.current);
+      effectRef.current.geometry?.dispose();
+      effectRef.current = null;
+      particlesRef.current = [];
+    }
+    
     return () => {
       if (effectRef.current) {
-        // Remove from scene
         effectRef.current.parent?.remove(effectRef.current);
-        // Dispose geometry and material
         effectRef.current.geometry?.dispose();
         effectRef.current = null;
       }
     };
-  }, []);
+  }, [resolution, blobCount, globSize, reactivity]);
 
   useFrame((state, delta) => {
     frameCountRef.current++;
@@ -97,8 +107,8 @@ export function LavaLampBlobs({
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      // Use blobCount prop (multiply by ~3 to get a good number of particles)
-      const numParticles = blobCount * 3;
+      // Use blobCount prop directly as the number of particles/blobs
+      const numParticles = blobCount;
       particlesRef.current = Array.from({ length: numParticles }, () => {
         // Start particles spread across safe zone
         const angle1 = Math.random() * Math.PI * 2;
@@ -134,11 +144,18 @@ export function LavaLampBlobs({
     // Scale movement with energy - VERY calm in silence, active when energetic
     const energyFactor = Math.max(0.1, energy); // Lower minimum for calmer silence
     const centerX = 0.5, centerY = 0.5, centerZ = 0.5;
-    const gravityStrength = 0.08 * energyFactor; // Much weaker gravity - less pull
-    const repulsionStrength = bass * 6; // STRONG bass kicks - doesn't scale with energy!
-    const repulsionDistance = 0.14 + bass * 0.15; // Larger repulsion zone when bass hits
+    
+    // Adjust gravity based on glob size - smaller globs need stronger pull to return to center
+    const gravityMultiplier = 1.0 / Math.max(0.5, globSize); // Inverse relationship: smaller = stronger
+    const gravityStrength = 0.08 * energyFactor * reactivity * gravityMultiplier;
+    
+    const repulsionStrength = bass * 6 * reactivity; // Reactivity affects bass response
+    
+    // Smaller globs need smaller repulsion distance to merge better with center
+    const repulsionDistance = (0.14 + bass * 0.15) * globSize; 
+    
     const damping = 0.985 + (1 - energyFactor) * 0.012; // Much more damping in silence (0.997 when calm)
-    const maxSpeed = (0.015 + bass * 0.12) * energyFactor; // Lower base speed for calmer movement
+    const maxSpeed = (0.015 + bass * 0.12) * energyFactor * reactivity; // Reactivity affects speed
     const maxSpeedSq = maxSpeed * maxSpeed; // Precompute for optimization
 
     // Update particle physics
@@ -177,7 +194,7 @@ export function LavaLampBlobs({
       }
 
       // Subtle random perturbations for organic movement - scales with energy
-      const perturbation = 0.00005 * energyFactor; // Much lower - almost still in silence
+      const perturbation = 0.00005 * energyFactor * reactivity; // Reactivity affects random movement
       p.vx += (Math.random() - 0.5) * perturbation;
       p.vy += (Math.random() - 0.5) * perturbation;
       p.vz += (Math.random() - 0.5) * perturbation;
@@ -214,20 +231,20 @@ export function LavaLampBlobs({
       if (p.z > 0.85) { p.z = 0.85; p.vz = -Math.abs(p.vz) * bounceStrength; }
 
       // Small balls that stay fully within safe zone
-      const strength = 0.6;
+      const strength = 0.6 * globSize; // Glob size affects ball size
       const subtract = 12;
       
       effect.addBall(p.x, p.y, p.z, strength, subtract);
     }
 
     // Add central sphere - slightly moves with music
-    const centralOffset = energy * 0.02;
+    const centralOffset = energy * 0.02 * reactivity;
     const centralX = 0.5 + Math.sin(time * 0.3) * centralOffset;
     const centralY = 0.5 + Math.cos(time * 0.2) * centralOffset;
     const centralZ = 0.5;
     
     // Larger strength = bigger sphere, larger subtract = sharper edges
-    const centralStrength = 1.2 + bass * 0.3; // Pulses with bass
+    const centralStrength = (1.2 + bass * 0.3) * globSize; // Glob size affects central sphere
     const centralSubtract = 8;
     
     effect.addBall(centralX, centralY, centralZ, centralStrength, centralSubtract);

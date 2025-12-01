@@ -72,12 +72,12 @@ export async function getShaderControls(): Promise<{ rgbSplit: number; distortio
 }
 
 // Lava Lamp controls
-export async function saveLavaLampControls(controls: { resolution: number; blobCount: number }): Promise<void> {
+export async function saveLavaLampControls(controls: { resolution: number; blobCount: number; globSize?: number; reactivity?: number }): Promise<void> {
   await localforage.setItem(KEYS.LAVALAMP_CONTROLS, controls);
 }
 
-export async function getLavaLampControls(): Promise<{ resolution: number; blobCount: number } | null> {
-  return await localforage.getItem<{ resolution: number; blobCount: number }>(KEYS.LAVALAMP_CONTROLS);
+export async function getLavaLampControls(): Promise<{ resolution: number; blobCount: number; globSize?: number; reactivity?: number } | null> {
+  return await localforage.getItem<{ resolution: number; blobCount: number; globSize?: number; reactivity?: number }>(KEYS.LAVALAMP_CONTROLS);
 }
 
 // FFT controls
