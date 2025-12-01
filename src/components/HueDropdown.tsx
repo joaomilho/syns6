@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { HueConnection } from "@/hooks/useHueLights";
 import { Toggle } from "@/components/ds";
+import { Lightbulb, Construction, Search, AlertTriangle, Info } from "lucide-react";
 import styles from "./HueDropdown.module.css";
 
 interface HueDropdownProps {
@@ -79,7 +80,7 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
         onClick={() => setIsOpen(!isOpen)}
         title={isConnected ? (isActive ? "Hue Active" : "Hue Connected") : "Connect Hue Lights"}
       >
-        <span className={styles.icon}>◐</span>
+        <Lightbulb size={20} />
       </button>
 
       {isOpen && (
@@ -88,13 +89,18 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
             // Coming soon in production
             <div className={styles.comingSoon}>
               <div className={styles.header}>
-                <span className={styles.title}>💡 Hue Lights</span>
+                <span className={styles.title}>
+                  <Lightbulb size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                  Hue Lights
+                </span>
               </div>
               <div className={styles.comingSoonContent}>
-                <p className={styles.comingSoonText}>🚧 Coming Soon</p>
-                <p className={styles.hint}>
+                <p className={styles.comingSoonText}>
+                  <Construction size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                  Coming Soon
+                </p>
+                <p className={styles.comingSoonHint}>
                   Hue integration is currently in development.
-                  Available in local mode only.
                 </p>
               </div>
             </div>
@@ -209,7 +215,10 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
             // Not connected view
             <>
               <div className={styles.header}>
-                <span className={styles.title}>💡 Connect Hue</span>
+                <span className={styles.title}>
+                  <Lightbulb size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                  Connect Hue
+                </span>
               </div>
 
               {error && <div className={styles.error}>{error}</div>}
@@ -222,7 +231,12 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
                     disabled={isConnecting}
                     className={styles.discoverBtn}
                   >
-                    {isConnecting ? "Discovering..." : "🔍 Discover"}
+                    {isConnecting ? "Discovering..." : (
+                      <>
+                        <Search size={14} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                        Discover
+                      </>
+                    )}
                   </button>
                   
                   <div className={styles.divider}>
@@ -249,10 +263,12 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
                       </button>
                     </div>
                     <p className={styles.hint}>
-                      💡 Find IP in Hue app: Settings → Bridges → Network
+                      <Info size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                      Find IP in Hue app: Settings → Bridges → Network
                     </p>
                     <p className={styles.hint}>
-                      ⚠️ Press the bridge button before connecting!
+                      <AlertTriangle size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                      Press the bridge button before connecting!
                     </p>
                   </div>
                 </div>
@@ -276,7 +292,8 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
                     </div>
                   ))}
                   <p className={styles.hint}>
-                    ⚠️ Press the button on your bridge!
+                    <AlertTriangle size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                    Press the button on your bridge!
                   </p>
                 </div>
               )}
