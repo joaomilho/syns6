@@ -24,6 +24,7 @@ const KEYS = {
   KALEIDOSCOPE_CONTROLS: 'kaleidoscopeControls',
   ORBITAL_CONTROLS: 'orbitalControls',
   WAVY_LINES_CONTROLS: 'wavyLinesControls',
+  SPECTRUM3D_CONTROLS: 'spectrum3DControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -117,6 +118,15 @@ export async function saveWavyLinesControls(controls: { numLines: number; colorP
 
 export async function getWavyLinesControls(): Promise<{ numLines: number; colorPalette: string; particleCount: number } | null> {
   return await localforage.getItem<{ numLines: number; colorPalette: string; particleCount: number }>(KEYS.WAVY_LINES_CONTROLS);
+}
+
+// Spectrum3D controls
+export async function saveSpectrum3DControls(controls: { shape: string; neonIntensity: number; colorPalette: string }): Promise<void> {
+  await localforage.setItem(KEYS.SPECTRUM3D_CONTROLS, controls);
+}
+
+export async function getSpectrum3DControls(): Promise<{ shape: string; neonIntensity: number; colorPalette: string } | null> {
+  return await localforage.getItem<{ shape: string; neonIntensity: number; colorPalette: string }>(KEYS.SPECTRUM3D_CONTROLS);
 }
 
 // Hue controls visibility
