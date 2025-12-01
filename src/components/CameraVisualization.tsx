@@ -188,26 +188,6 @@ function CameraPlane({
 
     const uniforms = materialRef.current.uniforms;
 
-    // DEBUG: Log occasionally
-    if (Math.random() < 0.016) {
-      console.log('📹 CameraPlane useFrame:', { 
-        bass, mid, treble, hasMicData: !!micData,
-        hasVideo: !!videoTexture,
-        controls: {
-          rgbSplit: controls.rgbSplitAmount,
-          distortion: controls.distortionAmount,
-          colorShiftR: controls.colorShiftR,
-          colorShiftB: controls.colorShiftB,
-          pixelThreshold: controls.pixelThreshold,
-        },
-        uniformValues: {
-          uBass: uniforms?.uBass?.value,
-          uDistortion: uniforms?.uDistortionAmount?.value,
-          uRgbSplit: uniforms?.uRgbSplitAmount?.value,
-        }
-      });
-    }
-
     if (!uniforms) {
       console.error("❌ No uniforms found!");
       return;
