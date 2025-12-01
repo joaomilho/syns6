@@ -8,7 +8,8 @@
 compo? Or getting AT compo?
 [ ] Viz config basics
     Add some basic configs for views
-
+[ ] Slow lyrics change 
+    Debug why the switch of lyrics is slow
 Question:
     - Should I ask people what they want instead?
     - Should viewers also log with Spotify?

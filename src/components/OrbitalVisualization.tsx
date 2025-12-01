@@ -13,30 +13,6 @@ interface VisualizationProps {
   fps?: number;
 }
 
-// Camera shake component
-export function CameraShake({ bass = 0 }: { bass?: number }) {
-  const { camera } = useThree();
-  const originalPosition = useRef(new Vector3(0, 0, 30));
-  const shakeIntensity = useRef(0);
-
-  useFrame(() => {
-    // Smooth shake intensity with more dampening
-    shakeIntensity.current = shakeIntensity.current * 0.9 + bass * 0.1;
-    
-    // Apply subtle shake
-    if (shakeIntensity.current > 0.01) {
-      const shake = shakeIntensity.current * 0.3; // Reduced from 2 to 0.3
-      camera.position.x = originalPosition.current.x + (Math.random() - 0.5) * shake;
-      camera.position.y = originalPosition.current.y + (Math.random() - 0.5) * shake;
-      camera.position.z = originalPosition.current.z + (Math.random() - 0.5) * shake * 0.3;
-    } else {
-      camera.position.lerp(originalPosition.current, 0.15);
-    }
-  });
-
-  return null;
-}
-
 // Frequency band circle - follows its orbital ring
 function FrequencyCircle({ 
   index, 
@@ -510,7 +486,7 @@ export function OrbitalPaths({
   );
 }
 
-function SceneContent({
+export function SceneContent({
   bass,
   energy,
   treble,
@@ -532,11 +508,33 @@ function SceneContent({
   
   // Shared positions map so planets can follow their rings
   const ringPositions = useRef(new Map<number, Float32Array>());
+  
+  // Group ref for shaking the orbitals only
+  const orbitalsGroupRef = useRef<Group>(null);
+  const shakeIntensity = useRef(0);
+
+  // Shake the orbitals group based on bass
+  useFrame(() => {
+    if (!orbitalsGroupRef.current) return;
+    
+    const currentBass = bassRef.current || 0;
+    
+    // Smooth shake intensity with more dampening
+    shakeIntensity.current = shakeIntensity.current * 0.1 + currentBass * 0.15;
+    
+    // Apply shake to the group, not the camera
+    if (shakeIntensity.current > 0.01) {
+      const shake = shakeIntensity.current * 2.0; // Noticeable shake
+      orbitalsGroupRef.current.position.x = (Math.random() - 0.5) * shake;
+      orbitalsGroupRef.current.position.y = (Math.random() - 0.5) * shake;
+      orbitalsGroupRef.current.position.z = (Math.random() - 0.5) * shake * 0.5;
+    } else {
+      orbitalsGroupRef.current.position.set(0, 0, 0);
+    }
+  });
 
   return (
     <>
-      <CameraShake bass={bassRef.current} />
-      
       <ambientLight intensity={0.3} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <pointLight
@@ -545,23 +543,25 @@ function SceneContent({
         intensity={0.5}
       />
 
-      {/* Orbital path guides - must render first to create positions */}
-      <OrbitalPaths 
-        frequencyData={frequencyDataRef.current} 
-        treble={trebleRef.current}
-        ringPositions={ringPositions} 
-        fps={fps} 
-      />
-      
-      {/* Frequency circles orbiting - follow the rings */}
-      <FrequencyCircles 
-        frequencyData={frequencyDataRef.current}
-        ringPositions={ringPositions} 
-        fps={fps} 
-      />
-      
-      {/* Center core */}
-      <CenterCore bass={bassRef.current} energy={energyRef.current} />
+      <group ref={orbitalsGroupRef}>
+        {/* Orbital path guides - must render first to create positions */}
+        <OrbitalPaths 
+          frequencyData={frequencyDataRef.current} 
+          treble={trebleRef.current}
+          ringPositions={ringPositions} 
+          fps={fps} 
+        />
+        
+        {/* Frequency circles orbiting - follow the rings */}
+        <FrequencyCircles 
+          frequencyData={frequencyDataRef.current}
+          ringPositions={ringPositions} 
+          fps={fps} 
+        />
+        
+        {/* Center core */}
+        <CenterCore bass={bassRef.current} energy={energyRef.current} />
+      </group>
 
       {/* 3D Lyrics - positioned closer to camera */}
       <OrbitControls
