@@ -150,6 +150,10 @@ export interface Spectrum3DControls {
   colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
 }
 
+export interface YouTubeControls {
+  effect: 'none' | '3d-flip' | 'black-white' | 'glitch' | 'bloom';
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
@@ -161,10 +165,12 @@ interface ConfigDropdownProps {
   orbitalControls: OrbitalControls;
   wavyLinesControls: WavyLinesControls;
   spectrum3DControls: Spectrum3DControls;
+  youtubeControls: YouTubeControls;
   currentVisualization: string; // Current viz type to show relevant controls
   albumArt?: string; // For kaleidoscope thumbnails
   videoElement?: HTMLVideoElement | null; // For video thumbnail
   isCameraEnabled?: boolean; // To show/hide video option
+  currentYouTubeUrl?: string | null; // Current YouTube video URL
   onModeChange: (mode: VisualizationMode) => void;
   onFontChange: (font: LyricsFont) => void;
   onColorChange: (color: LyricsColor) => void;
@@ -175,6 +181,7 @@ interface ConfigDropdownProps {
   onOrbitalControlsChange: (controls: OrbitalControls) => void;
   onWavyLinesControlsChange: (controls: WavyLinesControls) => void;
   onSpectrum3DControlsChange: (controls: Spectrum3DControls) => void;
+  onYouTubeControlsChange: (controls: YouTubeControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -188,10 +195,12 @@ export default function ConfigDropdown({
   orbitalControls,
   wavyLinesControls,
   spectrum3DControls,
+  youtubeControls,
   currentVisualization,
   albumArt,
   videoElement,
   isCameraEnabled,
+  currentYouTubeUrl,
   onModeChange,
   onFontChange,
   onColorChange,
@@ -202,6 +211,7 @@ export default function ConfigDropdown({
   onOrbitalControlsChange,
   onWavyLinesControlsChange,
   onSpectrum3DControlsChange,
+  onYouTubeControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1179,6 +1189,87 @@ export default function ConfigDropdown({
                     colorPalette: 'default',
                   });
                 }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* YouTube Config */}
+          {currentVisualization === "youtube" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>YouTube</div>
+                
+                {/* Current URL */}
+                {currentYouTubeUrl && (
+                  <div className={styles.sliderControl}>
+                    <label className={styles.sliderLabel}>
+                      Current Video
+                    </label>
+                    <a 
+                      href={currentYouTubeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#00ff88',
+                        fontSize: '13px',
+                        textDecoration: 'none',
+                        wordBreak: 'break-all',
+                        display: 'block',
+                        padding: '8px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                      }}
+                    >
+                      {currentYouTubeUrl}
+                    </a>
+                  </div>
+                )}
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Visual Effect
+                  </label>
+                  <div className={styles.optionList}>
+                    {[
+                      { id: 'none', name: 'None' },
+                      { id: '3d-flip', name: '3D Flip' },
+                      { id: 'black-white', name: 'Black & White' },
+                      { id: 'glitch', name: 'Glitch' },
+                      { id: 'bloom', name: 'Bloom' },
+                    ].map((effect) => (
+                      <button
+                        key={effect.id}
+                        className={`${styles.option} ${
+                          youtubeControls.effect === effect.id ? styles.active : ""
+                        }`}
+                        onClick={() =>
+                          onYouTubeControlsChange({
+                            ...youtubeControls,
+                            effect: effect.id as any,
+                          })
+                        }
+                      >
+                        <span className={styles.optionName}>{effect.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                        onClick={() => {
+                          onYouTubeControlsChange({
+                            effect: 'none',
+                          });
+                        }}
               >
                 Reset Settings
               </button>
