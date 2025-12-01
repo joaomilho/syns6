@@ -191,6 +191,7 @@ export interface QueueItem {
   };
   duration_ms: number;
   uri: string;
+  videoIds?: string[]; // Prefetched YouTube video IDs
 }
 
 export interface SpotifyQueue {
