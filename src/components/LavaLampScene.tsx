@@ -8,8 +8,15 @@
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { LavaLampBlobs } from "./LavaLampVisualization";
 
-export default function LavaLampScene({ micData }: { micData?: any }) {
+interface LavaLampControls {
+  resolution: number;
+  blobCount: number;
+}
+
+export default function LavaLampScene({ micData, lavaLampControls }: { micData?: any; lavaLampControls?: LavaLampControls }) {
   const bloomIntensity = 0.1 + (micData?.bass || 0) * 5;
+  const resolution = lavaLampControls?.resolution ?? 32;
+  const blobCount = lavaLampControls?.blobCount ?? 5;
 
   return (
     <>
@@ -23,6 +30,8 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
         energy={micData?.energy}
         bass={micData?.bass}
         mid={micData?.mid}
+        resolution={resolution}
+        blobCount={blobCount}
       />
 
       <EffectComposer multisampling={0}>

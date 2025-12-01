@@ -25,7 +25,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
-import { getShaderControls, saveShaderControls } from "@/lib/storage";
+import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -158,6 +158,19 @@ export default function PlayerPage() {
     distortion: 0.02,
     colorShift: 0.5,
   });
+  const [lavaLampControls, setLavaLampControls] = useState({
+    resolution: 32,
+    blobCount: 5,
+  });
+  const [fftControls, setFFTControls] = useState<{
+    neonIntensity: number;
+    colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+    lineWidth: number;
+  }>({
+    neonIntensity: 1.6,
+    colorPalette: 'default',
+    lineWidth: 0.04,
+  });
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -188,6 +201,36 @@ export default function PlayerPage() {
   useEffect(() => {
     saveShaderControls(shaderControls).catch(console.error);
   }, [shaderControls]);
+
+  // Restore lava lamp controls from storage on mount
+  useEffect(() => {
+    getLavaLampControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("🔥 Restoring lava lamp controls:", savedControls);
+        setLavaLampControls(savedControls);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save lava lamp controls whenever they change
+  useEffect(() => {
+    saveLavaLampControls(lavaLampControls).catch(console.error);
+  }, [lavaLampControls]);
+
+  // Restore FFT controls from storage on mount
+  useEffect(() => {
+    getFFTControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("📊 Restoring FFT controls:", savedControls);
+        setFFTControls(savedControls as any);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save FFT controls whenever they change
+  useEffect(() => {
+    saveFFTControls(fftControls).catch(console.error);
+  }, [fftControls]);
   
   // Reset auto-expand flag after QR code is shown
   useEffect(() => {
@@ -1254,13 +1297,13 @@ export default function PlayerPage() {
           }}
         >
           {/* Visualization Scenes - swap based on selection */}
-          {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} />}
+          {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} fftControls={fftControls} />}
           {visualizationType === 'particles' && <OrbitalScene micData={micData} />}
           {visualizationType === 'fractal' && <FractalScene micData={micData} />}
           {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
           {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} />}
-          {visualizationType === 'animated' && <LavaLampScene micData={micData} />}
+          {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
           {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
           {/* lyricsonly has no scene content - just background */}
 
@@ -1425,11 +1468,15 @@ export default function PlayerPage() {
           font={lyricsFont}
           color={lyricsColor}
           shaderControls={shaderControls}
+          lavaLampControls={lavaLampControls}
+          fftControls={fftControls}
           currentVisualization={visualizationType}
           onModeChange={setVisualizationMode}
           onFontChange={setLyricsFont}
           onColorChange={setLyricsColor}
           onShaderControlsChange={setShaderControls}
+          onLavaLampControlsChange={setLavaLampControls}
+          onFFTControlsChange={setFFTControls}
         />
 
         {/* User Profile */}
