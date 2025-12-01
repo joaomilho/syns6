@@ -1192,9 +1192,9 @@ export default function PlayerPage() {
   const getCameraSettings = () => {
     switch(visualizationType) {
       case 'fftspectrum': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
-      case 'particles': return { position: [0, 3, 40] as [number, number, number], fov: 80 };
+      case 'particles': return { position: [0, 0, 30] as [number, number, number], fov: 80 };
       case 'animated': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
-      case 'waves': return { position: [0, 3, 25] as [number, number, number], fov: 75 };
+      case 'waves': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
       case 'kaleidoscope': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
       default: return { position: [0, 0, 30] as [number, number, number], fov: 75 };
     }
@@ -1313,11 +1313,6 @@ export default function PlayerPage() {
                 powerPreference: "high-performance",
               }}
               dpr={1}
-              onCreated={({ camera }) => {
-                // Enable camera to see layer 1 (text without bloom)
-                camera.layers.enable(0);
-                camera.layers.enable(1);
-              }}
             >
               <Lyrics3D
                 lyrics={lyrics}
