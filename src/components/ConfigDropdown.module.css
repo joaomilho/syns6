@@ -295,6 +295,7 @@
   transition: all 0.2s;
   position: relative;
   z-index: 10;
+  margin-top: -5px;
 }
 
 .slider::-webkit-slider-thumb:hover {
