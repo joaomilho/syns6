@@ -367,49 +367,62 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
         return (
           <OrbitalVisualization
             key="particles"
-            micData={micData}
+            bass={micData.bass}
+            energy={micData.energy}
+            treble={micData.treble}
+            frequencyData={micData.frequencyData}
           />
         );
       case "fractal":
         return (
           <FractalVisualization
             key="fractal"
-            micData={micData}
+            energy={micData.energy}
+            bass={micData.bass}
           />
         );
       case "psychedelic":
         return (
           <PsychedelicVisualization
             key="psychedelic"
-            micData={micData}
+            // Note: This viz doesn't need micData at all!
           />
         );
       case "waves":
         return (
           <WavyLinesVisualization
             key="waves"
-            micData={micData}
+            energy={micData.energy}
+            volume={micData.volume}
+            bass={micData.bass}
+            drums={micData.instruments.drums}
+            vocalStrength={micData.vocal.strength}
           />
         );
       case "animated":
         return (
           <LavaLampVisualization
             key="animated"
-            micData={micData}
+            energy={micData.energy}
+            bass={micData.bass}
+            mid={micData.mid}
+            treble={micData.treble}
+            volume={micData.volume}
           />
         );
       case "spectrum3d":
         return (
           <Spectrum3DVisualization
             key="spectrum3d"
-            micData={micData}
+            frequencyData={micData.frequencyData}
+            sampleRate={micData.sampleRate}
           />
         );
       case "fftspectrum":
         return (
           <FFTSpectrumVisualization
             key="fftspectrum"
-            micData={micData}
+            frequencyData={micData.frequencyData}
             // TODO remove this
             onWebGLUnavailable={handleWebGLUnavailable}
           />
@@ -429,14 +442,16 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
           <CameraVisualization
             key="camera"
             videoElement={videoElement}
-            micData={micData}
+            bass={micData.bass}
+            mid={micData.mid}
+            treble={micData.treble}
           />
         );
       default:
         return (
           <FFTSpectrumVisualization
             key="default"
-            micData={micData}
+            frequencyData={micData.frequencyData}
             onWebGLUnavailable={handleWebGLUnavailable}
           />
         );

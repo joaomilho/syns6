@@ -22,7 +22,10 @@ export default function Spectrum3DScene({ micData }: { micData?: any }) {
         rotation={[-0.3, 0, 0]}
         scale={[3.5, 3.5, 3.5]}
       >
-        <CircularSpectrum3D micData={micData} />
+        <CircularSpectrum3D 
+          frequencyData={micData?.frequencyData}
+          sampleRate={micData?.sampleRate}
+        />
         <gridHelper
           args={[70, 70, "#333333", "#111111"]}
           position={[0, -0.1, 0]}

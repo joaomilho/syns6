@@ -37,7 +37,7 @@ export default function FFTSpectrumScene({ micData }: FFTSpectrumSceneProps) {
         scale={[-1.5, 1.5, 1.5]}
       >
         <FFTSpectrumPlanes 
-          micData={micData} 
+          frequencyData={micData?.frequencyData}
           bassIntensity={bassIntensity} 
           rows={rows}
         />

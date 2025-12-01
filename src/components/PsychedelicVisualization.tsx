@@ -5,7 +5,6 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AdditiveBlending, DoubleSide, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Points, PointsMaterial } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface AudioFeatures {
   energy: number;
@@ -18,7 +17,7 @@ interface AudioFeatures {
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   syncedData?: SyncedAudioData | null;
-  micData?: MicrophoneData;
+  // Note: This visualization doesn't use micData at all!
 }
 
 // Morphing blob with shader-like color effects
@@ -237,7 +236,6 @@ export function LiquidParticles({ audioFeatures }: VisualizationProps) {
 export default function PsychedelicVisualization({
   audioFeatures,
   syncedData,
-  micData,
 }: VisualizationProps) {
   return (
     <div

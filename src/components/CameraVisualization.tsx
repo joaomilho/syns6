@@ -3,7 +3,6 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, LinearFilter, Mesh, Points, RGBFormat, ShaderMaterial, VideoTexture } from "three";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 
 interface ShaderControls {
@@ -17,17 +16,23 @@ interface ShaderControls {
 
 interface CameraVisualizationProps {
   videoElement?: HTMLVideoElement | null;
-  micData?: MicrophoneData;
+  bass?: number;  // Only needs these 3 scalars
+  mid?: number;
+  treble?: number;
   shaderControls?: ShaderControls;
 }
 
 function CameraPlane({
   videoElement,
-  micData,
+  bass = 0,
+  mid = 0,
+  treble = 0,
   controls,
 }: {
   videoElement?: HTMLVideoElement | null;
-  micData?: MicrophoneData;
+  bass?: number;
+  mid?: number;
+  treble?: number;
   controls: ShaderControls;
 }) {
   const meshRef = useRef<Mesh>(null);
@@ -180,10 +185,6 @@ function CameraPlane({
   useFrame(({ clock }) => {
     if (!materialRef.current) return;
 
-    const bass = micData?.bass || 0;
-    const mid = micData?.mid || 0;
-    const treble = micData?.treble || 0;
-
     const uniforms = materialRef.current.uniforms;
 
     if (!uniforms) {
@@ -231,7 +232,7 @@ function CameraPlane({
 }
 
 // Particle system that reacts to camera and audio
-function CameraParticles({ micData }: { micData?: MicrophoneData }) {
+function CameraParticles({ bass = 0 }: { bass?: number }) {
   const particlesRef = useRef<Points>(null);
   const particleCount = 1000;
 
@@ -261,7 +262,6 @@ function CameraParticles({ micData }: { micData?: MicrophoneData }) {
   useFrame(({ clock }) => {
     if (!particlesRef.current) return;
 
-    const bass = micData?.bass || 0;
     const positions = geometry.attributes.position.array as Float32Array;
 
     for (let i = 0; i < particleCount; i++) {
@@ -289,7 +289,9 @@ function CameraParticles({ micData }: { micData?: MicrophoneData }) {
 
 export default function CameraVisualization({
   videoElement,
-  micData,
+  bass,
+  mid,
+  treble,
   shaderControls: externalControls,
 }: CameraVisualizationProps) {
   const [localControls, setLocalControls] = useState<ShaderControls>({
@@ -329,12 +331,14 @@ export default function CameraVisualization({
         {/* Camera feed with audio-reactive effects */}
         <CameraPlane
           videoElement={videoElement}
-          micData={micData}
+          bass={bass}
+          mid={mid}
+          treble={treble}
           controls={controls}
         />
 
         {/* Particles floating around */}
-        <CameraParticles micData={micData} />
+        <CameraParticles bass={bass} />
       </Canvas>
     </div>
   );

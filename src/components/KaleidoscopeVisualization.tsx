@@ -4,7 +4,6 @@ import { useRef, useMemo, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { DoubleSide, ShaderMaterial, Vector2, Vector4, Mesh, TextureLoader } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { EffectComposer, Bloom, ChromaticAberration, Vignette } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 
@@ -19,7 +18,7 @@ interface AudioFeatures {
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   syncedData?: SyncedAudioData | null;
-  micData?: MicrophoneData;
+  bass?: number; // Only needs bass value
   albumArt?: string;
 }
 
@@ -105,7 +104,7 @@ void main() {
 }
 `;
 
-export function KaleidoscopeShader({ audioFeatures, syncedData, micData, albumArt }: VisualizationProps) {
+export function KaleidoscopeShader({ audioFeatures, syncedData, bass = 0, albumArt }: VisualizationProps) {
   const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<ShaderMaterial>(null);
   const { size, camera } = useThree();
@@ -188,7 +187,6 @@ export function KaleidoscopeShader({ audioFeatures, syncedData, micData, albumAr
     if (!materialRef.current || !meshRef.current) return;
     
     const time = state.clock.getElapsedTime();
-    const bass = micData?.bass || 0;
     const isOnBeat = syncedData?.isOnBeat || false;
     
     const rotationSpeed = 0.1;
@@ -222,10 +220,9 @@ export function KaleidoscopeShader({ audioFeatures, syncedData, micData, albumAr
 export default function KaleidoscopeVisualization({
   audioFeatures,
   syncedData,
-  micData,
+  bass,
   albumArt,
 }: VisualizationProps) {
-  
   return (
     <div
       style={{
@@ -247,7 +244,7 @@ export default function KaleidoscopeVisualization({
         orthographic
         gl={{ antialias: true }}
       >
-        <KaleidoscopeShader audioFeatures={audioFeatures} syncedData={syncedData} micData={micData} albumArt={albumArt} />
+        <KaleidoscopeShader audioFeatures={audioFeatures} syncedData={syncedData} bass={bass} albumArt={albumArt} />
         
 
       </Canvas>

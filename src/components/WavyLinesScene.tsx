@@ -14,7 +14,15 @@ export default function WavyLinesScene({ micData }: { micData?: any }) {
       <ambientLight intensity={0.2} />
       <pointLight position={[0, 0, 20]} intensity={0.5} color="#6666ff" />
 
-      <WavyLineField audioFeatures={null} syncedData={null} micData={micData} />
+      <WavyLineField 
+        audioFeatures={null} 
+        syncedData={null}
+        energy={micData?.energy}
+        volume={micData?.volume}
+        bass={micData?.bass}
+        drums={micData?.instruments?.drums}
+        vocalStrength={micData?.vocal?.strength}
+      />
       <FlowingParticles audioFeatures={null} syncedData={null} />
 
       <OrbitControls

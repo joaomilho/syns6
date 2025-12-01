@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import { PsychedelicBlob, KaleidoscopePlanes, LiquidParticles } from "./PsychedelicVisualization";
 
 export default function PsychedelicScene({ micData }: { micData?: any }) {
+  // Note: PsychedelicVisualization doesn't use micData at all!
   return (
     <>
       <ambientLight intensity={0.4} />

@@ -3,10 +3,15 @@
 import { useRef, useEffect } from "react";
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, DoubleSide, Mesh, OrthographicCamera, Scene, ShaderMaterial, Vector4, WebGLRenderer } from "three";
 import { Canvas } from "@react-three/fiber";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface OscilloscopeVisualizationProps {
-  micData?: MicrophoneData;
+  waveform?: Float32Array;
+  waveformLeft?: Float32Array;
+  waveformRight?: Float32Array;
+  bass?: number;
+  energy?: number;
+  volume?: number;
+  treble?: number;
   fps?: number;
 }
 
@@ -104,7 +109,13 @@ void main() {
 `;
 
 export default function OscilloscopeVisualization({
-  micData,
+  waveform,
+  waveformLeft,
+  waveformRight,
+  bass = 0,
+  energy = 0,
+  volume = 0,
+  treble = 0,
   fps = 60,
 }: OscilloscopeVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,16 +126,16 @@ export default function OscilloscopeVisualization({
   const materialRef = useRef<ShaderMaterial | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const updateWaveformRef = useRef(0);
-  const micDataRef = useRef(micData); // Keep current micData in a ref
+  const waveformDataRef = useRef({ waveform, waveformLeft, waveformRight, bass, energy, volume, treble }); // Keep current data in a ref
   const isInitializedRef = useRef(false); // Prevent double initialization
   
   const nSamples = 2048;
   const baseLineSize = 0.012; // Woscope default line size
   
-  // Update ref whenever micData changes
+  // Update ref whenever data changes
   useEffect(() => {
-    micDataRef.current = micData;
-  }, [micData]);
+    waveformDataRef.current = { waveform, waveformLeft, waveformRight, bass, energy, volume, treble };
+  }, [waveform, waveformLeft, waveformRight, bass, energy, volume, treble]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -354,15 +365,15 @@ export default function OscilloscopeVisualization({
         return;
       }
     
-    // Use ref to get current micData (not closed-over value)
-    const currentMicData = micDataRef.current;
-    const waveform = currentMicData?.waveform;
-    const waveformLeft = currentMicData?.waveformLeft; // X-axis
-    const waveformRight = currentMicData?.waveformRight; // Y-axis (phase-shifted)
-    const bass = currentMicData?.bass || 0;
-    const energy = currentMicData?.energy || 0;
-    const volume = currentMicData?.volume || 0;
-    const treble = currentMicData?.treble || 0;
+    // Use ref to get current data (not closed-over value)
+    const currentData = waveformDataRef.current;
+    const waveform = currentData.waveform;
+    const waveformLeft = currentData.waveformLeft; // X-axis
+    const waveformRight = currentData.waveformRight; // Y-axis (phase-shifted)
+    const bass = currentData.bass;
+    const energy = currentData.energy;
+    const volume = currentData.volume;
+    const treble = currentData.treble;
     
     
     // Dynamic scale based on audio intensity - gets MUCH bigger with bass
