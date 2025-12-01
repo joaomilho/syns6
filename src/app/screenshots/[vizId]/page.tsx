@@ -240,9 +240,7 @@ export default function ScreenshotPage() {
       case "camera":
         return (
           <CameraVisualization
-            bass={micData.bass}
-            mid={micData.mid}
-            treble={micData.treble}
+            micData={micData}
           />
         );
       case "debug":
