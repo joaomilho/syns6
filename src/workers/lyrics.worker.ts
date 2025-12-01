@@ -7,7 +7,8 @@ import { fetchSyncedLyrics, LyricLine } from '@/lib/lyrics';
 
 interface WorkerMessage {
   type: 'FETCH_LYRICS' | 'PREFETCH_QUEUE' | 'START_POLLING' | 'STOP_POLLING' | 'UPDATE_POLLING_STATE' 
-    | 'START_SHARING' | 'STOP_SHARING' | 'UPDATE_SHARE_STATE' | 'JOIN_SHARING' | 'LEAVE_SHARING';
+    | 'START_SHARING' | 'STOP_SHARING' | 'UPDATE_SHARE_STATE' | 'JOIN_SHARING' | 'LEAVE_SHARING'
+    | 'FETCH_YOUTUBE' | 'REPORT_WORKING_VIDEO';
   data: any;
 }
 
@@ -177,6 +178,46 @@ async function pollSpotify() {
     
     // Retry with backoff (5 seconds)
     pollingTimeout = setTimeout(pollSpotify, 5000);
+  }
+}
+
+/**
+ * Fetch YouTube videos for a track
+ */
+async function fetchYouTubeVideos(
+  trackName: string,
+  artistName: string,
+  spotifyId: string
+): Promise<string[]> {
+  console.log(`[Worker] 🎬 Fetching YouTube videos for: ${trackName} - ${artistName} (${spotifyId})`);
+  
+  try {
+    const query = `${trackName} ${artistName}`;
+    const params = new URLSearchParams({
+      q: query,
+      title: trackName,
+      artist: artistName,
+      spotifyId,
+    });
+    
+    const apiUrl = `${self.location.origin}/api/youtube/search?${params.toString()}`;
+    console.log(`[Worker] 📡 API URL: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      console.error('[Worker] ❌ YouTube API error:', response.status);
+      return [];
+    }
+    
+    const data = await response.json();
+    const videoIds = data.videoIds || [];
+    
+    console.log(`[Worker] ✅ Fetched ${videoIds.length} YouTube video IDs for: ${trackName}`, videoIds);
+    return videoIds;
+  } catch (error: any) {
+    console.error('[Worker] ❌ Error fetching YouTube videos:', error);
+    return [];
   }
 }
 
@@ -496,6 +537,8 @@ async function pollSharedState() {
 self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data;
 
+  console.log(`🔵 [Worker] Message received: ${type}`, data ? Object.keys(data) : 'no data');
+
   try {
     switch (type) {
       case 'FETCH_LYRICS': {
@@ -515,27 +558,69 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       case 'PREFETCH_QUEUE': {
         const { queue, maxTracks = 5 } = data as QueuePrefetchRequest;
         
-        // Fetch lyrics for first N tracks in parallel
+        console.log('🎯 [Worker] PREFETCH_QUEUE received:', queue.length, 'tracks, prefetching:', maxTracks);
+        
+        // Fetch both lyrics AND YouTube videos for first N tracks in parallel
         const prefetchPromises = queue.slice(0, maxTracks).map(async (track) => {
           try {
-            const lyrics = await fetchSyncedLyrics(
-              track.name,
-              track.artists?.[0]?.name || 'Unknown Artist',
-              track.duration_ms,
-              track.id
-            );
-            return { trackId: track.id, lyrics, success: true };
+            const artistName = track.artists?.[0]?.name || 'Unknown Artist';
+            
+            console.log(`🎯 [Worker] Fetching for: ${track.name} by ${artistName}`);
+            
+            // Fetch lyrics and YouTube videos in parallel
+            const [lyrics, videoIds] = await Promise.all([
+              fetchSyncedLyrics(track.name, artistName, track.duration_ms, track.id),
+              fetchYouTubeVideos(track.name, artistName, track.id),
+            ]);
+            
+            console.log(`🎯 [Worker] ✅ Got ${videoIds?.length || 0} video IDs for: ${track.name}`);
+            
+            return { 
+              trackId: track.id, 
+              lyrics, 
+              videoIds,
+              success: true 
+            };
           } catch (error: any) {
-            return { trackId: track.id, lyrics: null, success: false, error: error.message };
+            console.error(`🎯 [Worker] ❌ Error fetching for ${track.name}:`, error);
+            return { 
+              trackId: track.id, 
+              lyrics: null, 
+              videoIds: [],
+              success: false, 
+              error: error.message 
+            };
           }
         });
         
         const results = await Promise.all(prefetchPromises);
         
+        console.log('🎯 [Worker] ✅ All prefetch complete, posting results:', results.map(r => `${r.trackId}: ${r.videoIds?.length || 0} videos`));
+        
         self.postMessage({
           type: 'QUEUE_PREFETCHED',
           results,
         });
+        break;
+      }
+
+      case 'FETCH_YOUTUBE': {
+        const { trackName, artistName, spotifyId } = data;
+        const videoIds = await fetchYouTubeVideos(trackName, artistName, spotifyId);
+        
+        self.postMessage({
+          type: 'YOUTUBE_RESULT',
+          spotifyId,
+          videoIds,
+        });
+        break;
+      }
+
+      case 'REPORT_WORKING_VIDEO': {
+        // Main thread found a working video, we just log it
+        // IndexedDB operations will be handled by main thread
+        const { spotifyId, workingVideoId } = data;
+        console.log(`[Worker] ✅ Reported working video for ${spotifyId}: ${workingVideoId}`);
         break;
       }
 

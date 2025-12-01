@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
+import { getWorkingVideo, saveWorkingVideo } from "@/lib/storage";
 
 interface YouTubeVisualizationProps {
   trackName?: string;
@@ -23,6 +24,7 @@ export default function YouTubeVisualization({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [videoError, setVideoError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [usingCachedVideo, setUsingCachedVideo] = useState<boolean>(false); // Flag for cached video
   const playersRef = useRef<Map<string, any>>(new Map()); // Map of videoId -> player instance
   const hasWorkingVideoRef = useRef<boolean>(false);
   const spotifyId = spotifyIdProp;
@@ -51,8 +53,25 @@ export default function YouTubeVisualization({
       setWorkingVideoId(null);
       hasWorkingVideoRef.current = false;
       setIsLoading(true);
+      setUsingCachedVideo(false);
 
       try {
+        // Check IndexedDB for cached working video first
+        if (spotifyId) {
+          const cached = await getWorkingVideo(spotifyId);
+          if (cached) {
+            const cachedVideoId = cached.workingVideoId;
+            console.log(`[YouTube] 💾 Found cached working video: ${cachedVideoId}, using immediately!`);
+            // Use cached winner immediately - set videoIds to trigger player creation
+            // Don't set hasWorkingVideoRef yet - let the player load normally
+            setVideoIds([cachedVideoId]);
+            setUsingCachedVideo(true); // Mark as cached
+            setIsLoading(true); // Show loading briefly while player initializes
+            setVideoError(false);
+            return; // Skip API call - we only need to load the cached video
+          }
+        }
+
         const params = new URLSearchParams({
           q: query,
           title: trackName,
@@ -61,21 +80,13 @@ export default function YouTubeVisualization({
         
         if (spotifyId) {
           params.append('spotifyId', spotifyId);
-          console.log(`[YouTube] ✅ Including spotifyId in request: ${spotifyId}`);
-        } else {
-          console.log("[YouTube] ⚠️ No spotifyId available for this track");
         }
         
         const url = `/api/youtube/search?${params.toString()}`;
-        console.log("[YouTube] 📡 Making request to:", url);
-        
         const response = await fetch(url);
-        console.log("[YouTube] 📥 Response status:", response.status, response.statusText);
         
         if (!response.ok) {
-          console.error(`[YouTube] ❌ API returned error: ${response.status} ${response.statusText}`);
-          const errorText = await response.text();
-          console.error("[YouTube] Error body:", errorText);
+          console.error(`[YouTube] ❌ API returned error: ${response.status}`);
           setVideoIds([]);
           setIsLoading(false);
           setVideoError(true);
@@ -83,22 +94,14 @@ export default function YouTubeVisualization({
         }
         
         const data = await response.json();
-        console.log("[YouTube] 📦 Response data:", data);
+        let ids = data.videoIds || [data.videoId].filter(Boolean);
         
-        // Handle new array response format
-        const ids = data.videoIds || [data.videoId].filter(Boolean);
-        console.log(`[YouTube] ✅ Received ${ids.length} video ID(s) to try (source: ${data.source || 'unknown'})`);
-        ids.forEach((id: string, i: number) => {
-          console.log(`[YouTube]   ${i + 1}. ${id}`);
-        });
-        
+        console.log(`[YouTube] ✅ Testing ${ids.length} video(s)`);
         setVideoIds(ids);
-        setWorkingVideoId(null);
         setIsLoading(true);
         setVideoError(false);
       } catch (error) {
-        console.error(`[YouTube] ❌ Error fetching video:`, error);
-        console.error("[YouTube] Error details:", error instanceof Error ? error.message : String(error));
+        console.error(`[YouTube] ❌ Error:`, error);
         setVideoIds([]);
         setIsLoading(false);
         setVideoError(true);
@@ -116,6 +119,51 @@ export default function YouTubeVisualization({
     const initPlayers = () => {
       if (!(window as any).YT || !(window as any).YT.Player) {
         setTimeout(initPlayers, 100);
+        return;
+      }
+
+      // If using a cached video, load it directly without testing
+      if (usingCachedVideo && videoIds.length > 0) {
+        const videoId = videoIds[0];
+        console.log(`[YouTube] 💾 Loading cached video directly: ${videoId}`);
+        
+        // Create player in the main container
+        const container = document.getElementById('youtube-player-container');
+        if (container) {
+          const player = new (window as any).YT.Player('youtube-player-container', {
+            height: window.innerHeight,
+            width: window.innerWidth,
+            videoId: videoId,
+            playerVars: {
+              autoplay: 1,
+              mute: 1,
+              controls: 1,
+              modestbranding: 1,
+              rel: 0,
+            },
+            events: {
+              onReady: (event: any) => {
+                console.log(`[YouTube] ✅ Cached video loaded: ${videoId}`);
+                // Set quality to HD
+                event.target.setPlaybackQuality('hd1080');
+                console.log(`[YouTube] 🎬 Set quality to HD1080`);
+                setWorkingVideoId(videoId);
+                hasWorkingVideoRef.current = true;
+                setIsLoading(false);
+                setVideoError(false);
+              },
+              onError: (event: any) => {
+                // If cached video fails, fall back to full search
+                console.error(`[YouTube] ❌ Cached video failed: ${videoId}, falling back to search`);
+                setWorkingVideoId(null);
+                hasWorkingVideoRef.current = false;
+                setIsLoading(false);
+                setVideoError(true);
+              },
+            },
+          });
+          playersRef.current.set(videoId, player);
+        }
         return;
       }
 
@@ -137,8 +185,8 @@ export default function YouTubeVisualization({
         console.log(`[YouTube] 🎬 Creating player ${index + 1}/${videoIds.length} for video: ${vid}`);
 
         const player = new (window as any).YT.Player(containerId, {
-          height: '360',
-          width: '640',
+          height: window.innerHeight,
+          width: window.innerWidth,
           videoId: vid,
           playerVars: {
             autoplay: 1,
@@ -157,10 +205,20 @@ export default function YouTubeVisualization({
               // YT.PlayerState.PLAYING = 1
               if (event.data === 1 && !hasWorkingVideoRef.current) {
                 console.log(`[YouTube] ✅ Video ${vid} is playing! This is the winner!`);
+                // Set quality to HD
+                event.target.setPlaybackQuality('hd1080');
+                console.log(`[YouTube] 🎬 Set quality to HD1080`);
                 hasWorkingVideoRef.current = true;
                 setWorkingVideoId(vid);
                 setIsLoading(false);
                 setVideoError(false);
+                
+                // Save working video to IndexedDB for future prioritization
+                if (spotifyId) {
+                  saveWorkingVideo(spotifyId, vid, videoIds).catch(err => {
+                    console.error('[YouTube] Error saving working video:', err);
+                  });
+                }
                 
                 // Destroy all other players
                 playersRef.current.forEach((p, id) => {
@@ -225,7 +283,7 @@ export default function YouTubeVisualization({
       });
       playersRef.current.clear();
     };
-  }, [videoIds, trackName, artistName]);
+  }, [videoIds, trackName, artistName, usingCachedVideo]);
 
   // Apply audio-reactive effects
   useEffect(() => {
@@ -254,13 +312,13 @@ export default function YouTubeVisualization({
           blur(${blur}px)
         `;
         
-        // Scale effect on bass - KEEP the translate to stay centered!
+        // Scale effect on bass
         const scale = 1 + bass * 0.1;
-        videoContainerRef.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        videoContainerRef.current.style.transform = `scale(${scale})`;
       } else {
-        // No audio data - just keep centered with no effects
+        // No audio data - no effects
         videoContainerRef.current.style.filter = 'none';
-        videoContainerRef.current.style.transform = 'translate(-50%, -50%)';
+        videoContainerRef.current.style.transform = 'scale(1)';
       }
       
       requestAnimationFrame(animate);
@@ -283,18 +341,15 @@ export default function YouTubeVisualization({
         background: "#000000",
       }}
     >
-      {/* Video layer - simple and centered */}
+      {/* Video layer - full screen cover */}
       <div
         ref={videoContainerRef}
         style={{
           position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "96vw",
-          height: "54vw", // 16:9 aspect ratio
-          maxWidth: "1536px",
-          maxHeight: "864px",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
           zIndex: 1,
         }}
       >
@@ -303,8 +358,6 @@ export default function YouTubeVisualization({
           style={{
             width: "100%",
             height: "100%",
-            borderRadius: "12px",
-            boxShadow: "0 12px 48px rgba(0, 0, 0, 0.9)",
             overflow: "hidden",
             opacity: workingVideoId ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
@@ -334,19 +387,19 @@ export default function YouTubeVisualization({
             }}
           >
             <div style={{
-              width: "60px",
-              height: "60px",
-              border: "4px solid rgba(255, 255, 255, 0.1)",
-              borderTop: "4px solid #ff0000",
+              width: "20px",
+              height: "20px",
+              border: "3px solid rgba(255, 255, 255, 0.1)",
+              borderTop: "3px solid #00ff00",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
               marginBottom: "20px",
             }} />
             <div style={{ fontSize: "18px", fontWeight: "500", opacity: 0.9 }}>
-              Finding video...
+              {usingCachedVideo ? "Loading video..." : "Finding video..."}
             </div>
             <div style={{ fontSize: "14px", opacity: 0.6, marginTop: "8px" }}>
-              {videoIds.length > 0 && `Testing ${videoIds.length} videos...`}
+              {!usingCachedVideo && videoIds.length > 0 && `Testing ${videoIds.length} videos...`}
             </div>
             <div style={{ fontSize: "13px", opacity: 0.5, marginTop: "4px" }}>
               {searchQuery}
