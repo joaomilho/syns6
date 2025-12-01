@@ -14,7 +14,7 @@ interface LyricsWorkerResponse {
   requestId?: string;
   spotifyId?: string;
   lyrics?: LyricLine[] | null;
-  results?: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>;
+  results?: Array<{ trackId: string; lyrics: LyricLine[] | null; videoIds?: string[]; success: boolean }>;
   error?: string;
   data?: any; // For playback state
   code?: string; // For sharing
@@ -24,7 +24,7 @@ interface LyricsWorkerResponse {
 
 interface UseLyricsWorkerOptions {
   onLyricsReceived?: (spotifyId: string, lyrics: LyricLine[] | null) => void;
-  onQueuePrefetched?: (results: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>) => void;
+  onQueuePrefetched?: (results: Array<{ trackId: string; lyrics: LyricLine[] | null; videoIds?: string[]; success: boolean }>) => void;
   onPlaybackState?: (data: any) => void;
   onPollingError?: (error: string) => void;
   onError?: (error: string) => void;

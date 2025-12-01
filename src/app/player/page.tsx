@@ -14,6 +14,7 @@ import { useShareManager, SharedState } from "@/hooks/useShareManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useLyricsWorker } from "@/hooks/useLyricsWorker";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
+import { useYouTubePreloader } from "@/hooks/useYouTubePreloader";
 import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
@@ -112,6 +113,10 @@ export default function PlayerPage() {
   } = useCamera();
   const hue = useHueLights();
   const wakeLock = useWakeLock();
+  
+  // YouTube preloader - tests videos in background for queued tracks
+  useYouTubePreloader(queue, playbackState?.item?.id);
+  
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [lyricsTimeOffset, setLyricsTimeOffset] = useState(0); // Offset for showing next track's lyrics early
   const hasSwitchedToNextRef = useRef(false); // Track if we've already switched to next lyrics
@@ -135,10 +140,28 @@ export default function PlayerPage() {
       }
     }, [playbackState?.item?.id]),
     
-    onQueuePrefetched: useCallback((results: Array<{ trackId: string; lyrics: LyricLine[] | null; success: boolean }>) => {
-      // Cache all prefetched lyrics
-      results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
+    onQueuePrefetched: useCallback((results: Array<{ trackId: string; lyrics: LyricLine[] | null; videoIds?: string[]; success: boolean }>) => {
+      console.log('🚀🚀🚀 [Player] 📦 Queue prefetched, results:', results.length);
+      
+      // Cache all prefetched lyrics and update queue with video IDs
+      results.forEach(({ trackId, lyrics: prefetchedLyrics, videoIds }) => {
         lyricsCache.current.set(trackId, prefetchedLyrics);
+        console.log(`🚀 [Player]   ${trackId}: ${videoIds?.length || 0} video IDs`, videoIds);
+      });
+      
+      // Update queue with video IDs
+      setQueue(prevQueue => {
+        console.log('🚀 [Player] Updating queue, current queue size:', prevQueue.length);
+        const updated = prevQueue.map(track => {
+          const result = results.find(r => r.trackId === track.id);
+          if (result && result.videoIds) {
+            console.log(`🚀 [Player] ✅ Adding ${result.videoIds.length} video IDs to: ${track.name}`, result.videoIds);
+            return { ...track, videoIds: result.videoIds };
+          }
+          return track;
+        });
+        console.log('🚀 [Player] 📋 Updated queue:', updated.map(t => `${t.name} (${t.videoIds?.length || 0} videos)`));
+        return updated;
       });
     }, []),
     
@@ -837,12 +860,16 @@ export default function PlayerPage() {
         // Filter queue to only uncached tracks
         const uncachedTracks = queueData.queue.filter(track => !lyricsCache.current.has(track.id));
         
+        console.log('🔍 [Player] Uncached tracks:', uncachedTracks.length, 'Worker ready:', lyricsWorker.isWorkerReady);
+        
         if (uncachedTracks.length > 0) {
           if (lyricsWorker.isWorkerReady) {
             // Use worker to prefetch lyrics (off main thread)
+            console.log('📤 [Player] Calling prefetchQueue with', uncachedTracks.length, 'tracks');
             lyricsWorker.prefetchQueue(uncachedTracks, 5);
             // Worker will call onQueuePrefetched callback when done
           } else {
+            console.warn('⚠️ [Player] Worker not ready, using fallback');
             // Fallback to main thread if worker not ready
             uncachedTracks.forEach(async (track, index) => {
               if (index >= 5) return;

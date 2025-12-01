@@ -156,6 +156,48 @@ export async function getLyricsColor(): Promise<string | null> {
   return await localforage.getItem<string>(KEYS.LYRICS_COLOR);
 }
 
+// YouTube working videos
+interface WorkingVideo {
+  spotifyId: string;
+  workingVideoId: string;
+  testedAt: number;
+  allVideoIds: string[];
+}
+
+export async function saveWorkingVideo(
+  spotifyId: string,
+  workingVideoId: string,
+  allVideoIds: string[]
+): Promise<void> {
+  const data: WorkingVideo = {
+    spotifyId,
+    workingVideoId,
+    testedAt: Date.now(),
+    allVideoIds,
+  };
+  await localforage.setItem(`youtube_${spotifyId}`, data);
+  console.log(`[Storage] ✅ Saved working video for ${spotifyId}:`, workingVideoId);
+}
+
+export async function getWorkingVideo(spotifyId: string): Promise<WorkingVideo | null> {
+  return await localforage.getItem<WorkingVideo>(`youtube_${spotifyId}`);
+}
+
+// Clear old working videos (older than 7 days)
+export async function clearOldWorkingVideos(): Promise<void> {
+  const keys = await localforage.keys();
+  const youtubeKeys = keys.filter(k => k.startsWith('youtube_'));
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  
+  for (const key of youtubeKeys) {
+    const video = await localforage.getItem<WorkingVideo>(key);
+    if (video && video.testedAt < sevenDaysAgo) {
+      await localforage.removeItem(key);
+      console.log(`[Storage] 🗑️ Cleared old video cache:`, key);
+    }
+  }
+}
+
 // Clear all preferences
 export async function clearAllPreferences(): Promise<void> {
   await localforage.clear();
