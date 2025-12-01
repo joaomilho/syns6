@@ -18,9 +18,25 @@ export default function YouTubeVisualization({
   micData,
 }: YouTubeVisualizationProps) {
   const videoContainerRef = useRef<HTMLDivElement>(null);
-  const [videoId, setVideoId] = useState<string | null>(null);
+  const [workingVideoId, setWorkingVideoId] = useState<string | null>(null); // Confirmed working video
+  const [videoIds, setVideoIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [videoError, setVideoError] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const playersRef = useRef<Map<string, any>>(new Map()); // Map of videoId -> player instance
+  const hasWorkingVideoRef = useRef<boolean>(false);
   const spotifyId = spotifyIdProp;
+
+  // Load YouTube IFrame API
+  useEffect(() => {
+    // Check if API is already loaded
+    if ((window as any).YT) return;
+
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+  }, []);
 
   // Fetch video when track changes
   useEffect(() => {
@@ -31,6 +47,10 @@ export default function YouTubeVisualization({
       console.log("[YouTube] 🔍 Fetching video for:", query);
       console.log(`[YouTube] 🆔 Spotify ID: ${spotifyId || 'NOT PROVIDED'}`);
       setSearchQuery(query);
+      setVideoError(false);
+      setWorkingVideoId(null);
+      hasWorkingVideoRef.current = false;
+      setIsLoading(true);
 
       try {
         const params = new URLSearchParams({
@@ -56,23 +76,156 @@ export default function YouTubeVisualization({
           console.error(`[YouTube] ❌ API returned error: ${response.status} ${response.statusText}`);
           const errorText = await response.text();
           console.error("[YouTube] Error body:", errorText);
-          setVideoId(null);
+          setVideoIds([]);
+          setIsLoading(false);
+          setVideoError(true);
           return;
         }
         
         const data = await response.json();
         console.log("[YouTube] 📦 Response data:", data);
-        console.log(`[YouTube] ✅ Video ID: ${data.videoId || "No video found"} (source: ${data.source || 'unknown'})`);
-        setVideoId(data.videoId);
+        
+        // Handle new array response format
+        const ids = data.videoIds || [data.videoId].filter(Boolean);
+        console.log(`[YouTube] ✅ Received ${ids.length} video ID(s) to try (source: ${data.source || 'unknown'})`);
+        ids.forEach((id: string, i: number) => {
+          console.log(`[YouTube]   ${i + 1}. ${id}`);
+        });
+        
+        setVideoIds(ids);
+        setWorkingVideoId(null);
+        setIsLoading(true);
+        setVideoError(false);
       } catch (error) {
         console.error(`[YouTube] ❌ Error fetching video:`, error);
         console.error("[YouTube] Error details:", error instanceof Error ? error.message : String(error));
-        setVideoId(null);
+        setVideoIds([]);
+        setIsLoading(false);
+        setVideoError(true);
       }
     };
 
     fetchVideo();
   }, [trackName, artistName, spotifyId]);
+
+  // Test ALL videos in parallel - first one to play wins!
+  useEffect(() => {
+    if (videoIds.length === 0) return;
+    if (hasWorkingVideoRef.current) return;
+
+    const initPlayers = () => {
+      if (!(window as any).YT || !(window as any).YT.Player) {
+        setTimeout(initPlayers, 100);
+        return;
+      }
+
+      console.log(`[YouTube] 🚀 Testing ${videoIds.length} videos in parallel...`);
+      
+      // Create a player for each video ID
+      videoIds.forEach((vid, index) => {
+        const containerId = `yt-player-${vid}`;
+        
+        // Create container element if it doesn't exist
+        let container = document.getElementById(containerId);
+        if (!container) {
+          container = document.createElement('div');
+          container.id = containerId;
+          container.style.display = 'none'; // Hidden until it wins
+          document.body.appendChild(container);
+        }
+
+        console.log(`[YouTube] 🎬 Creating player ${index + 1}/${videoIds.length} for video: ${vid}`);
+
+        const player = new (window as any).YT.Player(containerId, {
+          height: '360',
+          width: '640',
+          videoId: vid,
+          playerVars: {
+            autoplay: 1,
+            mute: 1,
+            controls: 1,
+            modestbranding: 1,
+            rel: 0,
+          },
+          events: {
+            onError: (event: any) => {
+              if (hasWorkingVideoRef.current) return;
+              console.log(`[YouTube] ❌ Video ${vid} error: ${event.data}`);
+              playersRef.current.delete(vid);
+            },
+            onStateChange: (event: any) => {
+              // YT.PlayerState.PLAYING = 1
+              if (event.data === 1 && !hasWorkingVideoRef.current) {
+                console.log(`[YouTube] ✅ Video ${vid} is playing! This is the winner!`);
+                hasWorkingVideoRef.current = true;
+                setWorkingVideoId(vid);
+                setIsLoading(false);
+                setVideoError(false);
+                
+                // Destroy all other players
+                playersRef.current.forEach((p, id) => {
+                  if (id !== vid) {
+                    try {
+                      p.destroy();
+                      const elem = document.getElementById(`yt-player-${id}`);
+                      elem?.remove();
+                    } catch (e) {
+                      console.warn('[YouTube] Error destroying player:', e);
+                    }
+                  }
+                });
+                
+                // Move winning player to our container
+                const winnerContainer = document.getElementById(`yt-player-${vid}`);
+                const targetContainer = document.getElementById('youtube-player-container');
+                if (winnerContainer && targetContainer) {
+                  winnerContainer.style.display = 'block';
+                  winnerContainer.style.width = '100%';
+                  winnerContainer.style.height = '100%';
+                  targetContainer.appendChild(winnerContainer);
+                }
+              }
+            },
+          },
+        });
+
+        playersRef.current.set(vid, player);
+      });
+
+      // Set timeout - if no video works in 15 seconds, show error
+      setTimeout(() => {
+        if (!hasWorkingVideoRef.current) {
+          console.error('[YouTube] ⏱️ Timeout - no videos worked');
+          setIsLoading(false);
+          setVideoError(true);
+          
+          // Cleanup all players
+          playersRef.current.forEach((p, id) => {
+            try {
+              p.destroy();
+              const elem = document.getElementById(`yt-player-${id}`);
+              elem?.remove();
+            } catch (e) {}
+          });
+          playersRef.current.clear();
+        }
+      }, 15000);
+    };
+
+    initPlayers();
+
+    return () => {
+      // Cleanup on unmount or videoIds change
+      playersRef.current.forEach((p, id) => {
+        try {
+          p.destroy();
+          const elem = document.getElementById(`yt-player-${id}`);
+          elem?.remove();
+        } catch (e) {}
+      });
+      playersRef.current.clear();
+    };
+  }, [videoIds, trackName, artistName]);
 
   // Apply audio-reactive effects
   useEffect(() => {
@@ -117,6 +270,7 @@ export default function YouTubeVisualization({
     return () => cancelAnimationFrame(rafId);
   }, [micData]);
 
+
   return (
     <div
       style={{
@@ -144,22 +298,75 @@ export default function YouTubeVisualization({
           zIndex: 1,
         }}
       >
-        {videoId ? (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0`}
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              borderRadius: "12px",
-              boxShadow: "0 12px 48px rgba(0, 0, 0, 0.9)",
-            }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        ) : (
+        {/* YouTube player wrapper - controls visibility */}
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: "12px",
+            boxShadow: "0 12px 48px rgba(0, 0, 0, 0.9)",
+            overflow: "hidden",
+            opacity: workingVideoId ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out',
+          }}
+        >
+          {/* YouTube replaces this div with iframe - don't touch it after creation */}
+          <div id="youtube-player-container" style={{ width: "100%", height: "100%" }} />
+        </div>
+
+        {/* Loading state - shown while trying videos */}
+        {isLoading && !workingVideoId && (
           <div
             style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              color: "white",
+              background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+              borderRadius: "12px",
+              zIndex: 10,
+            }}
+          >
+            <div style={{
+              width: "60px",
+              height: "60px",
+              border: "4px solid rgba(255, 255, 255, 0.1)",
+              borderTop: "4px solid #ff0000",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              marginBottom: "20px",
+            }} />
+            <div style={{ fontSize: "18px", fontWeight: "500", opacity: 0.9 }}>
+              Finding video...
+            </div>
+            <div style={{ fontSize: "14px", opacity: 0.6, marginTop: "8px" }}>
+              {videoIds.length > 0 && `Testing ${videoIds.length} videos...`}
+            </div>
+            <div style={{ fontSize: "13px", opacity: 0.5, marginTop: "4px" }}>
+              {searchQuery}
+            </div>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* Error state - only shown when all videos fail and not loading */}
+        {videoError && !isLoading && !workingVideoId && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
               width: "100%",
               height: "100%",
               display: "flex",
@@ -170,6 +377,7 @@ export default function YouTubeVisualization({
               background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
               borderRadius: "12px",
               cursor: "pointer",
+              zIndex: 10,
             }}
             onClick={() => {
               if (searchQuery) {
@@ -178,8 +386,21 @@ export default function YouTubeVisualization({
             }}
           >
             <div style={{ fontSize: "80px", color: "#ff0000", marginBottom: "20px" }}>▶</div>
-            <div style={{ fontSize: "20px", fontWeight: "600" }}>No embeddable video</div>
+            <div style={{ fontSize: "20px", fontWeight: "600" }}>
+              {videoError ? "Video Unavailable" : "No embeddable video"}
+            </div>
             <div style={{ fontSize: "15px", opacity: 0.7, marginTop: "10px" }}>{searchQuery}</div>
+            {videoError && (
+              <div style={{
+                fontSize: "13px",
+                opacity: 0.6,
+                marginTop: "8px",
+                maxWidth: "400px",
+                textAlign: "center",
+              }}>
+                This video may be private, deleted, or embedding may be disabled
+              </div>
+            )}
             <div style={{
               fontSize: "14px",
               padding: "10px 20px",

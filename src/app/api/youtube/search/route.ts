@@ -12,10 +12,18 @@ interface YouTubeSearchResult {
   channelTitle: string;
 }
 
+interface YouTubeSearchResponse {
+  videoIds: string[]; // Array of video IDs to try
+  primaryVideoId: string; // First/best match
+  title: string;
+  channelTitle: string;
+  source: string;
+}
+
 // Default fallback video when YouTube API fails or no video found
 const DEFAULT_VIDEO_ID = "L1vrPpM4eyM";
 
-async function searchForEmbeddableVideo(query: string, apiKey: string): Promise<YouTubeSearchResult | null> {
+async function searchForEmbeddableVideos(query: string, apiKey: string, maxResults: number = 5): Promise<YouTubeSearchResult[]> {
   try {
     // Step 1: Search for videos with embeddable filter
     const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
@@ -35,14 +43,14 @@ async function searchForEmbeddableVideo(query: string, apiKey: string): Promise<
     if (!searchResponse.ok) {
       const error = await searchResponse.json();
       console.error("[YouTube API] ❌ Search error:", error);
-      return null;
+      return [];
     }
 
     const searchData = await searchResponse.json();
 
     if (!searchData.items || searchData.items.length === 0) {
       console.log(`⚠️ No results found for: "${query}"`);
-      return null;
+      return [];
     }
 
     // Step 2: Get video details to verify embeddable status and check for restrictions
@@ -54,15 +62,14 @@ async function searchForEmbeddableVideo(query: string, apiKey: string): Promise<
 
     const videoResponse = await fetch(videoUrl.toString());
     if (!videoResponse.ok) {
-      // Fallback to first search result
-      const video = searchData.items[0];
-      const result: YouTubeSearchResult = {
+      // Fallback to all search results
+      const results: YouTubeSearchResult[] = searchData.items.slice(0, maxResults).map((video: any) => ({
         videoId: video.id.videoId,
         title: video.snippet.title,
         channelTitle: video.snippet.channelTitle,
-      };
-      console.log(`⚠️ Could not verify embeddable status, using: ${result.title} (${result.videoId})`);
-      return result;
+      }));
+      console.log(`⚠️ Could not verify embeddable status, returning ${results.length} results`);
+      return results;
     }
 
     const videoData = await videoResponse.json();
@@ -74,27 +81,34 @@ async function searchForEmbeddableVideo(query: string, apiKey: string): Promise<
       console.log(`[YouTube API]   ${index + 1}. ${item.snippet.title} - Embeddable: ${item.status?.embeddable}, Public: ${item.status?.publicStatsViewable}`);
     });
 
-    // Find first embeddable video (simplified - just check embeddable flag)
-    const embeddableVideo = videoData.items?.find(
-      (item: any) => item.status?.embeddable === true
-    );
+    // Find ALL embeddable videos (up to maxResults)
+    const embeddableVideos = videoData.items
+      ?.filter((item: any) => item.status?.embeddable === true)
+      .slice(0, maxResults)
+      .map((item: any) => ({
+        videoId: item.id,
+        title: item.snippet.title,
+        channelTitle: item.snippet.channelTitle,
+      })) || [];
 
-    if (embeddableVideo) {
-      const result: YouTubeSearchResult = {
-        videoId: embeddableVideo.id,
-        title: embeddableVideo.snippet.title,
-        channelTitle: embeddableVideo.snippet.channelTitle,
-      };
-      console.log(`[YouTube API] ✅ Found embeddable video: ${result.title} (${result.videoId})`);
-      return result;
+    if (embeddableVideos.length > 0) {
+      console.log(`[YouTube API] ✅ Found ${embeddableVideos.length} embeddable videos`);
+      embeddableVideos.forEach((v: YouTubeSearchResult, i: number) => {
+        console.log(`[YouTube API]   ${i + 1}. ${v.title} (${v.videoId})`);
+      });
+      return embeddableVideos;
     }
 
-    // No embeddable videos found
-    console.log(`[YouTube API] ❌ No embeddable videos found for: "${query}"`);
-    return null;
+    // No embeddable videos found, return all results as fallback
+    console.log(`[YouTube API] ❌ No embeddable videos found, returning all ${searchData.items.length} results to try`);
+    return searchData.items.slice(0, maxResults).map((video: any) => ({
+      videoId: video.id.videoId,
+      title: video.snippet.title,
+      channelTitle: video.snippet.channelTitle,
+    }));
   } catch (error) {
     console.error("[YouTube API] ❌ Search error:", error);
-    return null;
+    return [];
   }
 }
 
@@ -142,8 +156,14 @@ export async function GET(request: NextRequest) {
     
     if (cachedVideo) {
       console.log(`[YouTube API] ✅ Found in database: ${cachedVideo.youtubeId} (spotifyId: ${cachedVideo.spotifyId})`);
+      
+      // Parse comma-separated video IDs back into array
+      const ids = cachedVideo.youtubeId.split(',').map(id => id.trim()).filter(Boolean);
+      console.log(`[YouTube API] 📋 Parsed ${ids.length} video ID(s) from database`);
+      
       return NextResponse.json({
-        videoId: cachedVideo.youtubeId,
+        videoIds: ids,
+        primaryVideoId: ids[0],
         title: cachedVideo.title,
         channelTitle: cachedVideo.artist,
         source: 'database',
@@ -162,38 +182,44 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     console.error("[YouTube API] ❌ YOUTUBE_API_KEY not configured, using default video");
     return NextResponse.json({
-      videoId: DEFAULT_VIDEO_ID,
+      videoIds: [DEFAULT_VIDEO_ID],
+      primaryVideoId: DEFAULT_VIDEO_ID,
       title: query,
       channelTitle: "Default",
       source: 'default',
     });
   }
 
-  // 3. Try fetching from YouTube API
-  let result = await searchForEmbeddableVideo(query, apiKey);
+  // 3. Try fetching from YouTube API - get multiple candidates
+  let results = await searchForEmbeddableVideos(query, apiKey, 10);
 
   // If no embeddable video found, retry with "live" appended
-  if (!result && !query.toLowerCase().includes("live")) {
+  if (results.length === 0 && !query.toLowerCase().includes("live")) {
     console.log(`[YouTube API] 🔄 Retrying with "live" appended: "${query} live"`);
-    result = await searchForEmbeddableVideo(`${query} live`, apiKey);
+    results = await searchForEmbeddableVideos(`${query} live`, apiKey, 10);
   }
 
   // 4. Save to database if found and we have required fields
-  if (result && result.videoId) {
-    console.log(`[YouTube API] ✅ Got video from API: ${result.videoId}`);
+  if (results.length > 0) {
+    const primaryResult = results[0];
+    console.log(`[YouTube API] ✅ Got ${results.length} video candidates from API`);
     
     if (spotifyId && title && artist) {
       try {
+        // Save all video IDs as comma-separated string
+        const videoIdsString = results.map(r => r.videoId).join(',');
+        console.log(`[YouTube API] 💾 Saving ${results.length} video IDs: ${videoIdsString}`);
+        
         await prisma.youTubeVideo.upsert({
           where: { spotifyId: spotifyId },
           create: {
             spotifyId: spotifyId,
             title: title,
             artist: artist,
-            youtubeId: result.videoId,
+            youtubeId: videoIdsString, // Comma-separated list
           },
           update: {
-            youtubeId: result.videoId,
+            youtubeId: videoIdsString, // Comma-separated list
           },
         });
         console.log("[YouTube API] 💾 Saved to database");
@@ -205,9 +231,10 @@ export async function GET(request: NextRequest) {
     }
     
     return NextResponse.json({ 
-      videoId: result.videoId,
-      title: result.title,
-      channelTitle: result.channelTitle,
+      videoIds: results.map(r => r.videoId),
+      primaryVideoId: primaryResult.videoId,
+      title: primaryResult.title,
+      channelTitle: primaryResult.channelTitle,
       source: 'youtube' 
     });
   }
@@ -215,7 +242,8 @@ export async function GET(request: NextRequest) {
   // 5. No video found - return default
   console.log("[YouTube API] ⚠️ No video found, using default");
   return NextResponse.json({
-    videoId: DEFAULT_VIDEO_ID,
+    videoIds: [DEFAULT_VIDEO_ID],
+    primaryVideoId: DEFAULT_VIDEO_ID,
     title: query,
     channelTitle: "Default",
     source: 'default',
