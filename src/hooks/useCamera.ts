@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { getCameraEnabled, saveCameraEnabled } from "@/lib/storage";
 
 export function useCamera() {
   const [isEnabled, setIsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const hasRestoredRef = useRef(false);
 
   const enable = useCallback(async () => {
     try {
@@ -38,6 +40,10 @@ export function useCamera() {
       setVideoElement(video);
       setIsEnabled(true);
       setError(null);
+      
+      // Save preference
+      saveCameraEnabled(true).catch(console.error);
+      
       console.log("📷 Camera enabled");
     } catch (err: any) {
       console.error("Camera error:", err);
@@ -61,8 +67,25 @@ export function useCamera() {
     });
 
     setIsEnabled(false);
+    
+    // Save preference
+    saveCameraEnabled(false).catch(console.error);
+    
     console.log("📷 Camera disabled");
   }, []);
+
+  // Restore camera state on mount
+  useEffect(() => {
+    if (hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
+    getCameraEnabled().then((wasEnabled) => {
+      if (wasEnabled) {
+        console.log("📷 Restoring camera from previous session");
+        enable();
+      }
+    }).catch(console.error);
+  }, [enable]);
 
   // Cleanup on unmount
   useEffect(() => {
