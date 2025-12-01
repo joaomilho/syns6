@@ -25,7 +25,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
-import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls } from "@/lib/storage";
+import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -207,6 +207,15 @@ export default function PlayerPage() {
     colorPalette: 'default',
     particleCount: 500,
   });
+  const [spectrum3DControls, setSpectrum3DControls] = useState<{
+    shape: 'circle' | 'row';
+    neonIntensity: number;
+    colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+  }>({
+    shape: 'circle',
+    neonIntensity: 2.5,
+    colorPalette: 'default',
+  });
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -312,6 +321,21 @@ export default function PlayerPage() {
   useEffect(() => {
     saveWavyLinesControls(wavyLinesControls).catch(console.error);
   }, [wavyLinesControls]);
+  
+  // Load spectrum3D controls on mount
+  useEffect(() => {
+    getSpectrum3DControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("📊 Restoring spectrum3D controls:", savedControls);
+        setSpectrum3DControls(savedControls as any);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save spectrum3D controls whenever they change
+  useEffect(() => {
+    saveSpectrum3DControls(spectrum3DControls).catch(console.error);
+  }, [spectrum3DControls]);
   
   // Auto-switch to video mode when Kaleidoscope is selected and camera is on
   useEffect(() => {
@@ -1405,7 +1429,7 @@ export default function PlayerPage() {
           {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} videoElement={videoElement} kaleidoscopeControls={kaleidoscopeControls} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} wavyLinesControls={wavyLinesControls} />}
           {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
-          {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} />}
+          {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} spectrum3DControls={spectrum3DControls} />}
           {/* lyricsonly has no scene content - just background */}
 
           {/* LYRICS - ALWAYS RENDERED IN SAME CANVAS! Never unmounts! */}
@@ -1574,6 +1598,7 @@ export default function PlayerPage() {
           kaleidoscopeControls={kaleidoscopeControls}
           orbitalControls={orbitalControls}
           wavyLinesControls={wavyLinesControls}
+          spectrum3DControls={spectrum3DControls}
           currentVisualization={visualizationType}
           albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url}
           videoElement={videoElement}
@@ -1587,6 +1612,7 @@ export default function PlayerPage() {
           onKaleidoscopeControlsChange={setKaleidoscopeControls}
           onOrbitalControlsChange={setOrbitalControls}
           onWavyLinesControlsChange={setWavyLinesControls}
+          onSpectrum3DControlsChange={setSpectrum3DControls}
         />
 
         {/* User Profile */}
