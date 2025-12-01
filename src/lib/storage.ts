@@ -19,6 +19,8 @@ const KEYS = {
   MICROPHONE_ENABLED: 'microphoneEnabled',
   CAMERA_ENABLED: 'cameraEnabled',
   SHADER_CONTROLS: 'shaderControls',
+  LAVALAMP_CONTROLS: 'lavaLampControls',
+  FFT_CONTROLS: 'fftControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -67,6 +69,24 @@ export async function saveShaderControls(controls: { rgbSplit: number; distortio
 
 export async function getShaderControls(): Promise<{ rgbSplit: number; distortion: number; colorShift: number } | null> {
   return await localforage.getItem<{ rgbSplit: number; distortion: number; colorShift: number }>(KEYS.SHADER_CONTROLS);
+}
+
+// Lava Lamp controls
+export async function saveLavaLampControls(controls: { resolution: number; blobCount: number }): Promise<void> {
+  await localforage.setItem(KEYS.LAVALAMP_CONTROLS, controls);
+}
+
+export async function getLavaLampControls(): Promise<{ resolution: number; blobCount: number } | null> {
+  return await localforage.getItem<{ resolution: number; blobCount: number }>(KEYS.LAVALAMP_CONTROLS);
+}
+
+// FFT controls
+export async function saveFFTControls(controls: { neonIntensity: number; colorPalette: string; lineWidth: number }): Promise<void> {
+  await localforage.setItem(KEYS.FFT_CONTROLS, controls);
+}
+
+export async function getFFTControls(): Promise<{ neonIntensity: number; colorPalette: string; lineWidth: number } | null> {
+  return await localforage.getItem<{ neonIntensity: number; colorPalette: string; lineWidth: number }>(KEYS.FFT_CONTROLS);
 }
 
 // Hue controls visibility

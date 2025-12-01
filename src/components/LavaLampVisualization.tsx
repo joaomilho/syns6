@@ -29,10 +29,14 @@ export function LavaLampBlobs({
   energy = 0,
   bass = 0,
   mid = 0,
+  resolution = 32,
+  blobCount = 5,
 }: {
   energy?: number;
   bass?: number;
   mid?: number;
+  resolution?: number;
+  blobCount?: number;
 }) {
   const effectRef = useRef<MarchingCubes | null>(null);
   const timeRef = useRef(0);
@@ -76,7 +80,7 @@ export function LavaLampBlobs({
     
     if (!effectRef.current) {
       // Initialize on first frame - higher resolution needed to prevent edge clipping
-      const resolution = 32; // Higher resolution = more interior cells = less edge clipping
+      // resolution prop passed in - Higher resolution = more interior cells = less edge clipping
       const effect = new MarchingCubes(resolution, material, false, false, 50000);
       effect.position.set(0, 0, -120); // FAR back behind lyrics - lyrics are at z=5
       effect.scale.set(90, 90, 90); // Much larger scale to fill screen from far away
@@ -93,7 +97,8 @@ export function LavaLampBlobs({
       state.scene.add(effect);
 
       // Initialize particles inside the main blob - they'll get kicked out by bass
-      const numParticles = 16; // More particles to compensate for smaller ball size
+      // Use blobCount prop (multiply by ~3 to get a good number of particles)
+      const numParticles = blobCount * 3;
       particlesRef.current = Array.from({ length: numParticles }, () => {
         // Start particles spread across safe zone
         const angle1 = Math.random() * Math.PI * 2;

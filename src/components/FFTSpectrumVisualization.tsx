@@ -16,12 +16,16 @@ interface FFTSpectrumVisualizationProps {
 export function FFTSpectrumPlanes({ 
   frequencyData, 
   bassIntensity,
-  rows
+  rows,
+  colorPalette = 'default',
+  lineWidth = 0.15
 
 }: { 
   frequencyData?: Uint8Array; 
   bassIntensity?: number;
   rows: number;
+  colorPalette?: string;
+  lineWidth?: number;
 }) {
   const groupRef = useRef<Group>(null);
   
@@ -74,8 +78,40 @@ export function FFTSpectrumPlanes({
     const binsPerBar = 1024 / cols;
 
     // Create a cylinder geometry for line segments (rotated to be vertical)
-    const cylGeo = new CylinderGeometry(0.03, 0.03, 1, 8);
+    const cylGeo = new CylinderGeometry(lineWidth, lineWidth, 1, 8);
     prevGeometry.current = cylGeo;
+
+    // Color palette helper - based on column index for Fibonacci distribution
+    // 5, 11, 21, rest (Fibonacci-based)
+    const getColorForColumn = (colIndex: number, totalCols: number): [number, number, number] => {
+      switch (colorPalette) {
+        case 'vaporwave':
+          if (colIndex < 5) return [1, 0.44, 0.81]; // Hot pink (FF71CE)
+          if (colIndex < 16) return [0.73, 0.33, 0.83]; // Medium purple (5+11)
+          if (colIndex < 37) return [0.25, 0.88, 0.82]; // Turquoise (16+21)
+          return [0.54, 0.17, 0.89]; // Blue violet
+        case 'sunset':
+          if (colIndex < 5) return [1, 0.3, 0]; // Orange
+          if (colIndex < 16) return [1, 0.5, 0.7]; // Pink
+          if (colIndex < 37) return [0.8, 0.3, 1]; // Purple
+          return [0.6, 0.2, 1]; // Deep purple
+        case 'fire':
+          if (colIndex < 5) return [1, 1, 0.6]; // Pale yellow
+          if (colIndex < 16) return [1, 0.65, 0]; // Orange (5+11)
+          if (colIndex < 37) return [1, 0.27, 0]; // Red-orange (16+21)
+          return [0.55, 0, 0]; // Dark red
+        case 'neon':
+          if (colIndex < 5) return [1, 0.1, 0.8]; // Hot pink
+          if (colIndex < 16) return [0.8, 0.2, 1]; // Purple
+          if (colIndex < 37) return [0.2, 0.8, 1]; // Cyan
+          return [0.1, 1, 1]; // Bright cyan
+        default: // 'default'
+          if (colIndex < 5) return [1, 0.1, 0.3]; // Red/Pink
+          if (colIndex < 16) return [1, 0.5, 0]; // Orange (5+11)
+          if (colIndex < 37) return [0.2, 1, 0.8]; // Cyan (16+21)
+          return [0.3, 0.3, 1]; // Blue
+      }
+    };
 
     // Create one instanced mesh per column
     const meshes: {
@@ -85,27 +121,8 @@ export function FFTSpectrumPlanes({
     }[] = [];
 
     for (let col = 0; col < cols; col++) {
-      const centerFreq = (col * binsPerBar + binsPerBar / 2) * (nyquist / 1024);
-
-      // Get base color based on frequency
-      let r, g, b;
-      if (centerFreq <= 250) {
-        r = 1;
-        g = 0.1;
-        b = 0.3; // Red/Pink
-      } else if (centerFreq <= 2000) {
-        r = 1;
-        g = 0.5;
-        b = 0; // Orange
-      } else if (centerFreq <= 8000) {
-        r = 0.2;
-        g = 1;
-        b = 0.8; // Cyan
-      } else {
-        r = 0.3;
-        g = 0.3;
-        b = 1; // Blue
-      }
+      // Get base color based on column index and palette
+      const [r, g, b] = getColorForColumn(col, cols);
 
       // Reuse single Color object instead of creating two
       const baseColor = new Color(r, g, b);
@@ -132,7 +149,7 @@ export function FFTSpectrumPlanes({
     prevInstancedMeshes.current = meshes;
 
     return meshes;
-  }, [cols, rows, spacingX, spacingZ]);
+  }, [cols, rows, spacingX, spacingZ, colorPalette, lineWidth]);
 
   // Cleanup on unmount
   useEffect(() => {
