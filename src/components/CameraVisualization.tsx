@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, LinearFilter, Mesh, Points, RGBFormat, ShaderMaterial, VideoTexture } from "three";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 
 interface ShaderControls {
@@ -16,23 +17,17 @@ interface ShaderControls {
 
 interface CameraVisualizationProps {
   videoElement?: HTMLVideoElement | null;
-  bass?: number;  // Only needs these 3 scalars
-  mid?: number;
-  treble?: number;
+  micData?: MicrophoneData;
   shaderControls?: ShaderControls;
 }
 
 function CameraPlane({
   videoElement,
-  bass = 0,
-  mid = 0,
-  treble = 0,
+  micData,
   controls,
 }: {
   videoElement?: HTMLVideoElement | null;
-  bass?: number;
-  mid?: number;
-  treble?: number;
+  micData?: MicrophoneData;
   controls: ShaderControls;
 }) {
   const meshRef = useRef<Mesh>(null);
@@ -67,7 +62,8 @@ function CameraPlane({
     }
   }, [videoElement]);
 
-  // Create uniforms object that updates when controls or videoTexture change
+  // Create uniforms object that updates when videoTexture changes
+  // NOTE: Don't include controls in dependencies - we update those in useFrame!
   const uniforms = useMemo(
     () => ({
       uTexture: { value: videoTexture },
@@ -76,14 +72,14 @@ function CameraPlane({
       uMid: { value: 0 },
       uTreble: { value: 0 },
       uHasVideo: { value: !!videoTexture },
-      uRgbSplitAmount: { value: controls.rgbSplitAmount },
-      uDistortionAmount: { value: controls.distortionAmount },
-      uColorShiftR: { value: controls.colorShiftR },
-      uColorShiftB: { value: controls.colorShiftB },
-      uPixelThreshold: { value: controls.pixelThreshold },
-      uWaveFrequency: { value: controls.waveFrequency },
+      uRgbSplitAmount: { value: 0.025 },
+      uDistortionAmount: { value: 0.02 },
+      uColorShiftR: { value: 0.2 },
+      uColorShiftB: { value: 0.2 },
+      uPixelThreshold: { value: 0.7 },
+      uWaveFrequency: { value: 20.0 },
     }),
-    [videoTexture, controls]
+    [videoTexture]
   );
 
   // Custom shader for audio-reactive effects
@@ -185,7 +181,32 @@ function CameraPlane({
   useFrame(({ clock }) => {
     if (!materialRef.current) return;
 
+    // Extract latest audio values from micData each frame (avoids closure issue!)
+    const bass = micData?.bass || 0;
+    const mid = micData?.mid || 0;
+    const treble = micData?.treble || 0;
+
     const uniforms = materialRef.current.uniforms;
+
+    // DEBUG: Log occasionally
+    if (Math.random() < 0.016) {
+      console.log('📹 CameraPlane useFrame:', { 
+        bass, mid, treble, hasMicData: !!micData,
+        hasVideo: !!videoTexture,
+        controls: {
+          rgbSplit: controls.rgbSplitAmount,
+          distortion: controls.distortionAmount,
+          colorShiftR: controls.colorShiftR,
+          colorShiftB: controls.colorShiftB,
+          pixelThreshold: controls.pixelThreshold,
+        },
+        uniformValues: {
+          uBass: uniforms?.uBass?.value,
+          uDistortion: uniforms?.uDistortionAmount?.value,
+          uRgbSplit: uniforms?.uRgbSplitAmount?.value,
+        }
+      });
+    }
 
     if (!uniforms) {
       console.error("❌ No uniforms found!");
@@ -221,18 +242,14 @@ function CameraPlane({
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
-        key={`${videoTexture ? "video" : "no-video"}-${
-          controls.rgbSplitAmount
-        }-${controls.distortionAmount}-${controls.colorShiftR}-${
-          controls.colorShiftB
-        }-${controls.pixelThreshold}-${controls.waveFrequency}`}
+        key={videoTexture ? "video" : "no-video"}
       />
     </mesh>
   );
 }
 
 // Particle system that reacts to camera and audio
-function CameraParticles({ bass = 0 }: { bass?: number }) {
+function CameraParticles({ micData }: { micData?: MicrophoneData }) {
   const particlesRef = useRef<Points>(null);
   const particleCount = 1000;
 
@@ -262,6 +279,9 @@ function CameraParticles({ bass = 0 }: { bass?: number }) {
   useFrame(({ clock }) => {
     if (!particlesRef.current) return;
 
+    // Extract latest bass value from micData each frame (avoids closure issue!)
+    const bass = micData?.bass || 0;
+
     const positions = geometry.attributes.position.array as Float32Array;
 
     for (let i = 0; i < particleCount; i++) {
@@ -289,9 +309,7 @@ function CameraParticles({ bass = 0 }: { bass?: number }) {
 
 export default function CameraVisualization({
   videoElement,
-  bass,
-  mid,
-  treble,
+  micData,
   shaderControls: externalControls,
 }: CameraVisualizationProps) {
   const [localControls, setLocalControls] = useState<ShaderControls>({
@@ -331,14 +349,12 @@ export default function CameraVisualization({
         {/* Camera feed with audio-reactive effects */}
         <CameraPlane
           videoElement={videoElement}
-          bass={bass}
-          mid={mid}
-          treble={treble}
+          micData={micData}
           controls={controls}
         />
 
         {/* Particles floating around */}
-        <CameraParticles bass={bass} />
+        <CameraParticles micData={micData} />
       </Canvas>
     </div>
   );
