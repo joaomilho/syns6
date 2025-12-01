@@ -112,16 +112,31 @@ export interface ShaderControls {
   colorShift: number;
 }
 
+export interface LavaLampControls {
+  resolution: number;
+  blobCount: number;
+}
+
+export interface FFTControls {
+  neonIntensity: number;
+  colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+  lineWidth: number;
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
   color: LyricsColor;
   shaderControls: ShaderControls;
+  lavaLampControls: LavaLampControls;
+  fftControls: FFTControls;
   currentVisualization: string; // Current viz type to show relevant controls
   onModeChange: (mode: VisualizationMode) => void;
   onFontChange: (font: LyricsFont) => void;
   onColorChange: (color: LyricsColor) => void;
   onShaderControlsChange: (controls: ShaderControls) => void;
+  onLavaLampControlsChange: (controls: LavaLampControls) => void;
+  onFFTControlsChange: (controls: FFTControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -129,11 +144,15 @@ export default function ConfigDropdown({
   font,
   color,
   shaderControls,
+  lavaLampControls,
+  fftControls,
   currentVisualization,
   onModeChange,
   onFontChange,
   onColorChange,
   onShaderControlsChange,
+  onLavaLampControlsChange,
+  onFFTControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -341,6 +360,236 @@ export default function ConfigDropdown({
                 }}
               >
                 Reset Effects
+              </button>
+            </>
+          )}
+
+          {/* LavaLamp Config */}
+          {currentVisualization === "lavalamp" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Lava Lamp</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Resolution
+                    <span className={styles.sliderValue}>{lavaLampControls.resolution}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="16"
+                    max="64"
+                    step="8"
+                    value={lavaLampControls.resolution}
+                    onChange={(e) =>
+                      onLavaLampControlsChange({
+                        ...lavaLampControls,
+                        resolution: parseInt(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Number of Blobs
+                    <span className={styles.sliderValue}>{lavaLampControls.blobCount}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="2"
+                    max="10"
+                    step="1"
+                    value={lavaLampControls.blobCount}
+                    onChange={(e) =>
+                      onLavaLampControlsChange({
+                        ...lavaLampControls,
+                        blobCount: parseInt(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onLavaLampControlsChange({
+                    resolution: 32,
+                    blobCount: 5,
+                  });
+                }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* FFT Config */}
+          {currentVisualization === "fftspectrum" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>FFT Spectrum</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Neon Intensity
+                    <span className={styles.sliderValue}>{fftControls.neonIntensity.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="4"
+                    step="1"
+                    value={[0, 0.4, 1.6, 3.2, 6.4].indexOf(fftControls.neonIntensity)}
+                    onChange={(e) => {
+                      const intensities = [0, 0.4, 1.6, 3.2, 6.4];
+                      onFFTControlsChange({
+                        ...fftControls,
+                        neonIntensity: intensities[parseInt(e.target.value)],
+                      });
+                    }}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Line Width
+                    <span className={styles.sliderValue}>{Math.round(fftControls.lineWidth * 100)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="1"
+                    value={[0.01, 0.02, 0.04, 0.08, 0.16, 0.32].indexOf(fftControls.lineWidth)}
+                    onChange={(e) => {
+                      const widths = [0.01, 0.02, 0.04, 0.08, 0.16, 0.32];
+                      onFFTControlsChange({
+                        ...fftControls,
+                        lineWidth: widths[parseInt(e.target.value)],
+                      });
+                    }}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Color Palette
+                  </label>
+                  <div className={styles.colorList}>
+                    <button
+                      className={`${styles.colorOption} ${
+                        fftControls.colorPalette === 'default' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onFFTControlsChange({
+                          ...fftControls,
+                          colorPalette: 'default',
+                        })
+                      }
+                      title="Default"
+                    >
+                      <div
+                        className={styles.colorSwatch}
+                        style={{ background: 'linear-gradient(to right, rgb(255, 26, 77), rgb(255, 128, 0), rgb(51, 255, 204), rgb(77, 77, 255))' }}
+                      />
+                    </button>
+                    <button
+                      className={`${styles.colorOption} ${
+                        fftControls.colorPalette === 'vaporwave' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onFFTControlsChange({
+                          ...fftControls,
+                          colorPalette: 'vaporwave',
+                        })
+                      }
+                      title="Vaporwave"
+                    >
+                      <div
+                        className={styles.colorSwatch}
+                        style={{ background: 'linear-gradient(to right, rgb(255, 113, 206), rgb(186, 85, 211), rgb(64, 224, 208), rgb(138, 43, 226))' }}
+                      />
+                    </button>
+                    <button
+                      className={`${styles.colorOption} ${
+                        fftControls.colorPalette === 'sunset' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onFFTControlsChange({
+                          ...fftControls,
+                          colorPalette: 'sunset',
+                        })
+                      }
+                      title="Sunset"
+                    >
+                      <div
+                        className={styles.colorSwatch}
+                        style={{ background: 'linear-gradient(to right, rgb(255, 77, 0), rgb(255, 128, 179), rgb(204, 77, 255), rgb(153, 51, 255))' }}
+                      />
+                    </button>
+                    <button
+                      className={`${styles.colorOption} ${
+                        fftControls.colorPalette === 'fire' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onFFTControlsChange({
+                          ...fftControls,
+                          colorPalette: 'fire',
+                        })
+                      }
+                      title="Fire"
+                    >
+                      <div
+                        className={styles.colorSwatch}
+                        style={{ background: 'linear-gradient(to right, rgb(255, 255, 153), rgb(255, 165, 0), rgb(255, 69, 0), rgb(139, 0, 0))' }}
+                      />
+                    </button>
+                    <button
+                      className={`${styles.colorOption} ${
+                        fftControls.colorPalette === 'neon' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onFFTControlsChange({
+                          ...fftControls,
+                          colorPalette: 'neon',
+                        })
+                      }
+                      title="Neon"
+                    >
+                      <div
+                        className={styles.colorSwatch}
+                        style={{ background: 'linear-gradient(to right, rgb(255, 26, 204), rgb(204, 51, 255), rgb(51, 204, 255), rgb(26, 255, 255))' }}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onFFTControlsChange({
+                    neonIntensity: 1.6,
+                    colorPalette: 'default',
+                    lineWidth: 0.04,
+                  });
+                }}
+              >
+                Reset Settings
               </button>
             </>
           )}

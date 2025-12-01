@@ -12,13 +12,24 @@ import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
-interface FFTSpectrumSceneProps {
-  micData?: MicrophoneData;
+interface FFTControls {
+  neonIntensity: number;
+  colorPalette: string;
+  lineWidth: number;
 }
 
-export default function FFTSpectrumScene({ micData }: FFTSpectrumSceneProps) {
+interface FFTSpectrumSceneProps {
+  micData?: MicrophoneData;
+  fftControls?: FFTControls;
+}
+
+export default function FFTSpectrumScene({ micData, fftControls }: FFTSpectrumSceneProps) {
   const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
+  
+  const neonIntensity = fftControls?.neonIntensity ?? 1.6;
+  const colorPalette = fftControls?.colorPalette ?? 'default';
+  const lineWidth = fftControls?.lineWidth ?? 0.04;
 
   return (
     <>
@@ -40,6 +51,8 @@ export default function FFTSpectrumScene({ micData }: FFTSpectrumSceneProps) {
           frequencyData={micData?.frequencyData}
           bassIntensity={bassIntensity} 
           rows={rows}
+          colorPalette={colorPalette}
+          lineWidth={lineWidth}
         />
       
         {/* Grid floor */}
@@ -52,9 +65,9 @@ export default function FFTSpectrumScene({ micData }: FFTSpectrumSceneProps) {
       {/* Bloom Effect */}
       <EffectComposer>
         <Bloom 
-          intensity={Math.pow(bassIntensity * 4,2)}
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
+          intensity={Math.pow(bassIntensity * 4, 2) * neonIntensity}
+          luminanceThreshold={0}
+          luminanceSmoothing={0.6}
           radius={0.4}
         />
       </EffectComposer>
