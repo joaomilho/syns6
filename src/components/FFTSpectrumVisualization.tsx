@@ -3,28 +3,33 @@
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Group, Object3D, Color, InstancedMesh, Material, CylinderGeometry, MeshBasicMaterial } from "three";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
   onWebGLUnavailable?: () => void;
 }
 
 
 export function FFTSpectrumPlanes({ 
-  micData, 
+  frequencyData, 
   bassIntensity,
   rows
 
 }: { 
-  micData?: MicrophoneData; 
+  frequencyData?: Uint8Array; 
   bassIntensity?: number;
   rows: number;
 }) {
   const groupRef = useRef<Group>(null);
+  
+  // Store frequencyData in ref so useFrame sees latest value (fix closure issue)
+  const frequencyDataRef = useRef(frequencyData);
+  useEffect(() => {
+    frequencyDataRef.current = frequencyData;
+  }, [frequencyData]);
   
   // Reuse objects outside useFrame to avoid allocations every frame
   const dummy = useRef(new Object3D());
@@ -184,9 +189,10 @@ export function FFTSpectrumPlanes({
   useFrame(() => {
     if (!groupRef.current) return;
 
-    // Use silent mic data if no mic is available (REUSE, don't allocate!)
-    const frequencyData = micData?.frequencyData || silentFrequencyData.current;
-    const binsPerBar = Math.floor(frequencyData.length / cols);
+    // Use ref to get latest frequencyData (fixes closure issue!)
+    const currentFreqData = frequencyDataRef.current;
+    const freqData = currentFreqData || silentFrequencyData.current;
+    const binsPerBar = Math.floor(freqData.length / cols);
 
     // Calculate bass intensity using shared helper
     
@@ -215,10 +221,10 @@ export function FFTSpectrumPlanes({
     for (let col = 0; col < cols; col++) {
       let sum = 0;
       const startBin = col * binsPerBar;
-      const endBin = Math.min(startBin + binsPerBar, frequencyData.length);
+      const endBin = Math.min(startBin + binsPerBar, freqData.length);
 
       for (let j = startBin; j < endBin; j++) {
-        sum += frequencyData[j];
+        sum += freqData[j];
       }
       const avgValue = sum / (endBin - startBin);
       currentFreqs[col] = avgValue / 255;
@@ -310,11 +316,11 @@ export function FFTSpectrumPlanes({
 }
 
 export default function FFTSpectrumVisualization({
-  micData,
+  frequencyData,
   onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
-  const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
+  const bassIntensity = calculateBassIntensity(frequencyData || new Uint8Array(512).fill(0));
 
   // Render FFT visualization with bloom
   return (
@@ -351,7 +357,7 @@ export default function FFTSpectrumVisualization({
         scale={[-1.5, 1.5, 1.5]}
       >
         <FFTSpectrumPlanes 
-          micData={micData} 
+          frequencyData={frequencyData} 
           bassIntensity={bassIntensity} 
           rows={rows}
         />

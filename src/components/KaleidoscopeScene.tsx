@@ -9,7 +9,12 @@ import { KaleidoscopeShader } from "./KaleidoscopeVisualization";
 export default function KaleidoscopeScene({ micData, albumArt }: { micData?: any; albumArt?: string }) {
   return (
     <>
-      <KaleidoscopeShader audioFeatures={null} syncedData={null} micData={micData} albumArt={albumArt} />
+      <KaleidoscopeShader 
+        audioFeatures={null} 
+        syncedData={null} 
+        bass={micData?.bass}
+        albumArt={albumArt} 
+      />
     </>
   );
 }

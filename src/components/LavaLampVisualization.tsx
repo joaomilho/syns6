@@ -7,13 +7,11 @@ import { MarchingCubes } from "@/lib/MarchingCubes";
 import LavaLampScene from './LavaLampScene';
 
 interface LavaLampVisualizationProps {
-  micData: {
-    energy: number;
-    bass: number;
-    mid: number;
-    treble: number;
-    volume: number;
-  } | null;
+  energy?: number;
+  bass?: number;
+  mid?: number;
+  treble?: number;
+  volume?: number;
 }
 
 // Physics-based particle system for blobs
@@ -28,9 +26,13 @@ interface Particle {
 
 // Morphing blobs using Marching Cubes algorithm with physics
 export function LavaLampBlobs({
-  micData,
+  energy = 0,
+  bass = 0,
+  mid = 0,
 }: {
-  micData: LavaLampVisualizationProps["micData"];
+  energy?: number;
+  bass?: number;
+  mid?: number;
 }) {
   const effectRef = useRef<MarchingCubes | null>(null);
   const timeRef = useRef(0);
@@ -113,9 +115,6 @@ export function LavaLampBlobs({
     }
 
     const effect = effectRef.current;
-    const energy = micData?.energy || 0;
-    const bass = micData?.bass || 0;
-    const mid = micData?.mid || 0;
 
     // Update time
     timeRef.current += delta * 0.5;
@@ -248,11 +247,21 @@ export function LavaLampBlobs({
 }
 
 export default function LavaLampVisualization({
-  micData,
+  energy,
+  bass,
+  mid,
+  treble,
+  volume,
 }: LavaLampVisualizationProps) {
   return (
     <Canvas camera={{ position: [0, 0, 30], fov: 275, near: 0.1, far: 1000 }} dpr={1}>
-      <LavaLampScene micData={micData} />
+      <LavaLampScene 
+        energy={energy}
+        bass={bass}
+        mid={mid}
+        treble={treble}
+        volume={volume}
+      />
     </Canvas>
   );
 }

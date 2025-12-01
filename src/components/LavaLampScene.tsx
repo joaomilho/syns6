@@ -19,7 +19,11 @@ export default function LavaLampScene({ micData }: { micData?: any }) {
       {/* OrbitControls removed - it was causing skewed lyrics view */}
 
       
-      <LavaLampBlobs micData={micData} />
+      <LavaLampBlobs 
+        energy={micData?.energy}
+        bass={micData?.bass}
+        mid={micData?.mid}
+      />
 
       <EffectComposer multisampling={0}>
         <Bloom

@@ -3,14 +3,14 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Color, Group, MathUtils, Mesh, MeshStandardMaterial } from "three";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 interface Spectrum3DVisualizationProps {
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
+  sampleRate?: number;
 }
 
-function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
+function Spectrum3DBars({ frequencyData, sampleRate = 48000 }: { frequencyData?: Uint8Array; sampleRate?: number }) {
   const groupRef = useRef<Group>(null);
   const meshRefs = useRef<Mesh[]>([]);
 
@@ -33,11 +33,9 @@ function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
   }, [numBars]);
 
   useFrame(() => {
-    if (!micData?.frequencyData || !groupRef.current) return;
+    if (!frequencyData || !groupRef.current) return;
 
-    const frequencyData = micData.frequencyData;
     const binsPerBar = Math.floor(frequencyData.length / numBars);
-    const sampleRate = micData.sampleRate || 48000;
     const nyquist = sampleRate / 2;
     const freqPerBin = nyquist / frequencyData.length;
 
@@ -117,7 +115,7 @@ function Spectrum3DBars({ micData }: { micData?: MicrophoneData }) {
   );
 }
 
-export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
+export function CircularSpectrum3D({ frequencyData, sampleRate = 48000 }: { frequencyData?: Uint8Array; sampleRate?: number }) {
   const groupRef = useRef<Group>(null);
   const meshRefs = useRef<Mesh[]>([]);
 
@@ -146,11 +144,9 @@ export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
   }, [numBars, radius]);
 
   useFrame(() => {
-    if (!micData?.frequencyData || !groupRef.current) return;
+    if (!frequencyData || !groupRef.current) return;
 
-    const frequencyData = micData.frequencyData;
     const binsPerBar = Math.floor(frequencyData.length / numBars);
-    const sampleRate = micData.sampleRate || 48000;
     const nyquist = sampleRate / 2;
     const freqPerBin = nyquist / frequencyData.length;
 
@@ -231,7 +227,8 @@ export function CircularSpectrum3D({ micData }: { micData?: MicrophoneData }) {
 }
 
 export default function Spectrum3DVisualization({
-  micData,
+  frequencyData,
+  sampleRate,
 }: Spectrum3DVisualizationProps) {
   return (
     <div
@@ -262,7 +259,7 @@ export default function Spectrum3DVisualization({
           rotation={[-0.3, 0, 0]}
           scale={[3.5, 3.5, 3.5]}
         >
-          <CircularSpectrum3D micData={micData} />
+          <CircularSpectrum3D frequencyData={frequencyData} sampleRate={sampleRate} />
           {/* Grid floor for reference */}
           <gridHelper
             args={[70, 70, "#333333", "#111111"]}

@@ -24,7 +24,8 @@ export default function FractalScene({ micData }: { micData?: any }) {
       <MandelbrotPlane
         audioFeatures={null}
         syncedData={null}
-        micData={micData}
+        energy={micData?.energy}
+        bass={micData?.bass}
         fps={60}
       />
 

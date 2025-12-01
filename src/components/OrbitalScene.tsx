@@ -31,7 +31,7 @@ export default function OrbitalScene({
 
   return (
     <>
-      <CameraShake micData={micData} />
+      <CameraShake bass={micData?.bass} />
       
       <ambientLight intensity={0.3} />
       <pointLight position={[10, 10, 10]} intensity={1} />
@@ -42,13 +42,22 @@ export default function OrbitalScene({
       />
 
       {/* Orbital path guides - must render first to create positions */}
-      <OrbitalPaths micData={micData} ringPositions={ringPositions} fps={fps} />
+      <OrbitalPaths 
+        frequencyData={micData?.frequencyData}
+        treble={micData?.treble}
+        ringPositions={ringPositions} 
+        fps={fps} 
+      />
       
       {/* Frequency circles orbiting - follow the rings */}
-      <FrequencyCircles micData={micData} ringPositions={ringPositions} fps={fps} />
+      <FrequencyCircles 
+        frequencyData={micData?.frequencyData}
+        ringPositions={ringPositions} 
+        fps={fps} 
+      />
       
       {/* Center core */}
-      <CenterCore micData={micData} />
+      <CenterCore bass={micData?.bass} energy={micData?.energy} />
 
       <OrbitControls
         enableZoom={true}

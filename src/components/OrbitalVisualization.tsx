@@ -4,22 +4,22 @@ import React, { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, MeshDistortMaterial } from "@react-three/drei";
 import { Vector3, Mesh, PointLight, MeshStandardMaterial, CylinderGeometry, Color, InstancedMesh, Object3D, Group } from "three";
-import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 interface VisualizationProps {
-  micData?: MicrophoneData;
+  bass?: number;
+  energy?: number;
+  treble?: number;
+  frequencyData?: Uint8Array;
   fps?: number;
 }
 
 // Camera shake component
-export function CameraShake({ micData }: { micData?: MicrophoneData }) {
+export function CameraShake({ bass = 0 }: { bass?: number }) {
   const { camera } = useThree();
   const originalPosition = useRef(new Vector3(0, 0, 30));
   const shakeIntensity = useRef(0);
 
   useFrame(() => {
-    const bass = micData?.bass || 0;
-    
     // Smooth shake intensity with more dampening
     shakeIntensity.current = shakeIntensity.current * 0.9 + bass * 0.1;
     
@@ -41,13 +41,13 @@ export function CameraShake({ micData }: { micData?: MicrophoneData }) {
 function FrequencyCircle({ 
   index, 
   total, 
-  micData,
+  frequencyData,
   ringPositions,
   useDistortion = true
 }: { 
   index: number; 
   total: number; 
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   useDistortion?: boolean;
 }) {
@@ -56,9 +56,9 @@ function FrequencyCircle({
 
   // Get the frequency band for this circle
   const getFrequencyIntensity = () => {
-    if (!micData?.frequencyData) return 0;
+    if (!frequencyData) return 0;
     
-    const numBins = micData.frequencyData.length;
+    const numBins = frequencyData.length;
     const bandSize = Math.floor(numBins / total);
     const startIdx = index * bandSize;
     const endIdx = Math.min(startIdx + bandSize, numBins);
@@ -66,7 +66,7 @@ function FrequencyCircle({
     // Average the frequency band
     let sum = 0;
     for (let i = startIdx; i < endIdx; i++) {
-      sum += micData.frequencyData[i];
+      sum += frequencyData[i];
     }
     return (sum / (endIdx - startIdx)) / 255; // Normalize to 0-1
   };
@@ -144,11 +144,11 @@ function FrequencyCircle({
 
 // Multiple frequency circles
 export function FrequencyCircles({ 
-  micData,
+  frequencyData,
   ringPositions,
   fps = 60
 }: { 
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   fps?: number;
 }) {
@@ -164,7 +164,7 @@ export function FrequencyCircles({
           key={i}
           index={i}
           total={circleCount}
-          micData={micData}
+          frequencyData={frequencyData}
           ringPositions={ringPositions}
           useDistortion={useDistortion}
         />
@@ -174,7 +174,7 @@ export function FrequencyCircles({
 }
 
 // Center core that reacts to overall energy
-export function CenterCore({ micData }: { micData?: MicrophoneData }) {
+export function CenterCore({ bass = 0, energy = 0 }: { bass?: number; energy?: number }) {
   const meshRef = useRef<Mesh>(null);
   const pointLightRef = useRef<PointLight>(null);
 
@@ -182,8 +182,6 @@ export function CenterCore({ micData }: { micData?: MicrophoneData }) {
     if (!meshRef.current) return;
 
     const time = state.clock.getElapsedTime();
-    const bass = micData?.bass || 0;
-    const energy = micData?.energy || 0;
 
     // Pulse with music
     const scale = 1 + bass * 0.8 + energy * 0.3;
@@ -234,7 +232,7 @@ function OrbitalRing({
   index, 
   total, 
   baseRadius, 
-  micData,
+  frequencyData,
   bandHistory,
   ringPositions,
   segments
@@ -242,7 +240,7 @@ function OrbitalRing({
   index: number; 
   total: number; 
   baseRadius: number; 
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
   bandHistory: React.MutableRefObject<number[][]>;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   segments: number;
@@ -279,7 +277,7 @@ function OrbitalRing({
   const tempColor = useRef(new Color());
 
   useFrame(() => {
-    if (!micData?.frequencyData) return;
+    if (!frequencyData) return;
 
     const history = bandHistory.current;
     const pos = positions.current;
@@ -392,11 +390,13 @@ function OrbitalRing({
 
 // Orbital paths visualization - shows frequency band history in circles
 export function OrbitalPaths({ 
-  micData,
+  frequencyData,
+  treble = 0,
   ringPositions,
   fps = 60
 }: { 
-  micData?: MicrophoneData;
+  frequencyData?: Uint8Array;
+  treble?: number;
   ringPositions: React.MutableRefObject<Map<number, Float32Array>>;
   fps?: number;
 }) {
@@ -457,11 +457,9 @@ export function OrbitalPaths({
     if (!groupRef.current) return;
 
     const time = state.clock.getElapsedTime();
-    const treble = micData?.treble || 0;
 
     // Calculate current frequency values for all bands
-    if (micData?.frequencyData) {
-      const frequencyData = micData.frequencyData;
+    if (frequencyData) {
       const currentBands: number[] = [];
       
       for (let i = 0; i < circleCount; i++) {
@@ -501,7 +499,7 @@ export function OrbitalPaths({
             index={i}
             total={circleCount}
             baseRadius={radius}
-            micData={micData}
+            frequencyData={frequencyData}
             bandHistory={bandHistory}
             ringPositions={ringPositions}
             segments={segments}
@@ -513,15 +511,31 @@ export function OrbitalPaths({
 }
 
 function SceneContent({
-  micData,
+  bass,
+  energy,
+  treble,
+  frequencyData,
   fps = 60,
 }: VisualizationProps) {
+  // Store props in refs so useFrame sees latest values (fix closure issue)
+  const bassRef = useRef(bass);
+  const energyRef = useRef(energy);
+  const trebleRef = useRef(treble);
+  const frequencyDataRef = useRef(frequencyData);
+  
+  useEffect(() => {
+    bassRef.current = bass;
+    energyRef.current = energy;
+    trebleRef.current = treble;
+    frequencyDataRef.current = frequencyData;
+  }, [bass, energy, treble, frequencyData]);
+  
   // Shared positions map so planets can follow their rings
   const ringPositions = useRef(new Map<number, Float32Array>());
 
   return (
     <>
-      <CameraShake micData={micData} />
+      <CameraShake bass={bassRef.current} />
       
       <ambientLight intensity={0.3} />
       <pointLight position={[10, 10, 10]} intensity={1} />
@@ -532,13 +546,22 @@ function SceneContent({
       />
 
       {/* Orbital path guides - must render first to create positions */}
-      <OrbitalPaths micData={micData} ringPositions={ringPositions} fps={fps} />
+      <OrbitalPaths 
+        frequencyData={frequencyDataRef.current} 
+        treble={trebleRef.current}
+        ringPositions={ringPositions} 
+        fps={fps} 
+      />
       
       {/* Frequency circles orbiting - follow the rings */}
-      <FrequencyCircles micData={micData} ringPositions={ringPositions} fps={fps} />
+      <FrequencyCircles 
+        frequencyData={frequencyDataRef.current}
+        ringPositions={ringPositions} 
+        fps={fps} 
+      />
       
       {/* Center core */}
-      <CenterCore micData={micData} />
+      <CenterCore bass={bassRef.current} energy={energyRef.current} />
 
       {/* 3D Lyrics - positioned closer to camera */}
       <OrbitControls
@@ -554,7 +577,10 @@ function SceneContent({
 }
 
 export default function OrbitalVisualization({
-  micData,
+  bass,
+  energy,
+  treble,
+  frequencyData,
   fps = 60,
 }: VisualizationProps) {
   return (
@@ -576,7 +602,10 @@ export default function OrbitalVisualization({
         dpr={1}
       >
         <SceneContent
-          micData={micData}
+          bass={bass}
+          energy={energy}
+          treble={treble}
+          frequencyData={frequencyData}
           fps={fps}
         />
       </Canvas>

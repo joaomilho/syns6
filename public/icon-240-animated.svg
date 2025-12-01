@@ -1,0 +1,71 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="11"/>
+    </filter>
+    
+    <style>
+      .morphingShape {
+        animation: glowPulse 4s ease-in-out infinite;
+      }
+      
+      @keyframes glowPulse {
+        0%, 100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+    </style>
+  </defs>
+  
+  <!-- Black background -->
+  <rect width="240" height="240" fill="#000000"/>
+  
+  <!-- Glow layer that morphs -->
+  <path class="morphingShape" fill="none" stroke="#00ff00" stroke-width="15" filter="url(#outerGlow)">
+    <!-- Morph from dot → sine wave → circle -->
+    <animate 
+      attributeName="d" 
+      dur="4s" 
+      repeatCount="indefinite"
+      values="
+        M 120,120 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0;
+        M 40,120 Q 50,80 60,100 Q 70,120 80,100 Q 90,80 100,100 Q 110,120 120,100 Q 130,80 140,100 Q 150,120 160,100 Q 170,80 180,100 Q 190,120 200,120;
+        M 120,80 A 40,40 0 1,1 119.99,80;
+        M 120,80 A 40,40 0 1,1 119.99,80;
+        M 120,120 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0
+      "
+      keyTimes="0; 0.3; 0.6; 0.9; 1"
+    />
+  </path>
+  
+  <!-- Black circle mask that appears with the final ring -->
+  <circle cx="120" cy="120" r="32.5" fill="#000000">
+    <animate 
+      attributeName="opacity" 
+      dur="4s" 
+      repeatCount="indefinite"
+      values="0; 0; 0; 1; 1; 0"
+      keyTimes="0; 0.3; 0.55; 0.65; 0.9; 1"
+    />
+  </circle>
+  
+  <!-- Sharp ring on top that morphs -->
+  <path fill="none" stroke="#00ff00" stroke-width="15">
+    <animate 
+      attributeName="d" 
+      dur="4s" 
+      repeatCount="indefinite"
+      values="
+        M 120,120 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0;
+        M 40,120 Q 50,80 60,100 Q 70,120 80,100 Q 90,80 100,100 Q 110,120 120,100 Q 130,80 140,100 Q 150,120 160,100 Q 170,80 180,100 Q 190,120 200,120;
+        M 120,80 A 40,40 0 1,1 119.99,80;
+        M 120,80 A 40,40 0 1,1 119.99,80;
+        M 120,120 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0
+      "
+      keyTimes="0; 0.3; 0.6; 0.9; 1"
+    />
+  </path>
+</svg>
