@@ -17,6 +17,8 @@ const KEYS = {
   VISUALIZATION_TYPE: 'visualizationType',
   VISUALIZATION_MODE: 'visualizationMode',
   MICROPHONE_ENABLED: 'microphoneEnabled',
+  CAMERA_ENABLED: 'cameraEnabled',
+  SHADER_CONTROLS: 'shaderControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -47,6 +49,24 @@ export async function saveMicrophoneEnabled(enabled: boolean): Promise<void> {
 
 export async function getMicrophoneEnabled(): Promise<boolean | null> {
   return await localforage.getItem<boolean>(KEYS.MICROPHONE_ENABLED);
+}
+
+// Camera preference
+export async function saveCameraEnabled(enabled: boolean): Promise<void> {
+  await localforage.setItem(KEYS.CAMERA_ENABLED, enabled);
+}
+
+export async function getCameraEnabled(): Promise<boolean | null> {
+  return await localforage.getItem<boolean>(KEYS.CAMERA_ENABLED);
+}
+
+// Shader controls
+export async function saveShaderControls(controls: { rgbSplit: number; distortion: number; colorShift: number }): Promise<void> {
+  await localforage.setItem(KEYS.SHADER_CONTROLS, controls);
+}
+
+export async function getShaderControls(): Promise<{ rgbSplit: number; distortion: number; colorShift: number } | null> {
+  return await localforage.getItem<{ rgbSplit: number; distortion: number; colorShift: number }>(KEYS.SHADER_CONTROLS);
 }
 
 // Hue controls visibility

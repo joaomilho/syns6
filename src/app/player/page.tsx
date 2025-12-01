@@ -25,6 +25,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
+import { getShaderControls, saveShaderControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -172,6 +173,21 @@ export default function PlayerPage() {
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
+  
+  // Restore shader controls from storage on mount
+  useEffect(() => {
+    getShaderControls().then((savedControls) => {
+      if (savedControls) {
+        console.log("🎨 Restoring shader controls:", savedControls);
+        setShaderControls(savedControls);
+      }
+    }).catch(console.error);
+  }, []);
+  
+  // Save shader controls whenever they change
+  useEffect(() => {
+    saveShaderControls(shaderControls).catch(console.error);
+  }, [shaderControls]);
   
   // Reset auto-expand flag after QR code is shown
   useEffect(() => {
