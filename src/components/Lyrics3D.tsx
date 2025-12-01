@@ -404,11 +404,15 @@ function LyricText3D({
   // Split text into lines if needed
   const textLines = useMemo(() => splitLongText(text, maxLength), [text, maxLength]);
   const lineSpacing = 1.3; // Vertical spacing between lines
+  
+  // Calculate center offset for multi-line text
+  // For 2 lines: offset by half the spacing to center between them
+  const centerOffset = (textLines.length - 1) * lineSpacing / 2;
 
   const textElement = (
     <group ref={groupRef} position={position}>
       {textLines.map((line, lineIndex) => (
-        <group key={lineIndex} position={[0, -lineIndex * lineSpacing, 0]}>
+        <group key={lineIndex} position={[0, centerOffset - lineIndex * lineSpacing, 0]}>
           {/* Single text with built-in outline - 50% fewer draw calls! */}
           <Text
             fontSize={1}
