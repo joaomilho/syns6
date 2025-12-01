@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Line, LineBasicMaterial, Points, PointsMaterial, Vector3 } from "three";
 import { SyncedAudioData } from "@/lib/audioSync";
+import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
 // Camera shake component
 function CameraShake({ micData }: { micData?: MicrophoneData }) {

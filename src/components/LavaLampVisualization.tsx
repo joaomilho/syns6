@@ -278,11 +278,13 @@ export default function LavaLampVisualization({
   return (
     <Canvas camera={{ position: [0, 0, 30], fov: 275, near: 0.1, far: 1000 }} dpr={1}>
       <LavaLampScene 
-        energy={energy}
-        bass={bass}
-        mid={mid}
-        treble={treble}
-        volume={volume}
+        micData={{
+          energy,
+          bass,
+          mid,
+          treble,
+          volume
+        }}
       />
     </Canvas>
   );

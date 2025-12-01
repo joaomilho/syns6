@@ -291,9 +291,7 @@ export default function Home() {
           <div style={{ background: '#000' }} />
         ) : webglAvailable ? (
           // WebGL available - show 3D viz
-          <FFTSpectrumVisualization
-            micData={micData}
-          />
+          <FFTSpectrumVisualization />
         ) : (
           // WebGL not available - show fallback image
           <img 
