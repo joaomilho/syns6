@@ -8,7 +8,18 @@
 import { OrbitControls } from "@react-three/drei";
 import { WavyLineField, FlowingParticles } from "./WavyLinesVisualization";
 
-export default function WavyLinesScene({ micData }: { micData?: any }) {
+interface WavyLinesControls {
+  numLines: number;
+  colorPalette: 'default' | 'neon' | 'sunset' | 'forest' | 'candy';
+  particleCount: number;
+}
+
+interface WavyLinesSceneProps {
+  micData?: any;
+  wavyLinesControls?: WavyLinesControls;
+}
+
+export default function WavyLinesScene({ micData, wavyLinesControls }: WavyLinesSceneProps) {
   return (
     <>
       <ambientLight intensity={0.2} />
@@ -22,8 +33,13 @@ export default function WavyLinesScene({ micData }: { micData?: any }) {
         bass={micData?.bass}
         drums={micData?.instruments?.drums}
         vocalStrength={micData?.vocal?.strength}
+        wavyLinesControls={wavyLinesControls}
       />
-      <FlowingParticles audioFeatures={null} syncedData={null} />
+      <FlowingParticles 
+        audioFeatures={null} 
+        syncedData={null} 
+        wavyLinesControls={wavyLinesControls}
+      />
 
       <OrbitControls
         enableZoom={true}
