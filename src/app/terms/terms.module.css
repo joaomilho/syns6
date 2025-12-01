@@ -107,6 +107,44 @@
   color: #fff;
 }
 
+.importantNotice {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 30px 0;
+}
+
+.importantNotice h3 {
+  color: #fca5a5;
+  font-size: 20px;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.importantNotice p {
+  color: #ddd;
+  margin-bottom: 12px;
+}
+
+.importantNotice strong {
+  color: #fff;
+}
+
+.importantNotice ul {
+  margin: 12px 0;
+  color: #ccc;
+}
+
+.importantNotice a {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.importantNotice a:hover {
+  color: #93c5fd;
+}
+
 @media (max-width: 768px) {
   .topBar {
     padding: 15px 20px;
