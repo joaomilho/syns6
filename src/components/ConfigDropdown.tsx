@@ -131,6 +131,19 @@ export interface KaleidoscopeControls {
   reactivity: number;
 }
 
+export interface OrbitalControls {
+  intensity: number;
+  numOrbits: number;
+  colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+  orbitDistance: number;
+}
+
+export interface WavyLinesControls {
+  numLines: number;
+  colorPalette: 'default' | 'neon' | 'sunset' | 'forest' | 'candy';
+  particleCount: number;
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
@@ -139,6 +152,8 @@ interface ConfigDropdownProps {
   lavaLampControls: LavaLampControls;
   fftControls: FFTControls;
   kaleidoscopeControls: KaleidoscopeControls;
+  orbitalControls: OrbitalControls;
+  wavyLinesControls: WavyLinesControls;
   currentVisualization: string; // Current viz type to show relevant controls
   albumArt?: string; // For kaleidoscope thumbnails
   videoElement?: HTMLVideoElement | null; // For video thumbnail
@@ -150,6 +165,8 @@ interface ConfigDropdownProps {
   onLavaLampControlsChange: (controls: LavaLampControls) => void;
   onFFTControlsChange: (controls: FFTControls) => void;
   onKaleidoscopeControlsChange: (controls: KaleidoscopeControls) => void;
+  onOrbitalControlsChange: (controls: OrbitalControls) => void;
+  onWavyLinesControlsChange: (controls: WavyLinesControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -160,6 +177,8 @@ export default function ConfigDropdown({
   lavaLampControls,
   fftControls,
   kaleidoscopeControls,
+  orbitalControls,
+  wavyLinesControls,
   currentVisualization,
   albumArt,
   videoElement,
@@ -171,6 +190,8 @@ export default function ConfigDropdown({
   onLavaLampControlsChange,
   onFFTControlsChange,
   onKaleidoscopeControlsChange,
+  onOrbitalControlsChange,
+  onWavyLinesControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -703,7 +724,7 @@ export default function ConfigDropdown({
                   </label>
                   <div className={styles.colorList}>
                     <button
-                      className={`${styles.colorOption} ${
+                      className={`${styles.modeOption} ${
                         kaleidoscopeControls.mode === 'album' ? styles.active : ""
                       }`}
                       onClick={() =>
@@ -723,7 +744,7 @@ export default function ConfigDropdown({
                       </div>
                     </button>
                     <button
-                      className={`${styles.colorOption} ${
+                      className={`${styles.modeOption} ${
                         kaleidoscopeControls.mode === 'video' ? styles.active : ""
                       }`}
                       onClick={() =>
@@ -812,6 +833,228 @@ export default function ConfigDropdown({
                     mode: 'album',
                     rgbDistance: 0.1,
                     reactivity: 1.0,
+                  });
+                }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* Orbital (Particles & Rings) Config */}
+          {currentVisualization === "particles" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Particles & Rings</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Shake Intensity
+                    <span className={styles.sliderValue}>{orbitalControls.intensity.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={orbitalControls.intensity}
+                    onChange={(e) =>
+                      onOrbitalControlsChange({
+                        ...orbitalControls,
+                        intensity: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Number of Orbits
+                    <span className={styles.sliderValue}>{orbitalControls.numOrbits}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="4"
+                    max="24"
+                    step="2"
+                    value={orbitalControls.numOrbits}
+                    onChange={(e) =>
+                      onOrbitalControlsChange({
+                        ...orbitalControls,
+                        numOrbits: parseInt(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Orbit Distance
+                    <span className={styles.sliderValue}>{orbitalControls.orbitDistance.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                    value={orbitalControls.orbitDistance}
+                    onChange={(e) =>
+                      onOrbitalControlsChange({
+                        ...orbitalControls,
+                        orbitDistance: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Color Palette
+                  </label>
+                  <div className={styles.colorList}>
+                    {[
+                      { id: 'default' as const, gradient: 'linear-gradient(90deg, #6666ff, #ff00ff, #ff6666, #ffff66)' },
+                      { id: 'vaporwave' as const, gradient: 'linear-gradient(90deg, #ff71ce, #01cdfe, #05ffa1, #b967ff)' },
+                      { id: 'sunset' as const, gradient: 'linear-gradient(90deg, #ff6b6b, #ee5a6f, #f9ca24, #f0932b)' },
+                      { id: 'fire' as const, gradient: 'linear-gradient(90deg, #ff0000, #ff4500, #ffa500, #ffff00)' },
+                      { id: 'neon' as const, gradient: 'linear-gradient(90deg, #00ff00, #00ffff, #ff00ff, #ffff00)' },
+                    ].map((palette) => (
+                      <button
+                        key={palette.id}
+                        className={`${styles.colorOption} ${
+                          orbitalControls.colorPalette === palette.id ? styles.active : ""
+                        }`}
+                        onClick={() =>
+                          onOrbitalControlsChange({
+                            ...orbitalControls,
+                            colorPalette: palette.id,
+                          })
+                        }
+                        title={palette.id}
+                      >
+                        <div className={styles.colorSwatch} style={{ background: palette.gradient }} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onOrbitalControlsChange({
+                    intensity: 2.0,
+                    numOrbits: 16,
+                    colorPalette: 'default',
+                    orbitDistance: 1.5,
+                  });
+                }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* Wavy Lines Config */}
+          {currentVisualization === "waves" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Wavy Lines</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Lines per Instrument
+                    <span className={styles.sliderValue}>{wavyLinesControls.numLines}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    step="5"
+                    value={wavyLinesControls.numLines}
+                    onChange={(e) =>
+                      onWavyLinesControlsChange({
+                        ...wavyLinesControls,
+                        numLines: parseInt(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Particle Count
+                    <span className={styles.sliderValue}>{wavyLinesControls.particleCount}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="100"
+                    max="1000"
+                    step="50"
+                    value={wavyLinesControls.particleCount}
+                    onChange={(e) =>
+                      onWavyLinesControlsChange({
+                        ...wavyLinesControls,
+                        particleCount: parseInt(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Color Palette
+                  </label>
+                  <div className={styles.colorList}>
+                    {[
+                      { id: 'default' as const, colors: ['#6666ff', '#ff0000', '#5959dd', '#ffaa00'], label: 'Original' },
+                      { id: 'neon' as const, colors: ['#6666ff', '#ff00ff', '#00ffff', '#ffff00'], label: 'Neon' },
+                      { id: 'sunset' as const, colors: ['#6666ff', '#ff9955', '#ffe44d', '#ff6655'], label: 'Sunset' },
+                      { id: 'forest' as const, colors: ['#6666ff', '#4dcc4d', '#66ff99', '#66ffaa'], label: 'Forest' },
+                      { id: 'candy' as const, colors: ['#6666ff', '#ff71ce', '#00eeff', '#ffcc44'], label: 'Candy' },
+                    ].map((palette) => (
+                      <button
+                        key={palette.id}
+                        className={`${styles.colorOption} ${
+                          wavyLinesControls.colorPalette === palette.id ? styles.active : ""
+                        }`}
+                        onClick={() =>
+                          onWavyLinesControlsChange({
+                            ...wavyLinesControls,
+                            colorPalette: palette.id,
+                          })
+                        }
+                        title={palette.label}
+                      >
+                        <div className={styles.colorSwatch} style={{ 
+                          background: `linear-gradient(90deg, ${palette.colors.join(', ')})` 
+                        }} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onWavyLinesControlsChange({
+                    numLines: 60,
+                    colorPalette: 'default',
+                    particleCount: 500,
                   });
                 }}
               >

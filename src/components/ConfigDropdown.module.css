@@ -214,6 +214,21 @@
 .colorOption {
   position: relative;
   flex: 1;
+  height: 32px;
+  padding: 1px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeOption {
+  position: relative;
+  flex: 1;
   height: 60px;
   padding: 1px;
   background: transparent;
@@ -233,7 +248,16 @@
 
 .colorOption.active {
   border-color: #1ed760;
-  border-width: 3px;
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.5);
+}
+
+.modeOption:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.modeOption.active {
+  border-color: #1ed760;
   box-shadow: 0 0 12px rgba(29, 185, 84, 0.5);
 }
 

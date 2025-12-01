@@ -40,6 +40,12 @@ interface AudioFeatures {
   acousticness: number;
 }
 
+interface WavyLinesControls {
+  numLines: number;
+  colorPalette: 'default' | 'neon' | 'sunset' | 'forest' | 'candy';
+  particleCount: number;
+}
+
 interface VisualizationProps {
   audioFeatures?: AudioFeatures | null;
   syncedData?: SyncedAudioData | null;
@@ -48,6 +54,20 @@ interface VisualizationProps {
   bass?: number;
   drums?: number;
   vocalStrength?: number;
+  wavyLinesControls?: WavyLinesControls;
+}
+
+// Get colors for palette - defines ONLY the "activated" target colors
+// All lines start at BLUE (0.6-0.7), palette controls where they go when activated
+function getWavyLinesPalette(palette: string): { bass: number, vocal: number, drums: number } {
+  const palettes: Record<string, { bass: number, vocal: number, drums: number }> = {
+    default: { bass: 0, vocal: 0.65, drums: 0.15 }, // ORIGINAL: Red, DarkBlue, Orange
+    neon: { bass: 0.9, vocal: 0.5, drums: 0.15 }, // Magenta, Cyan, Yellow
+    sunset: { bass: 0.08, vocal: 0.12, drums: 0.03 }, // Orange, Yellow, RedOrange
+    forest: { bass: 0.3, vocal: 0.45, drums: 0.5 }, // Greens
+    candy: { bass: 0.9, vocal: 0.55, drums: 0.13 }, // Pink, Cyan, Gold
+  };
+  return palettes[palette] || palettes.default;
 }
 
 function WavyLine({
@@ -62,6 +82,8 @@ function WavyLine({
   drums = 0,
   vocalStrength = 0,
   instrumentType = "bass",
+  paletteColors,
+  colorPalette = 'default',
 }: {
   yPosition: number;
   zPosition: number;
@@ -74,6 +96,8 @@ function WavyLine({
   drums?: number;
   vocalStrength?: number;
   instrumentType?: "bass" | "vocal" | "drums";
+  paletteColors: { bass: number, vocal: number, drums: number };
+  colorPalette?: string;
 }) {
   const lineRef = useRef<Line | null>(null);
   const materialRef = useRef<LineBasicMaterial | null>(null);
@@ -181,35 +205,42 @@ function WavyLine({
 
     positionAttribute.needsUpdate = true;
 
-    // Color based on instrument type - RESTORE ORIGINAL BASS LOGIC
+    // Color based on instrument type - ALL START BLUE, palette defines activated colors
     let intensity, clampedIntensity, hue, saturation, lightness;
     
     switch (instrumentType) {
       case "bass":
-        // ORIGINAL: Blue to Red gradient that actually worked
+        // ALL BASS LINES START BLUE (0.7) → Activated color from palette
         intensity = energy * loudness * beatPulse * (1 + anticipation);
         clampedIntensity = Math.min(1, intensity);
         
-        // MIC DOMINATES COLOR - when mic hits, GO RED! (ORIGINAL WORKING LOGIC)
+        const bassStart = 0.7; // Always start at blue
+        const bassEnd = paletteColors.bass; // Palette defines activated color
         const micRedForce = volume * 3;
-        const baseHue = 0.7 - clampedIntensity * 0.7; // Music intensity: Blue to Red
-        hue = volume > 0.1 ? Math.max(0, 0.05 - micRedForce) : baseHue; // MIC OVERRIDES!
+        const baseHue = bassStart - clampedIntensity * (bassStart - bassEnd);
+        hue = volume > 0.1 ? Math.max(bassEnd, bassEnd - micRedForce) : baseHue; // MIC OVERRIDES!
         saturation = 0.7 + clampedIntensity * 0.3 + energy * 0.3;
         lightness = 0.35 + clampedIntensity * 0.45 + volume * 0.4;
         break;
+        
       case "vocal":
-        // Blue to Dark Blue gradient
+        // ALL VOCAL LINES START BLUE (0.6) → Activated color from palette
         intensity = (vocalStrength + energy * 0.3) * loudness;
         clampedIntensity = Math.min(1, intensity);
-        hue = 0.6 + clampedIntensity * 0.05; // Light blue to darker blue
+        const vocalStart = 0.6; // Always start at blue
+        const vocalEnd = paletteColors.vocal; // Palette defines activated color
+        hue = vocalStart + clampedIntensity * (vocalEnd - vocalStart);
         saturation = 0.8 + clampedIntensity * 0.2;
         lightness = 0.5 - clampedIntensity * 0.3; // Gets darker
         break;
+        
       case "drums":
-        // Blue to Yellow to Orange gradient
+        // ALL DRUM LINES START BLUE (0.6) → Activated color from palette
         intensity = (drums + energy * 0.3) * loudness * beatPulse;
         clampedIntensity = Math.min(1, intensity);
-        hue = 0.6 - clampedIntensity * 0.45; // Blue (0.6) to Orange (0.15)
+        const drumStart = 0.6; // Always start at blue
+        const drumEnd = paletteColors.drums; // Palette defines activated color
+        hue = drumStart - clampedIntensity * (drumStart - drumEnd);
         saturation = 0.8 + clampedIntensity * 0.2;
         lightness = 0.45 + clampedIntensity * 0.4;
         break;
@@ -230,8 +261,11 @@ export function WavyLineField({
   bass,
   drums,
   vocalStrength,
+  wavyLinesControls,
 }: VisualizationProps) {
-  const linesPerSet = 60; // 5x more lines (was 12)
+  const linesPerSet = wavyLinesControls?.numLines ?? 60; // Configurable number of lines
+  const colorPalette = wavyLinesControls?.colorPalette ?? 'default';
+  const paletteColors = getWavyLinesPalette(colorPalette);
   
   // Original bass-reactive waves (Blue → Red) - main layer
   const bassLines = useMemo(() => {
@@ -242,7 +276,7 @@ export function WavyLineField({
       offset: i * 0.1,
       type: "bass" as const,
     }));
-  }, []);
+  }, [linesPerSet]);
 
   // Vocal waves (Blue → Dark Blue) - back layer
   const vocalLines = useMemo(() => {
@@ -253,7 +287,7 @@ export function WavyLineField({
       offset: i * 0.08 + 1,
       type: "vocal" as const,
     }));
-  }, []);
+  }, [linesPerSet]);
 
   // Drum waves (Blue → Yellow → Orange) - front layer
   const drumLines = useMemo(() => {
@@ -264,7 +298,7 @@ export function WavyLineField({
       offset: i * 0.12 + 2,
       type: "drums" as const,
     }));
-  }, []);
+  }, [linesPerSet]);
 
   const allLines = [...vocalLines, ...bassLines, ...drumLines];
 
@@ -284,6 +318,8 @@ export function WavyLineField({
           drums={drums}
           vocalStrength={vocalStrength}
           instrumentType={line.type}
+          paletteColors={paletteColors}
+          colorPalette={colorPalette}
         />
       ))}
     </>
@@ -291,9 +327,9 @@ export function WavyLineField({
 }
 
 // Particle accents that move left to right
-export function FlowingParticles({ audioFeatures, syncedData }: VisualizationProps) {
+export function FlowingParticles({ audioFeatures, syncedData, wavyLinesControls }: VisualizationProps) {
   const pointsRef = useRef<Points>(null);
-  const particleCount = 500;
+  const particleCount = wavyLinesControls?.particleCount ?? 500;
 
   const positions = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
@@ -303,11 +339,11 @@ export function FlowingParticles({ audioFeatures, syncedData }: VisualizationPro
       positions[i * 3 + 2] = Math.random() * 15 - 5; // z: -5 to 10
     }
     return positions;
-  }, []);
+  }, [particleCount]);
 
   const velocities = useMemo(() => {
     return new Float32Array(particleCount).fill(0).map(() => Math.random() * 0.5 + 0.5);
-  }, []);
+  }, [particleCount]);
 
   useFrame((state) => {
     if (!pointsRef.current) return;
