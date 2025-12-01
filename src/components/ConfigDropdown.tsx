@@ -144,6 +144,12 @@ export interface WavyLinesControls {
   particleCount: number;
 }
 
+export interface Spectrum3DControls {
+  shape: 'circle' | 'row';
+  neonIntensity: number;
+  colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
@@ -154,6 +160,7 @@ interface ConfigDropdownProps {
   kaleidoscopeControls: KaleidoscopeControls;
   orbitalControls: OrbitalControls;
   wavyLinesControls: WavyLinesControls;
+  spectrum3DControls: Spectrum3DControls;
   currentVisualization: string; // Current viz type to show relevant controls
   albumArt?: string; // For kaleidoscope thumbnails
   videoElement?: HTMLVideoElement | null; // For video thumbnail
@@ -167,6 +174,7 @@ interface ConfigDropdownProps {
   onKaleidoscopeControlsChange: (controls: KaleidoscopeControls) => void;
   onOrbitalControlsChange: (controls: OrbitalControls) => void;
   onWavyLinesControlsChange: (controls: WavyLinesControls) => void;
+  onSpectrum3DControlsChange: (controls: Spectrum3DControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -179,6 +187,7 @@ export default function ConfigDropdown({
   kaleidoscopeControls,
   orbitalControls,
   wavyLinesControls,
+  spectrum3DControls,
   currentVisualization,
   albumArt,
   videoElement,
@@ -192,6 +201,7 @@ export default function ConfigDropdown({
   onKaleidoscopeControlsChange,
   onOrbitalControlsChange,
   onWavyLinesControlsChange,
+  onSpectrum3DControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1055,6 +1065,118 @@ export default function ConfigDropdown({
                     numLines: 60,
                     colorPalette: 'default',
                     particleCount: 500,
+                  });
+                }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* 3D Spectrum Config */}
+          {currentVisualization === "spectrum3d" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>3D Spectrum</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Shape
+                  </label>
+                  <div className={styles.optionList}>
+                    <button
+                      className={`${styles.option} ${
+                        spectrum3DControls.shape === 'circle' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onSpectrum3DControlsChange({
+                          ...spectrum3DControls,
+                          shape: 'circle',
+                        })
+                      }
+                    >
+                      <span className={styles.optionName}>Circle</span>
+                    </button>
+                    <button
+                      className={`${styles.option} ${
+                        spectrum3DControls.shape === 'row' ? styles.active : ""
+                      }`}
+                      onClick={() =>
+                        onSpectrum3DControlsChange({
+                          ...spectrum3DControls,
+                          shape: 'row',
+                        })
+                      }
+                    >
+                      <span className={styles.optionName}>Row</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Neon Intensity
+                    <span className={styles.sliderValue}>{spectrum3DControls.neonIntensity.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="6.4"
+                    step="0.1"
+                    value={spectrum3DControls.neonIntensity}
+                    onChange={(e) =>
+                      onSpectrum3DControlsChange({
+                        ...spectrum3DControls,
+                        neonIntensity: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Color Palette
+                  </label>
+                  <div className={styles.colorList}>
+                    {[
+                      { id: 'default' as const, gradient: 'linear-gradient(90deg, #ff3333, #ff9933, #00ff88, #5588ff)' },
+                      { id: 'vaporwave' as const, gradient: 'linear-gradient(90deg, #ff71ce, #01cdfe, #05ffa1, #b967ff)' },
+                      { id: 'sunset' as const, gradient: 'linear-gradient(90deg, #ff6b6b, #ee5a6f, #f9ca24, #f0932b)' },
+                      { id: 'fire' as const, gradient: 'linear-gradient(90deg, #ff0000, #ff4500, #ffa500, #ffff00)' },
+                      { id: 'neon' as const, gradient: 'linear-gradient(90deg, #00ff00, #00ffff, #ff00ff, #ffff00)' },
+                    ].map((palette) => (
+                      <button
+                        key={palette.id}
+                        className={`${styles.colorOption} ${
+                          spectrum3DControls.colorPalette === palette.id ? styles.active : ""
+                        }`}
+                        onClick={() =>
+                          onSpectrum3DControlsChange({
+                            ...spectrum3DControls,
+                            colorPalette: palette.id,
+                          })
+                        }
+                        title={palette.id}
+                      >
+                        <div className={styles.colorSwatch} style={{ background: palette.gradient }} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onSpectrum3DControlsChange({
+                    shape: 'circle',
+                    neonIntensity: 2.5,
+                    colorPalette: 'default',
                   });
                 }}
               >

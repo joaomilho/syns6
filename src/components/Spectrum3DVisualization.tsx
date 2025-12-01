@@ -8,9 +8,23 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 interface Spectrum3DVisualizationProps {
   frequencyData?: Uint8Array;
   sampleRate?: number;
+  colorPalette?: string;
 }
 
-function Spectrum3DBars({ frequencyData, sampleRate = 48000 }: { frequencyData?: Uint8Array; sampleRate?: number }) {
+// Get color palette - returns 4 colors for bass, mid, treble, high frequencies
+function getSpectrum3DPalette(palette: string): { bass: string, mid: string, treble: string, high: string } {
+  const palettes: Record<string, { bass: string, mid: string, treble: string, high: string }> = {
+    default: { bass: '#ff3333', mid: '#ff9933', treble: '#00ff88', high: '#5588ff' }, // ORIGINAL
+    vaporwave: { bass: '#ff71ce', mid: '#01cdfe', treble: '#05ffa1', high: '#b967ff' },
+    sunset: { bass: '#ff6b6b', mid: '#ee5a6f', treble: '#f9ca24', high: '#f0932b' },
+    fire: { bass: '#ff0000', mid: '#ff4500', treble: '#ffa500', high: '#ffff00' },
+    neon: { bass: '#00ff00', mid: '#00ffff', treble: '#ff00ff', high: '#ffff00' },
+  };
+  return palettes[palette] || palettes.default;
+}
+
+export function Spectrum3DBars({ frequencyData, sampleRate = 48000, colorPalette = 'default' }: { frequencyData?: Uint8Array; sampleRate?: number; colorPalette?: string }) {
+  const colors = getSpectrum3DPalette(colorPalette);
   const groupRef = useRef<Group>(null);
   const meshRefs = useRef<Mesh[]>([]);
 
@@ -63,23 +77,19 @@ function Spectrum3DBars({ frequencyData, sampleRate = 48000 }: { frequencyData?:
       // Update position (bars grow from bottom)
       mesh.position.y = mesh.scale.y / 2;
 
-      // Color based on frequency range
-      const centerFreq = (startBin + binsPerBar / 2) * freqPerBin;
+      // Color distribution using Fibonacci-like pattern (like FFT)
+      // 5, 11, 21, rest for better visual distribution
       const material = mesh.material as MeshStandardMaterial;
 
       let color: Color;
-      if (centerFreq <= 250) {
-        // Bass - Red
-        color = new Color(1, 0.2, 0.2);
-      } else if (centerFreq <= 2000) {
-        // Mid - Orange/Yellow
-        color = new Color(1, 0.6, 0);
-      } else if (centerFreq <= 8000) {
-        // Treble - Green/Cyan
-        color = new Color(0, 1, 0.5);
+      if (i < 5) {
+        color = new Color(colors.bass);
+      } else if (i < 16) { // 5 + 11
+        color = new Color(colors.mid);
+      } else if (i < 37) { // 16 + 21
+        color = new Color(colors.treble);
       } else {
-        // High - Blue/Purple
-        color = new Color(0.5, 0.5, 1);
+        color = new Color(colors.high);
       }
 
       material.color = color;
@@ -115,7 +125,8 @@ function Spectrum3DBars({ frequencyData, sampleRate = 48000 }: { frequencyData?:
   );
 }
 
-export function CircularSpectrum3D({ frequencyData, sampleRate = 48000 }: { frequencyData?: Uint8Array; sampleRate?: number }) {
+export function CircularSpectrum3D({ frequencyData, sampleRate = 48000, colorPalette = 'default' }: { frequencyData?: Uint8Array; sampleRate?: number; colorPalette?: string }) {
+  const colors = getSpectrum3DPalette(colorPalette);
   const groupRef = useRef<Group>(null);
   const meshRefs = useRef<Mesh[]>([]);
 
@@ -174,23 +185,19 @@ export function CircularSpectrum3D({ frequencyData, sampleRate = 48000 }: { freq
       mesh.position.x = Math.cos(angle) * extendedRadius;
       mesh.position.z = Math.sin(angle) * extendedRadius;
 
-      // Color based on frequency - use pre-calculated frequency from bars array
-      const centerFreq = bars[i].frequency;
+      // Color distribution using Fibonacci-like pattern (like FFT)
+      // 5, 11, 21, rest for better visual distribution
       const material = mesh.material as MeshStandardMaterial;
 
       let color: Color;
-      if (centerFreq <= 250) {
-        // Bass - Red
-        color = new Color(1, 0.2, 0.2);
-      } else if (centerFreq <= 2000) {
-        // Mid - Orange/Yellow
-        color = new Color(1, 0.6, 0);
-      } else if (centerFreq <= 8000) {
-        // Treble - Green/Cyan
-        color = new Color(0, 1, 0.5);
+      if (i < 5) {
+        color = new Color(colors.bass);
+      } else if (i < 16) { // 5 + 11
+        color = new Color(colors.mid);
+      } else if (i < 37) { // 16 + 21
+        color = new Color(colors.treble);
       } else {
-        // High - Blue/Purple
-        color = new Color(0.5, 0.5, 1);
+        color = new Color(colors.high);
       }
 
       material.color = color;
