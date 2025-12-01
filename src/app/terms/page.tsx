@@ -47,6 +47,45 @@ export default function TermsPage() {
             The Service requires an active Spotify account (Premium recommended for full functionality) and compatible hardware 
             (microphone, WebGL-capable browser).
           </p>
+
+          <div className={styles.importantNotice}>
+            <h3>⚠️ Personal Use Only</h3>
+            <p>
+              <strong>syns6 is designed for personal, private, and non-commercial use only.</strong> This Service is intended 
+              for individual enjoyment in private settings such as your home.
+            </p>
+            <p>
+              Spotify's Terms of Service explicitly prohibit public performance, commercial use, or broadcasting of their streaming 
+              content. As stated in{' '}
+              <a 
+                href="https://www.spotify.com/us/legal/end-user-agreement/#8-export-control-and-sanctions" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Spotify's User Agreement (Section 8)
+              </a>
+              , you may not:
+            </p>
+            <ul>
+              <li>Use the Service for public performances, broadcasting, or commercial purposes</li>
+              <li>Stream music in commercial venues (bars, restaurants, stores, etc.)</li>
+              <li>Broadcast or publicly perform music from Spotify</li>
+              <li>Use the Service for any commercial karaoke business</li>
+            </ul>
+            <p>
+              <strong>By using syns6, you acknowledge and agree that:</strong>
+            </p>
+            <ul>
+              <li>You will use the Service only for personal, private, non-commercial purposes</li>
+              <li>You will comply with all Spotify Terms of Service and licensing restrictions</li>
+              <li>You are responsible for ensuring your use complies with applicable copyright laws</li>
+              <li>syns6 is not liable for any misuse of Spotify's streaming service</li>
+            </ul>
+            <p>
+              For commercial or public performance rights, please contact the appropriate music licensing organizations 
+              (e.g., ASCAP, BMI, SESAC) or use a commercial music service designed for business use.
+            </p>
+          </div>
         </section>
 
         <section>
