@@ -35,6 +35,7 @@ function CameraPlane({
   const [videoTexture, setVideoTexture] = useState<VideoTexture | null>(
     null
   );
+  const { viewport } = useThree();
 
   // Create video texture
   useEffect(() => {
@@ -215,8 +216,8 @@ function CameraPlane({
   });
 
   return (
-    <mesh ref={meshRef} position={[0, 4, -3.8]}>
-      <planeGeometry args={[67.2, 37.8, 32, 32]} />
+    <mesh ref={meshRef} position={[0, 0, 0]}>
+      <planeGeometry args={[viewport.width, viewport.height, 32, 32]} />
       <shaderMaterial
         ref={materialRef}
         vertexShader={vertexShader}
@@ -316,7 +317,7 @@ export default function CameraVisualization({
       }}
     >
       <Canvas
-        camera={{ position: [0, 0, 30], fov: 75 }}
+        camera={{ position: [0, 0, 5], fov: 75 }}
         dpr={1}
         style={{
           background: "#000",
