@@ -42,6 +42,7 @@ async function fetchFromLRCLIB(
   artistName: string,
   duration: number
 ): Promise<LyricLine[] | null> {
+  const startTime = Date.now();
   try {
     const params = new URLSearchParams({
       track_name: trackName,
@@ -50,31 +51,51 @@ async function fetchFromLRCLIB(
     });
 
     const url = `https://lrclib.net/api/get?${params.toString()}`;
-    console.log(`   → Fetching: ${url}`);
-
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+    console.log(`   → LRCLIB: Fetching with params:`, {
+      track_name: trackName,
+      artist_name: artistName,
+      duration: Math.round(duration / 1000),
     });
 
-    console.log(`   → LRCLIB response: ${response.status} ${response.statusText}`);
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(15000), // 15 second timeout per API
+    });
+
+    const elapsed = Date.now() - startTime;
+    console.log(`   → LRCLIB response: ${response.status} ${response.statusText} (${elapsed}ms)`);
 
     if (!response.ok) {
-      console.log("   ✗ LRCLIB: No synced lyrics found");
+      const errorText = await response.text().catch(() => 'Could not read error');
+      console.log(`   ✗ LRCLIB: Failed - ${response.status}: ${errorText.substring(0, 200)}`);
       return null;
     }
 
     const data = await response.json();
+    console.log(`   → LRCLIB data structure:`, {
+      hasSyncedLyrics: !!data.syncedLyrics,
+      hasPlainLyrics: !!data.plainLyrics,
+      instrumental: data.instrumental,
+      keys: Object.keys(data),
+    });
 
     if (data.syncedLyrics) {
       const lines = parseLRC(data.syncedLyrics);
-      console.log(`   ✓ LRCLIB: Found ${lines.length} synced lyrics lines`);
+      console.log(`   ✓ LRCLIB: Found ${lines.length} synced lyrics lines (${elapsed}ms)`);
       return lines;
     }
 
-    console.log("   ✗ LRCLIB: Response had no syncedLyrics field");
+    if (data.instrumental) {
+      console.log("   ℹ LRCLIB: Track marked as instrumental");
+    } else {
+      console.log("   ✗ LRCLIB: Response had no syncedLyrics field (but has plainLyrics:", !!data.plainLyrics, ")");
+    }
     return null;
   } catch (error: any) {
-    console.error(`   ✗ LRCLIB error: ${error.message}`);
+    const elapsed = Date.now() - startTime;
+    console.error(`   ✗ LRCLIB error (${elapsed}ms): ${error.name} - ${error.message}`);
+    if (error.stack) {
+      console.error(`   Stack: ${error.stack.split('\n')[0]}`);
+    }
     return null;
   }
 }
@@ -83,24 +104,26 @@ async function fetchFromNetease(
   trackName: string,
   artistName: string
 ): Promise<LyricLine[] | null> {
+  const startTime = Date.now();
   try {
     // Search for the song first
-    const searchUrl = `https://music.xianqiao.wang/neteasecloud/search?limit=1&type=1&keywords=${encodeURIComponent(
-      `${trackName} ${artistName}`
-    )}`;
-    console.log(`   → NetEase searching: ${searchUrl}`);
+    const keywords = `${trackName} ${artistName}`;
+    const searchUrl = `https://music.xianqiao.wang/neteasecloud/search?limit=5&type=1&keywords=${encodeURIComponent(keywords)}`;
+    console.log(`   → NetEase searching for: "${keywords}"`);
 
     const searchResponse = await fetch(searchUrl, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+      signal: AbortSignal.timeout(15000), // 15 second timeout per API
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 
-    console.log(`   → NetEase search response: ${searchResponse.status}`);
+    const searchElapsed = Date.now() - startTime;
+    console.log(`   → NetEase search response: ${searchResponse.status} (${searchElapsed}ms)`);
 
     if (!searchResponse.ok) {
-      console.log("   ✗ NetEase: Search failed");
+      const errorText = await searchResponse.text().catch(() => 'Could not read error');
+      console.log(`   ✗ NetEase: Search failed - ${searchResponse.status}: ${errorText.substring(0, 200)}`);
       return null;
     }
 
@@ -109,35 +132,47 @@ async function fetchFromNetease(
     if (!contentType || !contentType.includes('application/json')) {
       console.log(`   ✗ NetEase: Invalid response type: ${contentType}`);
       const text = await searchResponse.text();
-      console.log(`   ✗ NetEase response preview: ${text.substring(0, 100)}`);
+      console.log(`   ✗ NetEase response preview: ${text.substring(0, 200)}`);
       return null;
     }
 
     const searchData = await searchResponse.json();
+    console.log(`   → NetEase search results:`, {
+      foundSongs: searchData?.result?.songs?.length || 0,
+      hasResult: !!searchData?.result,
+    });
+
     const songId = searchData?.result?.songs?.[0]?.id;
 
     if (!songId) {
-      console.log("   ✗ NetEase: Song not found in search results");
+      console.log(`   ✗ NetEase: No song ID found. Structure:`, {
+        hasResult: !!searchData?.result,
+        hasSongs: !!searchData?.result?.songs,
+        songCount: searchData?.result?.songs?.length || 0,
+      });
       return null;
     }
 
-    console.log(`   → NetEase found song ID: ${songId}`);
+    const songInfo = searchData.result.songs[0];
+    console.log(`   → NetEase found song: "${songInfo.name}" by ${songInfo.artists?.[0]?.name} (ID: ${songId})`);
 
     // Fetch lyrics using song ID
     const lyricsUrl = `https://music.xianqiao.wang/neteasecloud/lyric?id=${songId}`;
-    console.log(`   → Fetching lyrics: ${lyricsUrl}`);
+    console.log(`   → NetEase fetching lyrics for ID ${songId}`);
     
     const lyricsResponse = await fetch(lyricsUrl, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+      signal: AbortSignal.timeout(15000), // 15 second timeout per API
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 
-    console.log(`   → NetEase lyrics response: ${lyricsResponse.status}`);
+    const lyricsElapsed = Date.now() - startTime;
+    console.log(`   → NetEase lyrics response: ${lyricsResponse.status} (${lyricsElapsed}ms)`);
 
     if (!lyricsResponse.ok) {
-      console.log("   ✗ NetEase: Lyrics fetch failed");
+      const errorText = await lyricsResponse.text().catch(() => 'Could not read error');
+      console.log(`   ✗ NetEase: Lyrics fetch failed - ${lyricsResponse.status}: ${errorText.substring(0, 200)}`);
       return null;
     }
 
@@ -145,24 +180,41 @@ async function fetchFromNetease(
     const lyricsContentType = lyricsResponse.headers.get('content-type');
     if (!lyricsContentType || !lyricsContentType.includes('application/json')) {
       console.log(`   ✗ NetEase: Invalid lyrics response type: ${lyricsContentType}`);
+      const text = await lyricsResponse.text();
+      console.log(`   ✗ NetEase lyrics response preview: ${text.substring(0, 200)}`);
       return null;
     }
 
     const lyricsData = await lyricsResponse.json();
+    console.log(`   → NetEase lyrics data structure:`, {
+      hasLrc: !!lyricsData?.lrc,
+      hasLyric: !!lyricsData?.lrc?.lyric,
+      hasTlyric: !!lyricsData?.tlyric,
+      keys: Object.keys(lyricsData || {}),
+    });
+
     const lrcContent = lyricsData?.lrc?.lyric;
 
     if (lrcContent) {
       const lines = parseLRC(lrcContent);
       if (lines.length > 0) {
-        console.log(`   ✓ NetEase: Found ${lines.length} synced lyrics lines`);
+        const totalElapsed = Date.now() - startTime;
+        console.log(`   ✓ NetEase: Found ${lines.length} synced lyrics lines (${totalElapsed}ms total)`);
         return lines;
+      } else {
+        console.log(`   ✗ NetEase: LRC content exists but parsed to 0 lines. Raw length: ${lrcContent.length}`);
+        console.log(`   → First 200 chars: ${lrcContent.substring(0, 200)}`);
       }
     }
 
     console.log("   ✗ NetEase: No lyrics content in response");
     return null;
   } catch (error: any) {
-    console.error(`   ✗ NetEase error: ${error.message}`);
+    const elapsed = Date.now() - startTime;
+    console.error(`   ✗ NetEase error (${elapsed}ms): ${error.name} - ${error.message}`);
+    if (error.stack) {
+      console.error(`   Stack: ${error.stack.split('\n')[0]}`);
+    }
     return null;
   }
 }
@@ -171,47 +223,74 @@ async function fetchFromLRCLIBSearch(
   trackName: string,
   artistName: string
 ): Promise<LyricLine[] | null> {
+  const startTime = Date.now();
   try {
     // LRCLIB also has a search endpoint
+    const query = `${trackName} ${artistName}`;
     const params = new URLSearchParams({
-      q: `${trackName} ${artistName}`,
+      q: query,
     });
 
     const url = `https://lrclib.net/api/search?${params.toString()}`;
-    console.log(`   → LRCLIB Search: ${url}`);
+    console.log(`   → LRCLIB Search: Searching for "${query}"`);
 
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout per API
+      signal: AbortSignal.timeout(15000), // 15 second timeout per API
     });
 
-    console.log(`   → LRCLIB Search response: ${response.status}`);
+    const elapsed = Date.now() - startTime;
+    console.log(`   → LRCLIB Search response: ${response.status} (${elapsed}ms)`);
 
     if (!response.ok) {
-      console.log("   ✗ LRCLIB Search: No results");
+      const errorText = await response.text().catch(() => 'Could not read error');
+      console.log(`   ✗ LRCLIB Search: Failed - ${response.status}: ${errorText.substring(0, 200)}`);
       return null;
     }
 
     const results = await response.json();
-    console.log(`   → LRCLIB Search found ${results?.length || 0} results`);
+    const resultCount = results?.length || 0;
+    console.log(`   → LRCLIB Search found ${resultCount} result(s) (${elapsed}ms)`);
+    
+    if (resultCount > 0) {
+      console.log(`   → First result:`, {
+        trackName: results[0]?.trackName,
+        artistName: results[0]?.artistName,
+        hasSyncedLyrics: !!results[0]?.syncedLyrics,
+        hasPlainLyrics: !!results[0]?.plainLyrics,
+        instrumental: results[0]?.instrumental,
+      });
+    }
     
     // Check ALL results, not just the first one - some results may have null syncedLyrics
     if (Array.isArray(results)) {
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
+        console.log(`   → Checking result #${i + 1}/${resultCount}:`, {
+          track: result?.trackName,
+          artist: result?.artistName,
+          hasSynced: !!result?.syncedLyrics,
+          instrumental: result?.instrumental,
+        });
+        
         if (result?.syncedLyrics) {
           const lines = parseLRC(result.syncedLyrics);
           if (lines.length > 0) {
-            console.log(`   ✓ LRCLIB Search: Found ${lines.length} synced lyrics lines (result #${i + 1})`);
+            const totalElapsed = Date.now() - startTime;
+            console.log(`   ✓ LRCLIB Search: Found ${lines.length} synced lyrics lines in result #${i + 1} (${totalElapsed}ms)`);
             return lines;
           }
         }
       }
     }
 
-    console.log("   ✗ LRCLIB Search: No synced lyrics in any results");
+    console.log("   ✗ LRCLIB Search: No synced lyrics in any of the", resultCount, "results");
     return null;
   } catch (error: any) {
-    console.error(`   ✗ LRCLIB Search error: ${error.message}`);
+    const elapsed = Date.now() - startTime;
+    console.error(`   ✗ LRCLIB Search error (${elapsed}ms): ${error.name} - ${error.message}`);
+    if (error.stack) {
+      console.error(`   Stack: ${error.stack.split('\n')[0]}`);
+    }
     return null;
   }
 }
@@ -223,11 +302,13 @@ export async function GET(request: NextRequest) {
   const durationStr = searchParams.get("duration");
   const spotifyId = searchParams.get("spotifyId"); // Get spotifyId from params
 
-  console.log("🎵 [API] Lyrics request received:", {
+  console.log("\n🎵 ==================== LYRICS REQUEST ====================");
+  console.log("🎵 [API] Lyrics request:", {
     track: trackName,
     artist: artistName,
     duration: durationStr,
     spotifyId: spotifyId || '(not provided)',
+    timestamp: new Date().toISOString(),
   });
 
   if (!trackName || !artistName || !durationStr) {
@@ -265,6 +346,7 @@ export async function GET(request: NextRequest) {
   }
 
   // 2. Check PostgreSQL DB for cached lyrics
+  console.log("💾 [API] Checking database cache...");
   try {
     // Build query conditions
     const whereConditions: any[] = [
@@ -293,16 +375,21 @@ export async function GET(request: NextRequest) {
         ? JSON.parse(cachedLyrics.lyrics) 
         : cachedLyrics.lyrics;
       
+      console.log(`✅ [API] Found cached lyrics from ${cachedLyrics.source} (${lyricsData.length} lines)`);
+      console.log("=========================================================\n");
       return NextResponse.json({
         lines: lyricsData as LyricLine[],
         source: `DB (${cachedLyrics.source || 'cached'})`,
       });
     }
+    console.log("ℹ️  [API] No cached lyrics found in database");
   } catch (dbError) {
+    console.error("⚠️ [API] Database error:", dbError);
     // Ignore DB errors, proceed to remote fetch
   }
 
   // 3. Fetch from remote APIs in parallel
+  console.log("🌐 [API] Fetching from remote APIs in parallel...");
   const results = await Promise.allSettled([
     fetchFromLRCLIB(trackName, artistName, duration).then((lines) => ({
       lines,
@@ -318,10 +405,20 @@ export async function GET(request: NextRequest) {
     })),
   ]);
 
+  // Log all results for debugging
+  console.log("\n📊 [API] All API results:");
+  results.forEach((result, idx) => {
+    if (result.status === "fulfilled") {
+      console.log(`   ${idx + 1}. ${result.value.source}: ${result.value.lines ? `${result.value.lines.length} lines` : 'no lyrics'}`);
+    } else {
+      console.log(`   ${idx + 1}. Error: ${result.reason}`);
+    }
+  });
+
   // Find the first successful result with lyrics
   for (const result of results) {
     if (result.status === "fulfilled" && result.value.lines && result.value.lines.length > 0) {
-      console.log(`✅ [API] ${result.value.source} success: ${result.value.lines.length} lines`);
+      console.log(`\n✅ [API] SUCCESS! Using ${result.value.source}: ${result.value.lines.length} lines`);
       
       // 3. Save to database before returning
       try {
@@ -348,6 +445,7 @@ export async function GET(request: NextRequest) {
         // Continue anyway - don't block the response
       }
 
+      console.log("=========================================================\n");
       return NextResponse.json({
         lines: result.value.lines,
         source: result.value.source,
@@ -356,6 +454,7 @@ export async function GET(request: NextRequest) {
   }
 
   // No lyrics found - save to LyricsNotFound to avoid future lookups
+  console.log("\n❌ [API] No lyrics found from any source");
   try {
     await prisma.lyricsNotFound.upsert({
       where: spotifyId ? 
@@ -371,12 +470,14 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (err) {
+    console.error("⚠️ [API] Failed to save to not-found table:", err);
     // Ignore errors saving to not-found table
   }
 
+  console.log("=========================================================\n");
   return NextResponse.json(
     { error: "No synced lyrics found", lines: null },
-    { status: 404 }
+    { status: 500 } // 404 is cached
   );
 }
 
