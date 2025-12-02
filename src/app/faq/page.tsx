@@ -294,8 +294,8 @@ export default function FAQPage() {
                 <div className={styles.questionsContainer}>
                   {category.questions.map((item) => (
                     <article key={item.id} className={styles.faqItem} id={item.id}>
-                      {searchQuery && 'category' in item && (
-                        <div className={styles.categoryBadge}>{item.category}</div>
+                      {searchQuery && 'category' in item && item.category && (
+                        <div className={styles.categoryBadge}>{item.category as string}</div>
                       )}
                       <h3 className={styles.question}>{item.question}</h3>
                       <p className={styles.answer}>{item.answer}</p>
