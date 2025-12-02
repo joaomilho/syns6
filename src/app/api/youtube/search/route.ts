@@ -157,6 +157,19 @@ export async function GET(request: NextRequest) {
     if (cachedVideo) {
       console.log(`[YouTube API] ✅ Found in database: ${cachedVideo.youtubeId} (spotifyId: ${cachedVideo.spotifyId})`);
       
+      // Check if we have a verified working video ID from frontend
+      if (cachedVideo.workingYoutubeId) {
+        console.log(`[YouTube API] 🎯 Using crowdsourced working video: ${cachedVideo.workingYoutubeId} (verified: ${cachedVideo.verifiedAt})`);
+        
+        return NextResponse.json({
+          videoIds: [cachedVideo.workingYoutubeId],
+          primaryVideoId: cachedVideo.workingYoutubeId,
+          title: cachedVideo.title,
+          channelTitle: cachedVideo.artist,
+          source: 'crowdsourced',
+        });
+      }
+      
       // Parse comma-separated video IDs back into array
       const ids = cachedVideo.youtubeId.split(',').map(id => id.trim()).filter(Boolean);
       console.log(`[YouTube API] 📋 Parsed ${ids.length} video ID(s) from database`);

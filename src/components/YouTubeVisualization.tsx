@@ -32,6 +32,45 @@ export default function YouTubeVisualization({
   const hasWorkingVideoRef = useRef<boolean>(false);
   const spotifyId = spotifyIdProp;
 
+  // Report working video to backend for crowdsourced caching
+  const reportWorkingVideo = async (videoId: string) => {
+    if (!spotifyId || !trackName || !artistName) {
+      console.log('[YouTube] ⚠️ Missing data, cannot report working video');
+      return;
+    }
+
+    // Don't report the fallback video
+    const DEFAULT_VIDEO_ID = "L1vrPpM4eyM";
+    if (videoId === DEFAULT_VIDEO_ID) {
+      console.log('[YouTube] ⚠️ Skipping fallback video report');
+      return;
+    }
+
+    try {
+      console.log(`[YouTube] 📤 Reporting working video to backend: ${videoId}`);
+      const response = await fetch('/api/youtube/report-working', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          spotifyId,
+          workingVideoId: videoId,
+          title: trackName,
+          artist: artistName,
+        }),
+      });
+
+      if (response.ok) {
+        console.log(`[YouTube] ✅ Working video reported successfully`);
+      } else {
+        console.error(`[YouTube] ❌ Failed to report working video: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('[YouTube] ❌ Error reporting working video:', error);
+    }
+  };
+
   // Load YouTube IFrame API
   useEffect(() => {
     // Check if API is already loaded
@@ -156,6 +195,9 @@ export default function YouTubeVisualization({
                 hasWorkingVideoRef.current = true;
                 setIsLoading(false);
                 setVideoError(false);
+                
+                // Report working video to backend for crowdsourced caching
+                reportWorkingVideo(videoId);
               },
               onError: (event: any) => {
                 // If cached video fails, fall back to full search
@@ -225,6 +267,9 @@ export default function YouTubeVisualization({
                     console.error('[YouTube] Error saving working video:', err);
                   });
                 }
+                
+                // Report working video to backend for crowdsourced caching
+                reportWorkingVideo(vid);
                 
                 // Destroy all other players
                 playersRef.current.forEach((p, id) => {

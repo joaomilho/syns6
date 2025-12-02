@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -258,6 +258,7 @@ export default function PlayerPage() {
   const [micAvailable, setMicAvailable] = useState(true);
   const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
   const [showPerformanceStats, setShowPerformanceStats] = useState(false); // Toggle performance monitor
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false); // Profile dropdown
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
@@ -412,6 +413,21 @@ export default function PlayerPage() {
       return () => clearTimeout(timer);
     }
   }, [shareManager.shareCode, showQRCodeOnConnect]);
+  
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    if (!showProfileDropdown) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.profileDropdown') && !target.closest('[class*="userProfile"]')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileDropdown]);
   
   // Check subscription and redirect to pricing if not active
   useEffect(() => {
@@ -657,69 +673,80 @@ export default function PlayerPage() {
     saveColor();
   }, [lyricsColor]);
 
-  // Randomize visualization config
+  // Randomize visualization config (respects actual config bounds)
   const randomizeConfig = (vizType: VisualizationType) => {
     const random = (min: number, max: number) => Math.random() * (max - min) + min;
-    const randomInt = (min: number, max: number) => Math.floor(random(min, max));
-    const randomChoice = <T,>(arr: T[]): T => arr[randomInt(0, arr.length)];
+    const randomInt = (min: number, max: number) => Math.floor(random(min, max + 1));
+    const randomChoice = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+    const randomStep = (min: number, max: number, step: number) => {
+      const steps = Math.floor((max - min) / step);
+      return min + (Math.floor(Math.random() * (steps + 1)) * step);
+    };
     
     console.log(`🎲 Randomizing config for ${vizType}`);
     
     switch (vizType) {
       case 'particles':
+        // Ranges: rgbSplit 0-0.05, distortion 0-0.1, colorShift 0-1
         setShaderControls({
-          rgbSplit: random(0.005, 0.05),
-          distortion: random(0.01, 0.1),
+          rgbSplit: random(0, 0.05),
+          distortion: random(0, 0.1),
           colorShift: random(0, 1),
         });
         break;
       
       case 'fractal':
+        // Ranges: resolution [16-64, step 8], blobCount [6,12,18,24,36,62], globSize [0.2-2.0], reactivity [0.2-3, step 0.2]
         setLavaLampControls({
-          resolution: randomChoice([32, 64, 128]),
-          blobCount: randomInt(3, 8),
-          globSize: random(0.5, 2),
-          reactivity: random(0.5, 2),
+          resolution: randomStep(16, 64, 8),
+          blobCount: randomChoice([6, 12, 18, 24, 36, 62]),
+          globSize: randomChoice([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]),
+          reactivity: randomStep(0.2, 3, 0.2),
         });
         break;
       
       case 'fftspectrum':
+        // Ranges: neonIntensity [0,0.4,1.6,3.2,6.4], lineWidth [0.01,0.02,0.04,0.08,0.16,0.32]
         setFFTControls({
-          neonIntensity: random(1, 4),
+          neonIntensity: randomChoice([0, 0.4, 1.6, 3.2, 6.4]),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
-          lineWidth: random(1, 5),
+          lineWidth: randomChoice([0.01, 0.02, 0.04, 0.08, 0.16, 0.32]),
         });
         break;
       
       case 'psychedelic':
+        // Ranges: mode [album,video], rgbDistance [0-0.3, step 0.01], reactivity [0-3, step 0.1]
         setKaleidoscopeControls({
           mode: randomChoice(['album', 'video']),
-          rgbDistance: random(0, 0.3),
-          reactivity: random(0.5, 3),
+          rgbDistance: randomStep(0, 0.3, 0.01),
+          reactivity: randomStep(0, 3, 0.1),
         });
         break;
       
       case 'oscilloscope':
+        // Ranges: intensity [0-5, step 0.1], numOrbits [4-24, step 2], orbitDistance [0.5-3, step 0.1]
         setOrbitalControls({
-          intensity: random(0.5, 2),
-          numOrbits: randomInt(3, 8),
+          intensity: randomStep(0, 5, 0.1),
+          numOrbits: randomStep(4, 24, 2),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
-          orbitDistance: random(1, 3),
+          orbitDistance: randomStep(0.5, 3, 0.1),
         });
         break;
       
       case 'waves':
+        // Ranges: numLines [10-100, step 5], particleCount [100-1000, step 50]
         setWavyLinesControls({
-          numLines: randomInt(3, 8),
+          numLines: randomStep(10, 100, 5),
           colorPalette: randomChoice(['default', 'neon', 'sunset', 'forest', 'candy']),
-          particleCount: randomChoice([50, 100, 200, 300]),
+          particleCount: randomStep(100, 1000, 50),
         });
         break;
       
       case 'spectrum3d':
+        // Ranges: shape [circle,row], neonIntensity [0-6.4, step 0.1]
         setSpectrum3DControls({
           shape: randomChoice(['circle', 'row']),
-          neonIntensity: random(1, 4),
+          neonIntensity: randomStep(0, 6.4, 0.1),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
         });
         break;
@@ -1761,21 +1788,147 @@ export default function PlayerPage() {
 
         {/* User Profile */}
         {session?.user && (
-          <Link href="/profile" className={styles.userProfile}>
-            {session.user.image ? (
-              <Image
-                src={session.user.image}
-                alt={session.user.name || "User"}
-                width={36}
-                height={36}
-                className={styles.userAvatar}
-              />
-            ) : (
-              <div className={styles.userAvatarPlaceholder}>
-                {session.user.name?.charAt(0) || "U"}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className={styles.userProfile}
+              style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
+            >
+              {session.user.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "User"}
+                  width={36}
+                  height={36}
+                  className={styles.userAvatar}
+                />
+              ) : (
+                <div className={styles.userAvatarPlaceholder}>
+                  {session.user.name?.charAt(0) || "U"}
+                </div>
+              )}
+            </button>
+            
+            {showProfileDropdown && (
+              <div 
+                className="profileDropdown"
+                style={{
+                  position: 'absolute',
+                  top: '50px',
+                  right: 0,
+                  background: 'rgba(20, 20, 30, 0.98)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  minWidth: '200px',
+                  zIndex: 1000,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                }}
+              >
+                {/* User Info */}
+                <div style={{
+                  padding: '8px 12px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  marginBottom: '8px',
+                }}>
+                  <div style={{ 
+                    color: '#fff', 
+                    fontSize: '14px', 
+                    fontWeight: '600',
+                    marginBottom: '4px',
+                  }}>
+                    {session.user.name}
+                  </div>
+                  <div style={{ 
+                    color: 'rgba(255, 255, 255, 0.6)', 
+                    fontSize: '12px',
+                  }}>
+                    {session.user.email}
+                  </div>
+                </div>
+
+                {/* Subscription Status */}
+                {subscription && (
+                  <div style={{
+                    padding: '8px 12px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginBottom: '8px',
+                  }}>
+                    <div style={{ 
+                      color: subscription.status === 'active' ? '#00ff00' : 'rgba(255, 255, 255, 0.6)', 
+                      fontSize: '12px',
+                      marginBottom: '4px',
+                    }}>
+                      {subscription.status === 'active' ? '✓ Premium Active' : 'Free Plan'}
+                    </div>
+                    {subscription.status === 'active' && subscription.currentPeriodEnd && (
+                      <div style={{ 
+                        color: 'rgba(255, 255, 255, 0.4)', 
+                        fontSize: '11px',
+                      }}>
+                        Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <button
+                  onClick={() => {
+                    router.push('/profile');
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    marginBottom: '6px',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                >
+                  View Profile
+                </button>
+
+                <button
+                  onClick={() => {
+                    signOut({ callbackUrl: '/' });
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: 'rgba(255, 0, 0, 0.1)',
+                    border: '1px solid rgba(255, 0, 0, 0.3)',
+                    borderRadius: '8px',
+                    color: '#ff6b6b',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 0, 0, 0.1)';
+                  }}
+                >
+                  Sign Out
+                </button>
               </div>
             )}
-          </Link>
+          </div>
         )}
         </div>
       </div>
