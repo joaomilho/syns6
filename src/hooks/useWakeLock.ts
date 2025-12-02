@@ -16,36 +16,43 @@ export function useWakeLock() {
     if ('wakeLock' in navigator) {
       setIsSupported(true);
     } else {
-      console.warn('⚠️ Wake Lock API is not supported in this browser');
       return;
     }
 
     const requestWakeLock = async () => {
+      // Only request wake lock if page is visible
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+      
+      // Don't request if we already have one
+      if (wakeLockRef.current !== null) {
+        return;
+      }
+      
       try {
-        // Request a screen wake lock
         wakeLockRef.current = await navigator.wakeLock.request('screen');
         setIsActive(true);
-        console.log('🔒 Wake Lock acquired - screen will stay awake');
 
         // Listen for wake lock release
         wakeLockRef.current.addEventListener('release', () => {
-          console.log('🔓 Wake Lock released');
+          wakeLockRef.current = null;
           setIsActive(false);
         });
-      } catch (err) {
-        console.error('❌ Failed to acquire Wake Lock:', err);
+      } catch {
+        // Silently fail - will retry when page becomes visible
         setIsActive(false);
       }
     };
 
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && wakeLockRef.current === null) {
+      if (document.visibilityState === 'visible') {
         // Re-acquire wake lock when page becomes visible again
         await requestWakeLock();
       }
     };
 
-    // Request initial wake lock
+    // Request initial wake lock (only if page is visible)
     requestWakeLock();
 
     // Re-acquire wake lock when page becomes visible (after being hidden/minimized)
@@ -58,13 +65,10 @@ export function useWakeLock() {
       if (wakeLockRef.current !== null) {
         wakeLockRef.current.release()
           .then(() => {
-            console.log('🔓 Wake Lock released on cleanup');
             wakeLockRef.current = null;
             setIsActive(false);
           })
-          .catch((err) => {
-            console.error('❌ Failed to release Wake Lock:', err);
-          });
+          .catch(() => {});
       }
     };
   }, []);
@@ -76,9 +80,8 @@ export function useWakeLock() {
         await wakeLockRef.current.release();
         wakeLockRef.current = null;
         setIsActive(false);
-        console.log('🔓 Wake Lock manually released');
-      } catch (err) {
-        console.error('❌ Failed to manually release Wake Lock:', err);
+      } catch {
+        // Ignore release errors
       }
     }
   };
