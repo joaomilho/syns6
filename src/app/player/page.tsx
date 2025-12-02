@@ -126,14 +126,10 @@ export default function PlayerPage() {
   // Lyrics worker for background fetching (keeps main thread smooth)
   const lyricsWorker = useLyricsWorker({
     onLyricsReceived: useCallback((spotifyId: string, receivedLyrics: LyricLine[] | null) => {
-      // Cache the result
       lyricsCache.current.set(spotifyId, receivedLyrics);
       
-      // DON'T update UI if we've already switched to next track's lyrics!
-      if (hasSwitchedToNextRef.current) {
-        console.log(`⏭️ Skipping lyrics update - already showing next track`);
-        return;
-      }
+      // DON'T update UI if we've already switched to next track's lyrics
+      if (hasSwitchedToNextRef.current) return;
       
       // Only update UI if this is the currently playing track
       if (playbackState?.item?.id === spotifyId) {
@@ -143,33 +139,22 @@ export default function PlayerPage() {
     }, [playbackState?.item?.id]),
     
     onQueuePrefetched: useCallback((results: Array<{ trackId: string; lyrics: LyricLine[] | null; videoIds?: string[]; success: boolean }>) => {
-      console.log('🚀🚀🚀 [Player] 📦 Queue prefetched, results:', results.length);
-      
       // Cache all prefetched lyrics and update queue with video IDs
-      results.forEach(({ trackId, lyrics: prefetchedLyrics, videoIds }) => {
+      results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
         lyricsCache.current.set(trackId, prefetchedLyrics);
-        console.log(`🚀 [Player]   ${trackId}: ${videoIds?.length || 0} video IDs`, videoIds);
       });
       
       // Update queue with video IDs
-      setQueue(prevQueue => {
-        console.log('🚀 [Player] Updating queue, current queue size:', prevQueue.length);
-        const updated = prevQueue.map(track => {
-          const result = results.find(r => r.trackId === track.id);
-          if (result && result.videoIds) {
-            console.log(`🚀 [Player] ✅ Adding ${result.videoIds.length} video IDs to: ${track.name}`, result.videoIds);
-            return { ...track, videoIds: result.videoIds };
-          }
-          return track;
-        });
-        console.log('🚀 [Player] 📋 Updated queue:', updated.map(t => `${t.name} (${t.videoIds?.length || 0} videos)`));
-        return updated;
-      });
+      setQueue(prevQueue => prevQueue.map(track => {
+        const result = results.find(r => r.trackId === track.id);
+        if (result && result.videoIds) {
+          return { ...track, videoIds: result.videoIds };
+        }
+        return track;
+      }));
     }, []),
     
-    onError: useCallback((error: string) => {
-      console.error('Lyrics worker error:', error);
-    }, []),
+    onError: useCallback(() => {}, []),
   });
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
@@ -269,120 +254,112 @@ export default function PlayerPage() {
   useEffect(() => {
     getShaderControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🎨 Restoring shader controls:", savedControls);
         setShaderControls(savedControls);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save shader controls whenever they change
   useEffect(() => {
-    saveShaderControls(shaderControls).catch(console.error);
+    saveShaderControls(shaderControls).catch(() => {});
   }, [shaderControls]);
 
   // Restore lava lamp controls from storage on mount
   useEffect(() => {
     getLavaLampControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🔥 Restoring lava lamp controls:", savedControls);
         setLavaLampControls(savedControls);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save lava lamp controls whenever they change
   useEffect(() => {
-    saveLavaLampControls(lavaLampControls).catch(console.error);
+    saveLavaLampControls(lavaLampControls).catch(() => {});
   }, [lavaLampControls]);
 
   // Restore FFT controls from storage on mount
   useEffect(() => {
     getFFTControls().then((savedControls) => {
       if (savedControls) {
-        console.log("📊 Restoring FFT controls:", savedControls);
         setFFTControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save FFT controls whenever they change
   useEffect(() => {
-    saveFFTControls(fftControls).catch(console.error);
+    saveFFTControls(fftControls).catch(() => {});
   }, [fftControls]);
 
   // Restore kaleidoscope controls from storage on mount
   useEffect(() => {
     getKaleidoscopeControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🔮 Restoring kaleidoscope controls:", savedControls);
         setKaleidoscopeControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save kaleidoscopeControls whenever they change
   useEffect(() => {
-    saveKaleidoscopeControls(kaleidoscopeControls).catch(console.error);
+    saveKaleidoscopeControls(kaleidoscopeControls).catch(() => {});
   }, [kaleidoscopeControls]);
   
   // Load orbital controls on mount
   useEffect(() => {
     getOrbitalControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🌀 Restoring orbital controls:", savedControls);
         setOrbitalControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save orbital controls whenever they change
   useEffect(() => {
-    saveOrbitalControls(orbitalControls).catch(console.error);
+    saveOrbitalControls(orbitalControls).catch(() => {});
   }, [orbitalControls]);
   
   // Load wavy lines controls on mount
   useEffect(() => {
     getWavyLinesControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🌊 Restoring wavy lines controls:", savedControls);
         setWavyLinesControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save wavy lines controls whenever they change
   useEffect(() => {
-    saveWavyLinesControls(wavyLinesControls).catch(console.error);
+    saveWavyLinesControls(wavyLinesControls).catch(() => {});
   }, [wavyLinesControls]);
   
   // Load spectrum3D controls on mount
   useEffect(() => {
     getSpectrum3DControls().then((savedControls) => {
       if (savedControls) {
-        console.log("📊 Restoring spectrum3D controls:", savedControls);
         setSpectrum3DControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save spectrum3D controls whenever they change
   useEffect(() => {
-    saveSpectrum3DControls(spectrum3DControls).catch(console.error);
+    saveSpectrum3DControls(spectrum3DControls).catch(() => {});
   }, [spectrum3DControls]);
   
   // Load YouTube controls on mount
   useEffect(() => {
     getYouTubeControls().then((savedControls) => {
       if (savedControls) {
-        console.log("🎬 Restoring YouTube controls:", savedControls);
         setYouTubeControls(savedControls as any);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, []);
   
   // Save YouTube controls whenever they change
   useEffect(() => {
-    saveYouTubeControls(youtubeControls).catch(console.error);
+    saveYouTubeControls(youtubeControls).catch(() => {});
   }, [youtubeControls]);
   
   // Auto-switch to video mode when Kaleidoscope is selected and camera is on
@@ -440,7 +417,6 @@ export default function PlayerPage() {
 
     // If authenticated but no active subscription, redirect to pricing
     if (status === 'authenticated' && !isActive) {
-      console.log('⚠️ No active subscription detected, redirecting to pricing...');
       router.push('/pricing');
     }
   }, [status, subscriptionLoading, isActive, router]);
@@ -448,14 +424,12 @@ export default function PlayerPage() {
   // Start hosting when component mounts (only if sharing was previously active)
   useEffect(() => {
     if (!hasStartedHosting.current && shareManager.isShareActive) {
-      console.log("🎭 [PLAYER] Auto-reconnecting to screen sharing (was previously active)...");
       shareManager.startHosting();
       hasStartedHosting.current = true;
     }
     
     return () => {
       if (hasStartedHosting.current) {
-        console.log("🛑 [PLAYER] Stopping screen sharing");
         shareManager.stopHosting();
         hasStartedHosting.current = false;
       }
@@ -482,12 +456,6 @@ export default function PlayerPage() {
     setMicAvailable(isHttps || isLocalhost);
   }, []);
   
-  // Debug: Log when shareCode changes
-  useEffect(() => {
-    console.log(`🔑 [PLAYER] Share Code state:`, shareManager.shareCode || 'null');
-    console.log(`📊 [PLAYER] Is hosting:`, shareManager.isHosting);
-    console.log(`👥 [PLAYER] Connected viewers:`, shareManager.connectedViewers);
-  }, [shareManager.shareCode, shareManager.isHosting, shareManager.connectedViewers]);
   
   // Keyboard shortcut: Press 'S' to toggle performance stats
   useEffect(() => {
@@ -498,10 +466,7 @@ export default function PlayerPage() {
       }
       
       if (e.key === 's' || e.key === 'S') {
-        setShowPerformanceStats(prev => {
-          console.log(`📊 Performance stats ${!prev ? 'enabled' : 'disabled'}`);
-          return !prev;
-        });
+        setShowPerformanceStats(prev => !prev);
       }
     };
     
@@ -560,24 +525,14 @@ export default function PlayerPage() {
     // Send initial state immediately
     const initialState = buildState();
     shareManager.broadcastState(initialState);
-    broadcastCount++;
-    console.log(`📡 [HOST] Sent initial state to ${shareManager.connectedViewers} viewer(s)`);
     
     // Then broadcast on interval
     const broadcastInterval = setInterval(() => {
       const state = buildState();
       shareManager.broadcastState(state);
-      broadcastCount++;
-      
-      if (broadcastCount % 5 === 0) {
-        console.log(`📡 [HOST] Broadcasted ${broadcastCount} updates to ${shareManager.connectedViewers} viewers`);
-      }
     }, 2000); // 0.5fps - reduce network traffic
 
-    return () => {
-      console.log(`🛑 [HOST] Stopping broadcast (sent ${broadcastCount} updates total)`);
-      clearInterval(broadcastInterval);
-    };
+    return () => clearInterval(broadcastInterval);
   }, [
     shareManager.isHosting,
     shareManager.connectedViewers,
@@ -600,22 +555,16 @@ export default function PlayerPage() {
       const savedFont = await getLyricsFont();
       const savedColor = await getLyricsColor();
       
-      console.log(`📥 Loading preferences - Type: ${savedType}, Mode: ${savedMode}`);
-      
       if (savedType) {
-        console.log(`🎨 Restoring visualization: ${savedType}`);
         setVisualizationType(savedType as VisualizationType);
       }
       if (savedMode) {
-        console.log(`🎯 Restoring mode: ${savedMode}`);
         setVisualizationMode(savedMode as VisualizationMode);
       }
       if (savedFont) {
-        console.log(`🔤 Restoring lyrics font: ${savedFont}`);
         setLyricsFont(savedFont as LyricsFont);
       }
       if (savedColor) {
-        console.log(`🎨 Restoring lyrics color: ${savedColor}`);
         setLyricsColor(savedColor as LyricsColor);
       }
       
@@ -630,7 +579,6 @@ export default function PlayerPage() {
     const loadCustomViz = async () => {
       const customViz = await getAllCustomVisualizations();
       setCustomVisualizations(customViz);
-      console.log(`✨ Loaded ${customViz.length} custom visualizations`);
     };
     loadCustomViz();
   }, []);
@@ -650,9 +598,7 @@ export default function PlayerPage() {
     
     const saveMode = async () => {
       const { saveVisualizationMode } = await import('@/lib/storage');
-      console.log(`💾 Saving visualization mode: ${visualizationMode}`);
       await saveVisualizationMode(visualizationMode);
-      console.log(`✅ Visualization mode saved: ${visualizationMode}`);
     };
     saveMode();
   }, [visualizationMode, preferencesLoaded]);
@@ -685,7 +631,6 @@ export default function PlayerPage() {
       return min + (Math.floor(Math.random() * (steps + 1)) * step);
     };
     
-    console.log(`🎲 Randomizing config for ${vizType}`);
     
     switch (vizType) {
       case 'particles':
@@ -789,7 +734,6 @@ export default function PlayerPage() {
         const randomIndex = Math.floor(Math.random() * visualizations.length);
         const newVisualization = visualizations[randomIndex];
         
-        console.log(`🎲 RANDOM mode: Switching to ${newVisualization}${justSwitchedToRandom ? ' (mode activated)' : ' for new track'}`);
         setVisualizationType(newVisualization);
         
         // Randomize the config for this visualization
@@ -824,7 +768,6 @@ export default function PlayerPage() {
         const cleanCode = stripCodeFences(generatedCode);
         return JSON.parse(cleanCode);
       } catch (error) {
-        console.error('Failed to parse preview DSL:', error);
         return null;
       }
     }
@@ -838,7 +781,6 @@ export default function PlayerPage() {
         const { compileDSL } = require('@/lib/visualizationDSL/compiler');
         return compileDSL(previewConfig);
       } catch (error) {
-        console.error('Failed to compile preview DSL:', error);
         return null;
       }
     }
@@ -852,7 +794,6 @@ export default function PlayerPage() {
         const cleanCode = stripCodeFences(customViz.code);
         return JSON.parse(cleanCode);
       } catch (error) {
-        console.error('Failed to parse custom DSL:', error);
         return null;
       }
     }
@@ -882,7 +823,6 @@ export default function PlayerPage() {
     if (!session?.accessToken) return;
 
     const refreshInterval = setInterval(async () => {
-      console.log("🔄 Proactively refreshing session...");
       await update();
     }, 30 * 60 * 1000); // 30 minutes
 
@@ -909,7 +849,6 @@ export default function PlayerPage() {
         if (data.item.id && data.item.id !== lastFetchedTrackId) {
           // DON'T update lyrics if we've already switched to next track!
           if (hasSwitchedToNextRef.current) {
-            console.log(`⏭️ Skipping lyrics cache check - already showing next track`);
             // Just update the fetched ID to prevent re-fetching
             setLastFetchedTrackId(data.item.id);
           } else if (lyricsCache.current.has(data.item.id)) {
@@ -942,13 +881,11 @@ export default function PlayerPage() {
                   setLyrics(lyricsLines);
                   setLastFetchedTrackId(data.item.id);
                 } catch (err) {
-                  console.error("Error fetching lyrics:", err);
                   lyricsCache.current.set(data.item.id, null);
                   setLyrics(null);
                   setLastFetchedTrackId(data.item.id);
                 }
               } else {
-                console.log(`⏭️ Skipping main thread fetch - already showing next track`);
               }
             }
           }
@@ -956,11 +893,9 @@ export default function PlayerPage() {
       } else {
         // No current track from Spotify, but keep showing last known track
         setPlaybackState(null);
-        console.log("⏸️ No current playback, keeping last known track visible");
         // Don't clear lastKnownTrack - keep it visible!
       }
     } catch (err: any) {
-      console.error("Error fetching playback:", err);
 
       // Check if it's a 401 error (token expired)
       if (
@@ -968,7 +903,6 @@ export default function PlayerPage() {
         err.message.includes("401") &&
         tokenRefreshAttempts < 1
       ) {
-        console.log("🔄 Token expired, please re-authenticate...");
         setTokenRefreshAttempts((prev) => prev + 1);
         setPlaybackState(null);
         setLastKnownTrack(null); // Clear on auth error
@@ -996,21 +930,17 @@ export default function PlayerPage() {
         setQueue(queueData.queue);
         setNextTrack(queueData.queue[0] || null);
         
-        console.log(`🎵 Queue fetched: ${queueData.queue.length} tracks`);
         
         // Filter queue to only uncached tracks
         const uncachedTracks = queueData.queue.filter(track => !lyricsCache.current.has(track.id));
         
-        console.log('🔍 [Player] Uncached tracks:', uncachedTracks.length, 'Worker ready:', lyricsWorker.isWorkerReady);
         
         if (uncachedTracks.length > 0) {
           if (lyricsWorker.isWorkerReady) {
             // Use worker to prefetch lyrics (off main thread)
-            console.log('📤 [Player] Calling prefetchQueue with', uncachedTracks.length, 'tracks');
             lyricsWorker.prefetchQueue(uncachedTracks, 5);
             // Worker will call onQueuePrefetched callback when done
           } else {
-            console.warn('⚠️ [Player] Worker not ready, using fallback');
             // Fallback to main thread if worker not ready
             uncachedTracks.forEach(async (track, index) => {
               if (index >= 5) return;
@@ -1034,7 +964,6 @@ export default function PlayerPage() {
         setNextTrack(null);
       }
     } catch (err) {
-      console.error("Error fetching queue:", err);
       // Don't set error state - queue is non-critical
     }
   };
@@ -1066,7 +995,6 @@ export default function PlayerPage() {
   useEffect(() => {
     if (playbackState?.item?.id) {
       if (hasSwitchedToNextRef.current) {
-        console.log(`🔄 Track changed! Resetting switch flag. New track:`, playbackState.item.name);
       }
       hasSwitchedToNextRef.current = false;
       setLyricsTimeOffset(0); // Reset offset when track changes
@@ -1095,7 +1023,6 @@ export default function PlayerPage() {
         const nextLyrics = lyricsCache.current.get(nextTrack.id);
         
         if (nextLyrics && nextLyrics.length > 0) {
-          console.log(`🎵 Lyrics ended, switching to NEXT! ${Math.ceil(timeRemaining / 1000)}s remaining, ${Math.ceil(timeSinceLastLyric / 1000)}s since last lyric - showing:`, nextTrack.name);
           
           // Switch to next lyrics WITHOUT touching currentProgress!
           setLyrics(nextLyrics);
@@ -1171,9 +1098,7 @@ export default function PlayerPage() {
 
       const data = await response.json();
       setGeneratedCode(data.code);
-      console.log(previousCode ? "✅ Improved visualization code" : "✅ Generated visualization code");
     } catch (error) {
-      console.error("Error generating visualization:", error);
       setGenerationError(
         error instanceof Error ? error.message : "Failed to generate"
       );
@@ -1186,7 +1111,6 @@ export default function PlayerPage() {
   const handleSave = async (name: string) => {
     if (!generatedCode) return;
 
-    console.log('💾 Saving custom visualization:', name);
 
     // Strip markdown code fences before saving
     const cleanCode = stripCodeFences(generatedCode);
@@ -1198,9 +1122,7 @@ export default function PlayerPage() {
         const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
         const dslConfig = JSON.parse(cleanCode);
         compiledCode = compileDSL(dslConfig);
-        console.log('✅ Compiled DSL to JS code');
       } catch (error) {
-        console.error('⚠️ Failed to compile DSL, will use interpreter:', error);
         compiledCode = undefined;
       }
     }
@@ -1217,16 +1139,13 @@ export default function PlayerPage() {
       thumbnail: undefined, // Will capture after rendering
     };
 
-    console.log('📦 Object to save:', JSON.stringify(newViz).substring(0, 200));
 
     try {
       // Save to IndexedDB first
       await saveCustomVisualization(newViz);
-      console.log('✅ Saved to IndexedDB');
       
       // Reload custom visualizations
       const customViz = await getAllCustomVisualizations();
-      console.log('📦 Loaded custom visualizations:', customViz.length);
       setCustomVisualizations(customViz);
 
       // Close creator first
@@ -1236,40 +1155,29 @@ export default function PlayerPage() {
       setGenerationError(null);
 
       // Switch to the new visualization to render it
-      console.log('🎨 Switching to new visualization:', newViz.id);
       setVisualizationType(newViz.id);
 
       // Capture screenshot after visualization renders
       setTimeout(async () => {
         try {
-          console.log('📸 Capturing screenshot for viz:', newViz.id);
           const { captureAndCompressThumbnail } = await import('@/lib/screenshotCapture');
           const thumbnail = await captureAndCompressThumbnail('body');
           
-          console.log('📸 Screenshot captured, size:', thumbnail.length, 'chars');
-          console.log('📸 Screenshot preview:', thumbnail.substring(0, 50) + '...');
           
           // Update visualization with thumbnail
           newViz.thumbnail = thumbnail;
           await saveCustomVisualization(newViz);
-          console.log('💾 Updated viz with thumbnail in database');
           
           // Reload to show new thumbnail
           const updated = await getAllCustomVisualizations();
           setCustomVisualizations(updated);
           
-          console.log('✅ Screenshot captured and saved, updated list has', updated.length, 'vizs');
-          console.log('📋 Updated viz:', updated.find(v => v.id === newViz.id));
         } catch (error) {
-          console.error('⚠️ Failed to capture screenshot:', error);
-          console.error('⚠️ Error details:', error instanceof Error ? error.message : error);
           // Continue anyway - viz is still usable
         }
       }, 3000); // Wait 3 seconds for viz to render
 
-      console.log(`✅ Successfully saved and loaded: ${name}`);
     } catch (error) {
-      console.error('❌ Failed to save visualization:', error);
       setGenerationError('Failed to save visualization');
     }
   };
@@ -1722,7 +1630,6 @@ export default function PlayerPage() {
         {!shareManager.isShareActive ? (
           // Not sharing yet - show Share button
           <ShareButton onStartSharing={() => {
-            console.log("🎭 [PLAYER] User initiated screen sharing");
             shareManager.startHosting();
             hasStartedHosting.current = true;
             setShowQRCodeOnConnect(true); // Auto-expand QR on connect
@@ -1734,7 +1641,6 @@ export default function PlayerPage() {
             connectedViewers={shareManager.connectedViewers}
             autoExpand={showQRCodeOnConnect}
             onDisconnect={() => {
-              console.log("🛑 [PLAYER] User ended sharing session");
               shareManager.stopHosting();
               setShowQRCodeOnConnect(false);
             }}
@@ -1809,7 +1715,7 @@ export default function PlayerPage() {
                 throw new Error(data.error || 'Failed to open billing portal');
               }
             } catch (error) {
-              console.error('Error opening portal:', error);
+              console.error('[PLAYER] Portal error:', error);
               alert('Failed to open billing portal. Please try again.');
             }
           };
@@ -2158,7 +2064,6 @@ export default function PlayerPage() {
                   onClick={async () => {
                     if (!customViz) return;
                     try {
-                      console.log('🔄 Recompiling visualization...');
                       const cleanCode = stripCodeFences(customViz.code);
                       const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
                       const dslConfig = JSON.parse(cleanCode);
@@ -2173,11 +2078,10 @@ export default function PlayerPage() {
                         prev.map(v => v.id === customViz.id ? updatedViz : v)
                       );
                       
-                      console.log('✅ Recompiled successfully!');
                       alert('✅ Visualization recompiled! The page will refresh.');
                       window.location.reload();
                     } catch (error) {
-                      console.error('❌ Recompile failed:', error);
+                      console.error('[PLAYER] Recompile failed:', error);
                       alert('❌ Failed to recompile');
                     }
                   }}
@@ -2193,7 +2097,6 @@ export default function PlayerPage() {
                   onClick={async () => {
                     if (!customViz) return;
                     try {
-                      console.log('📸 Retaking screenshot for:', customViz.name);
                       
                       // Wait a moment for viz to render
                       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -2201,7 +2104,6 @@ export default function PlayerPage() {
                       const { captureAndCompressThumbnail } = await import('@/lib/screenshotCapture');
                       const thumbnail = await captureAndCompressThumbnail('body');
                       
-                      console.log('📸 Screenshot captured, size:', thumbnail.length, 'chars');
                       
                       // Save updated visualization with new thumbnail
                       const updatedViz = { ...customViz, thumbnail };
@@ -2211,10 +2113,9 @@ export default function PlayerPage() {
                       const updated = await getAllCustomVisualizations();
                       setCustomVisualizations(updated);
                       
-                      console.log('✅ Screenshot updated!');
                       alert('✅ Screenshot captured and saved!');
                     } catch (error) {
-                      console.error('❌ Screenshot capture failed:', error);
+                      console.error('[PLAYER] Screenshot failed:', error);
                       alert('❌ Failed to capture screenshot: ' + (error instanceof Error ? error.message : 'Unknown error'));
                     }
                   }}

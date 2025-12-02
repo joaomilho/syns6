@@ -257,10 +257,20 @@
   font-size: 1rem;
 }
 
+/* Hidden input for mobile keyboard - positioned off-screen but focusable */
+.hiddenCodeInput {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 .codeInputs {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  cursor: text;
 }
 
 .codeDigit {
@@ -268,20 +278,29 @@
   height: 5rem;
   font-size: 2.5rem;
   font-weight: 700;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   color: #fff;
   font-family: 'Monaco', 'Courier New', monospace;
   transition: all 0.2s;
+  user-select: none;
 }
 
-.codeDigit:focus {
-  outline: none;
+/* Active digit (cursor position) */
+.codeDigitActive {
   border-color: #00ff88;
   background: rgba(0, 255, 136, 0.1);
   box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+/* Filled digit */
+.codeDigitFilled {
+  border-color: rgba(0, 255, 136, 0.5);
+  background: rgba(0, 255, 136, 0.05);
 }
 
 .connectButton {
@@ -429,6 +448,10 @@
     height: 3.5rem;
     font-size: 1.75rem;
     border-radius: 8px;
+  }
+
+  .codeDigitActive {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
   }
 
   .codeInputContainer h1 {
