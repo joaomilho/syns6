@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 import OrbitalVisualization from "@/components/OrbitalVisualization";
-import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import KaleidoscopeVisualization from "@/components/KaleidoscopeVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
@@ -182,13 +181,6 @@ export default function ScreenshotPage() {
             energy={micData.energy}
             treble={micData.treble}
             frequencyData={micData.frequencyData}
-          />
-        );
-      case "fractal":
-        return (
-          <FractalVisualization
-            energy={micData.energy}
-            bass={micData.bass}
           />
         );
       case "psychedelic":
