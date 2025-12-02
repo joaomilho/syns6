@@ -1796,6 +1796,24 @@ export default function PlayerPage() {
             : null;
           const detectedCurrency: CurrencyCode = 'USD'; // Default currency
           
+          // Handle Stripe portal for subscription management
+          const handleManageSubscription = async () => {
+            try {
+              const response = await fetch('/api/stripe/portal', {
+                method: 'POST',
+              });
+              const data = await response.json();
+              if (response.ok && data.url) {
+                window.open(data.url, '_blank');
+              } else {
+                throw new Error(data.error || 'Failed to open billing portal');
+              }
+            } catch (error) {
+              console.error('Error opening portal:', error);
+              alert('Failed to open billing portal. Please try again.');
+            }
+          };
+          
           return (
             <div style={{ position: 'relative' }}>
               <button 
@@ -1892,10 +1910,35 @@ export default function PlayerPage() {
                         <div style={{ 
                           color: 'rgba(255, 255, 255, 0.5)', 
                           fontSize: '11px',
+                          marginBottom: '8px',
                         }}>
-                          Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                          {subscription.cancelAtPeriodEnd ? 'Expires' : 'Renews'} {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
                         </div>
                       )}
+                      <button
+                        onClick={handleManageSubscription}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        }}
+                      >
+                        Manage Subscription
+                      </button>
                     </div>
                   ) : (
                     <div style={{
