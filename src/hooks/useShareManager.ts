@@ -34,8 +34,11 @@ export interface SharedState {
   // Current playback position (for lyrics sync)
   currentTimeMs: number;
   
-  // Timestamp for measuring latency
+  // Timestamp for measuring latency (deprecated, use roundTripTime)
   timestamp?: number;
+  
+  // Round-trip time from poll request (ms) - use RTT/2 as estimated latency
+  roundTripTime?: number;
 }
 
 interface UseShareManagerReturn {
@@ -78,7 +81,6 @@ export function useShareManager(): UseShareManagerReturn {
   // Use lyrics worker for sharing functionality
   const lyricsWorker = useLyricsWorker({
     onSharingStarted: useCallback((code: string) => {
-      console.log('✅ [HOST] Sharing started with code:', code);
       setShareCode(code);
       setIsHosting(true);
       setIsShareActive(true);
@@ -91,7 +93,6 @@ export function useShareManager(): UseShareManagerReturn {
     }, []),
     
     onSharingStopped: useCallback(() => {
-      console.log('👋 [HOST] Sharing stopped');
       setShareCode(null);
       setIsHosting(false);
       setConnectedViewers(0);
@@ -105,7 +106,7 @@ export function useShareManager(): UseShareManagerReturn {
     }, []),
     
     onSharingError: useCallback((error: string) => {
-      console.error('❌ [HOST] Sharing error:', error);
+      console.error('[HOST] Sharing error:', error);
       setConnectionError(error);
     }, []),
     
@@ -114,19 +115,17 @@ export function useShareManager(): UseShareManagerReturn {
     }, []),
     
     onViewingStarted: useCallback((code: string) => {
-      console.log('✅ [VIEWER] Viewing started for code:', code);
       setIsViewer(true);
       setConnectionError(null);
     }, []),
     
     onViewingStopped: useCallback(() => {
-      console.log('👋 [VIEWER] Viewing stopped');
       setIsViewer(false);
       setViewerState(null);
     }, []),
     
     onViewingError: useCallback((error: string) => {
-      console.error('❌ [VIEWER] Viewing error:', error);
+      console.error('[VIEWER] Error:', error);
       setConnectionError(error);
       setIsViewer(false);
       setViewerState(null);
@@ -149,6 +148,10 @@ export function useShareManager(): UseShareManagerReturn {
         lyrics: state.lyrics,
         visualizationType: state.visualizationType,
         visualizationMode: state.visualizationMode,
+        // Poll timing for latency calculation
+        // RTT/2 is the estimated one-way latency from server to viewer
+        roundTripTime: state.roundTripTime || 0,
+        timestamp: Date.now(), // For backwards compatibility
       };
       
       setViewerState(sharedState);
@@ -157,23 +160,14 @@ export function useShareManager(): UseShareManagerReturn {
 
   // Start hosting
   const startHosting = useCallback(() => {
-    if (isHosting) {
-      console.log('⚠️ Already hosting');
-      return;
-    }
+    if (isHosting) return;
     
     // Check if we have a saved code to reuse
     const savedCode = typeof window !== 'undefined' 
       ? localStorage.getItem('syns-share-code') 
       : null;
     
-    if (savedCode) {
-      console.log('🔄 Reusing saved share code:', savedCode);
-      lyricsWorker.startSharing(savedCode);
-    } else {
-      console.log('✨ Creating new share session');
-      lyricsWorker.startSharing();
-    }
+    lyricsWorker.startSharing(savedCode || undefined);
   }, [isHosting, lyricsWorker]);
 
   // Stop hosting
@@ -218,10 +212,7 @@ export function useShareManager(): UseShareManagerReturn {
 
   // Connect to host (viewer mode)
   const connectToHost = useCallback((code: string) => {
-    if (isViewer) {
-      console.log('⚠️ Already viewing a session');
-      return;
-    }
+    if (isViewer) return;
     
     setConnectionError(null);
     lyricsWorker.joinSharing(code);

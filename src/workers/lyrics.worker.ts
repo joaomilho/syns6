@@ -168,7 +168,7 @@ async function pollSpotify() {
     // Schedule next poll
     pollingTimeout = setTimeout(pollSpotify, nextInterval);
   } catch (error: any) {
-    console.error('[Worker] Spotify polling error:', error);
+    console.error('[WORKER] Spotify poll error:', error.message);
     
     // Send error to main thread
     self.postMessage({
@@ -189,8 +189,6 @@ async function fetchYouTubeVideos(
   artistName: string,
   spotifyId: string
 ): Promise<string[]> {
-  console.log(`[Worker] 🎬 Fetching YouTube videos for: ${trackName} - ${artistName} (${spotifyId})`);
-  
   try {
     const query = `${trackName} ${artistName}`;
     const params = new URLSearchParams({
@@ -201,22 +199,13 @@ async function fetchYouTubeVideos(
     });
     
     const apiUrl = `${self.location.origin}/api/youtube/search?${params.toString()}`;
-    console.log(`[Worker] 📡 API URL: ${apiUrl}`);
-    
     const response = await fetch(apiUrl);
     
-    if (!response.ok) {
-      console.error('[Worker] ❌ YouTube API error:', response.status);
-      return [];
-    }
+    if (!response.ok) return [];
     
     const data = await response.json();
-    const videoIds = data.videoIds || [];
-    
-    console.log(`[Worker] ✅ Fetched ${videoIds.length} YouTube video IDs for: ${trackName}`, videoIds);
-    return videoIds;
-  } catch (error: any) {
-    console.error('[Worker] ❌ Error fetching YouTube videos:', error);
+    return data.videoIds || [];
+  } catch {
     return [];
   }
 }
@@ -253,22 +242,11 @@ function stopPolling() {
  * Start sharing - create a shared session or reuse existing one
  */
 async function startSharing() {
-  if (isSharing && shareCode) {
-    console.log('[Worker] Already sharing with code:', shareCode);
-    return;
-  }
+  if (isSharing && shareCode) return;
   
   try {
-    // Try to get saved session code from a message (will be sent from main thread)
-    // For now, just create a new session
-    // The main thread (useShareManager) will handle persistence via localStorage
-    
-    // Create a new shared session
-    // Use self.location.origin to get absolute URL in worker context
     const apiUrl = `${self.location.origin}/api/share/create`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-    });
+    const response = await fetch(apiUrl, { method: 'POST' });
     
     if (!response.ok) {
       throw new Error(`Failed to create session: ${response.status}`);
@@ -278,22 +256,11 @@ async function startSharing() {
     shareCode = data.code;
     isSharing = true;
     
-    console.log('[Worker] Sharing started with code:', shareCode);
-    
-    // Send the code back to the main thread
-    self.postMessage({
-      type: 'SHARING_STARTED',
-      code: shareCode,
-    });
-    
-    // Start checking for connected clients
+    self.postMessage({ type: 'SHARING_STARTED', code: shareCode });
     checkConnectedClients();
   } catch (error: any) {
-    console.error('[Worker] Error starting sharing:', error);
-    self.postMessage({
-      type: 'SHARING_ERROR',
-      error: error.message,
-    });
+    console.error('[WORKER] Share create error:', error.message);
+    self.postMessage({ type: 'SHARING_ERROR', error: error.message });
   }
 }
 
@@ -315,11 +282,7 @@ function stopSharing() {
     shareCheckTimeout = null;
   }
   
-  console.log('[Worker] Sharing stopped');
-  
-  self.postMessage({
-    type: 'SHARING_STOPPED',
-  });
+  self.postMessage({ type: 'SHARING_STOPPED' });
 }
 
 /**
@@ -347,7 +310,6 @@ async function updateShareState(state: SharedSessionState) {
     
     if (response.status === 410) {
       // Session expired or closed - stop sharing
-      console.log('[Worker] Session expired or closed by server');
       stopSharing();
       return;
     }
@@ -363,8 +325,8 @@ async function updateShareState(state: SharedSessionState) {
       type: 'CONNECTED_CLIENTS_UPDATE',
       connectedClients: data.connectedClients,
     });
-  } catch (error: any) {
-    console.error('[Worker] Error updating share state:', error);
+  } catch {
+    // Silent fail for state updates
   }
 }
 
@@ -381,8 +343,7 @@ async function checkConnectedClients() {
     const response = await fetch(apiUrl);
     
     if (response.status === 410 || response.status === 404) {
-      // Session expired, closed, or not found - stop sharing
-      console.log('[Worker] Session no longer available');
+      // Session expired, closed, or not found
       stopSharing();
       return;
     }
@@ -396,8 +357,8 @@ async function checkConnectedClients() {
         connectedClients: data.connectedClients,
       });
     }
-  } catch (error: any) {
-    console.error('[Worker] Error checking connected clients:', error);
+  } catch {
+    // Silent fail
   }
   
   // Check again in 2 seconds
@@ -408,19 +369,13 @@ async function checkConnectedClients() {
  * Join sharing - start polling for shared state
  */
 async function joinSharing(code: string) {
-  if (isViewing && viewShareCode === code) {
-    console.log('[Worker] Already viewing session:', code);
-    return;
-  }
+  if (isViewing && viewShareCode === code) return;
   
   try {
-    // Join the shared session
     const apiUrl = `${self.location.origin}/api/share/join`;
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
     });
     
@@ -432,17 +387,12 @@ async function joinSharing(code: string) {
     viewShareCode = code;
     isViewing = true;
     
-    console.log('[Worker] Joined shared session:', code);
-    
-    self.postMessage({
-      type: 'VIEWING_STARTED',
-      code,
-    });
+    self.postMessage({ type: 'VIEWING_STARTED', code });
     
     // Start polling for state updates
     pollSharedState();
   } catch (error: any) {
-    console.error('[Worker] Error joining session:', error);
+    console.error('[WORKER] Join error:', error.message);
     self.postMessage({
       type: 'VIEWING_ERROR',
       error: error.message,
@@ -479,15 +429,11 @@ async function leaveSharing() {
       },
       body: JSON.stringify({ code }),
     });
-  } catch (error) {
-    console.error('[Worker] Error disconnecting:', error);
+  } catch {
+    // Silent fail
   }
   
-  console.log('[Worker] Left shared session');
-  
-  self.postMessage({
-    type: 'VIEWING_STOPPED',
-  });
+  self.postMessage({ type: 'VIEWING_STOPPED' });
 }
 
 /**
@@ -499,8 +445,10 @@ async function pollSharedState() {
   }
   
   try {
+    const pollStartTime = Date.now();
     const apiUrl = `${self.location.origin}/api/share/poll?code=${viewShareCode}`;
     const response = await fetch(apiUrl);
+    const pollEndTime = Date.now();
     
     if (!response.ok) {
       if (response.status === 404 || response.status === 410) {
@@ -512,16 +460,24 @@ async function pollSharedState() {
     
     const data = await response.json();
     
-    // Send state to main thread
+    // Calculate round-trip time (RTT) - latency is approximately RTT/2
+    const roundTripTime = pollEndTime - pollStartTime;
+    
+    // Send state to main thread with timing info
     self.postMessage({
       type: 'SHARED_STATE_UPDATE',
-      state: data,
+      state: {
+        ...data,
+        // Add timing metadata for latency calculation
+        pollTimestamp: pollEndTime,
+        roundTripTime,
+      },
     });
     
     // Poll again in 500ms (2 times per second)
     viewPollTimeout = setTimeout(pollSharedState, 500);
   } catch (error: any) {
-    console.error('[Worker] Error polling shared state:', error);
+    console.error('[WORKER] Poll error:', error.message);
     
     self.postMessage({
       type: 'VIEWING_ERROR',
@@ -536,8 +492,6 @@ async function pollSharedState() {
 // Message handler
 self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data;
-
-  console.log(`🔵 [Worker] Message received: ${type}`, data ? Object.keys(data) : 'no data');
 
   try {
     switch (type) {
@@ -558,49 +512,25 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       case 'PREFETCH_QUEUE': {
         const { queue, maxTracks = 5 } = data as QueuePrefetchRequest;
         
-        console.log('🎯 [Worker] PREFETCH_QUEUE received:', queue.length, 'tracks, prefetching:', maxTracks);
-        
         // Fetch both lyrics AND YouTube videos for first N tracks in parallel
         const prefetchPromises = queue.slice(0, maxTracks).map(async (track) => {
           try {
             const artistName = track.artists?.[0]?.name || 'Unknown Artist';
             
-            console.log(`🎯 [Worker] Fetching for: ${track.name} by ${artistName}`);
-            
-            // Fetch lyrics and YouTube videos in parallel
             const [lyrics, videoIds] = await Promise.all([
               fetchSyncedLyrics(track.name, artistName, track.duration_ms, track.id),
               fetchYouTubeVideos(track.name, artistName, track.id),
             ]);
             
-            console.log(`🎯 [Worker] ✅ Got ${videoIds?.length || 0} video IDs for: ${track.name}`);
-            
-            return { 
-              trackId: track.id, 
-              lyrics, 
-              videoIds,
-              success: true 
-            };
+            return { trackId: track.id, lyrics, videoIds, success: true };
           } catch (error: any) {
-            console.error(`🎯 [Worker] ❌ Error fetching for ${track.name}:`, error);
-            return { 
-              trackId: track.id, 
-              lyrics: null, 
-              videoIds: [],
-              success: false, 
-              error: error.message 
-            };
+            return { trackId: track.id, lyrics: null, videoIds: [], success: false, error: error.message };
           }
         });
         
         const results = await Promise.all(prefetchPromises);
         
-        console.log('🎯 [Worker] ✅ All prefetch complete, posting results:', results.map(r => `${r.trackId}: ${r.videoIds?.length || 0} videos`));
-        
-        self.postMessage({
-          type: 'QUEUE_PREFETCHED',
-          results,
-        });
+        self.postMessage({ type: 'QUEUE_PREFETCHED', results });
         break;
       }
 
@@ -617,10 +547,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       }
 
       case 'REPORT_WORKING_VIDEO': {
-        // Main thread found a working video, we just log it
-        // IndexedDB operations will be handled by main thread
-        const { spotifyId, workingVideoId } = data;
-        console.log(`[Worker] ✅ Reported working video for ${spotifyId}: ${workingVideoId}`);
+        // Main thread found a working video - IndexedDB operations handled by main thread
         break;
       }
 
@@ -655,22 +582,14 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
               // Reuse existing session
               shareCode = savedCode;
               isSharing = true;
-              console.log('[Worker] ✅ Reusing saved session code:', shareCode);
               
-              self.postMessage({
-                type: 'SHARING_STARTED',
-                code: shareCode,
-              });
-              
-              // Start checking for connected clients
+              self.postMessage({ type: 'SHARING_STARTED', code: shareCode });
               checkConnectedClients();
             } else {
               // Saved code is invalid, create new session
-              console.log('[Worker] ⚠️ Saved code invalid, creating new session');
               await startSharing();
             }
-          } catch (error) {
-            console.error('[Worker] Error verifying saved code:', error);
+          } catch {
             // On error, create new session
             await startSharing();
           }
@@ -704,15 +623,11 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       }
 
       default:
-        console.warn(`[Worker] Unknown message type: ${type}`);
+        // Unknown message type - ignore
     }
   } catch (error: any) {
-    console.error('[Worker] Error:', error);
-    self.postMessage({
-      type: 'ERROR',
-      error: error.message,
-      originalType: type,
-    });
+    console.error('[WORKER] Error:', error.message);
+    self.postMessage({ type: 'ERROR', error: error.message, originalType: type });
   }
 });
 

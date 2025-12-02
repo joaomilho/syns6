@@ -143,12 +143,11 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
       try {
         const savedHostPeerId = await loadHostPeerId();
         if (savedHostPeerId) {
-          console.log('🔄 Auto-connecting to saved host:', savedHostPeerId);
           setHostPeerId(savedHostPeerId);
           setShowCodeInput(false);
         }
       } catch (error) {
-        console.error('Failed to load saved connection:', error);
+        // Silent fail - will show code input
       } finally {
         setIsLoadingSavedConnection(false);
       }
@@ -161,26 +160,21 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   useEffect(() => {
     if (hostPeerId && !shareManager.isViewer && !maxAttemptsReached && !hasAttemptedConnection.current) {
       hasAttemptedConnection.current = true;
-      console.log("🔗 Connecting to host:", hostPeerId, `(Attempt ${connectionAttempts + 1}/${MAX_CONNECTION_ATTEMPTS})`);
       shareManager.connectToHost(hostPeerId);
       setIsConnecting(true);
       setConnectionAttempts(prev => prev + 1);
 
       // Save to IndexedDB for auto-reconnect
-      saveHostPeerId(hostPeerId).catch(err => {
-        console.error('Failed to save host peer ID:', err);
-      });
+      saveHostPeerId(hostPeerId).catch(() => {});
     }
   }, [hostPeerId, shareManager, maxAttemptsReached, MAX_CONNECTION_ATTEMPTS]); // Removed connectionAttempts from deps
 
   // Update connecting state
   useEffect(() => {
-    console.log(`🔄 [VIEWER] Connection state: isViewer=${shareManager.isViewer}, hasState=${!!shareManager.viewerState}`);
     if (shareManager.isViewer) {
       setIsConnecting(false);
       setConnectionAttempts(0); // Reset attempts on successful connection
       // DON'T reset hasAttemptedConnection here - it causes double connection!
-      console.log('✅ [VIEWER] Connected! Waiting for data...');
     }
   }, [shareManager.isViewer, shareManager.viewerState]);
 
@@ -188,7 +182,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   useEffect(() => {
     if (shareManager.connectionError) {
       if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
-        console.error(`❌ [VIEWER] Max connection attempts (${MAX_CONNECTION_ATTEMPTS}) reached`);
         setMaxAttemptsReached(true);
         setIsConnecting(false);
       } else {
@@ -207,27 +200,18 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
     loadCustomViz();
   }, []);
 
-  // Force body to be black and log lifecycle
+  // Force body to be black
   useEffect(() => {
-    console.log('🎬 [VIEWER] SharePageContent mounted');
     document.body.style.backgroundColor = '#000000';
     document.documentElement.style.backgroundColor = '#000000';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
 
-    // Detect page reloads
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      console.log('🔄 [VIEWER] Page is reloading/closing!');
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
-      console.log('💀 [VIEWER] SharePageContent unmounting - this should NOT happen during normal operation!');
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       document.body.style.backgroundColor = '';
       document.documentElement.style.backgroundColor = '';
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-enable microphone on viewer (for text-only mode audio reactivity and WebGL visualizations)
   useEffect(() => {
@@ -245,23 +229,19 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
 
       // If not HTTPS and not localhost, skip mic setup silently
       if (!isHttps && !isLocalhost) {
-        console.log('⏭️ Skipping microphone - HTTP context (not localhost)');
         return;
       }
 
       // Check if mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log('⏭️ Skipping microphone - not supported by browser');
         return;
       }
 
       if (!isMicEnabled && !micHookError) {
-        console.log('🎤 Auto-enabling microphone for viewer...');
         try {
           await enableMic();
-        } catch (err) {
-          console.error('❌ Failed to enable microphone:', err);
-          // Don't show error, just continue without mic
+        } catch {
+          // Silent fail - continue without mic
         }
       }
     };
@@ -272,25 +252,19 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   // Convert received state to component props
   const state = shareManager.viewerState;
 
-  // Calculate and update latency
+  // Calculate and update latency from poll round-trip time
+  // RTT/2 gives us an estimate of one-way network latency
   useEffect(() => {
-    if (state?.timestamp) {
-      const now = Date.now();
-      const calculatedLatency = now - state.timestamp;
-      setLatency(calculatedLatency);
+    if (state?.roundTripTime !== undefined) {
+      const estimatedLatency = Math.round(state.roundTripTime / 2);
+      setLatency(estimatedLatency);
       setUpdateCount(prev => prev + 1);
     }
-  }, [state]);
+  }, [state?.roundTripTime]);
 
-  // Debug: Log received state on first receive
+  // Track first state received
   useEffect(() => {
     if (state && !hasLoggedRef.current) {
-      console.log('✅ First state received:', {
-        hasPlayback: !!state.playbackState,
-        hasLyrics: !!state.lyrics,
-        hasQueue: !!state.queue,
-        queueLength: state.queue?.length,
-      });
       hasLoggedRef.current = true;
     }
   }, [state]);
@@ -346,7 +320,7 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             />
           );
         } catch (error) {
-          console.error("Failed to parse custom DSL:", error);
+          // Failed to parse DSL
           return null;
         }
       } else {
@@ -469,8 +443,24 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
     );
   }
 
+  // Handle single input change for code entry
+  const handleCodeInputChange = (value: string) => {
+    const sanitized = value.replace(/[^0-9]/g, '').slice(0, 6);
+    const newCode = sanitized.split('').concat(Array(6).fill('')).slice(0, 6);
+    setCodeInput(newCode);
+
+    // Auto-connect when all 6 digits entered
+    if (sanitized.length === 6) {
+      hasAttemptedConnection.current = false;
+      setHostPeerId(sanitized);
+      setShowCodeInput(false);
+    }
+  };
+
   // Show code input if no host ID
   if (showCodeInput && !hostPeerId) {
+    const codeValue = codeInput.join('');
+    
     return (
       <div className={styles.container}>
         <div className={styles.codeInputContainer}>
@@ -479,73 +469,49 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             Enter the 6-digit code from the host screen
           </p>
 
-          <div className={styles.codeInputs}>
+          {/* Hidden single input for mobile keyboard persistence */}
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={codeValue}
+            onChange={(e) => handleCodeInputChange(e.target.value)}
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+              handleCodeInputChange(pastedText);
+            }}
+            className={styles.hiddenCodeInput}
+            autoFocus
+          />
+
+          {/* Visual digit boxes (click focuses hidden input) */}
+          <div 
+            className={styles.codeInputs}
+            onClick={() => {
+              const hiddenInput = document.querySelector(`.${styles.hiddenCodeInput}`) as HTMLInputElement;
+              hiddenInput?.focus();
+            }}
+          >
             {codeInput.map((digit, index) => (
-              <input
+              <div
                 key={index}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]"
-                maxLength={1}
-                value={digit}
-                className={styles.codeDigit}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value.length <= 1) {
-                    const newCode = [...codeInput];
-                    newCode[index] = value;
-                    setCodeInput(newCode);
-
-                    // Auto-focus next input
-                    if (value && index < 5) {
-                      const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
-                      nextInput?.focus();
-                    }
-
-                    // Auto-connect when all 6 digits entered
-                    if (index === 5 && value && newCode.every(d => d)) {
-                      const code = newCode.join('');
-                      console.log('🔗 Connecting with code:', code);
-                      hasAttemptedConnection.current = false; // Allow new connection attempt
-                      setHostPeerId(code);
-                      setShowCodeInput(false);
-                    }
-                  }
-                }}
-                onKeyDown={(e) => {
-                  // Backspace: move to previous input
-                  if (e.key === 'Backspace' && !codeInput[index] && index > 0) {
-                    const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
-                    prevInput?.focus();
-                  }
-                }}
-                onPaste={(e) => {
-                  e.preventDefault();
-                  const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-                  if (pastedText.length === 6) {
-                    const newCode = pastedText.split('');
-                    setCodeInput(newCode);
-                    // Auto-connect
-                    const code = newCode.join('');
-                    console.log('🔗 Connecting with code:', code);
-                    hasAttemptedConnection.current = false;
-                    setHostPeerId(code);
-                    setShowCodeInput(false);
-                  }
-                }}
-                onFocus={(e) => e.target.select()}
-              />
+                className={`${styles.codeDigit} ${index === codeValue.length ? styles.codeDigitActive : ''} ${digit ? styles.codeDigitFilled : ''}`}
+              >
+                {digit}
+              </div>
             ))}
           </div>
 
           <button
             className={styles.connectButton}
-            disabled={!codeInput.every(d => d)}
+            disabled={codeValue.length !== 6}
             onClick={() => {
-              const code = codeInput.join('');
-              console.log('🔗 Connecting with code:', code);
-              hasAttemptedConnection.current = false; // Allow new connection attempt
-              setHostPeerId(code);
+             
+              hasAttemptedConnection.current = false;
+              setHostPeerId(codeValue);
               setShowCodeInput(false);
             }}
           >
@@ -592,75 +558,68 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             Enter a new 6-digit code
           </p>
 
-          <div className={styles.codeInputs}>
+          {/* Hidden single input for mobile keyboard persistence */}
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={codeInput.join('')}
+            onChange={(e) => {
+              const sanitized = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+              const newCode = sanitized.split('').concat(Array(6).fill('')).slice(0, 6);
+              setCodeInput(newCode);
+
+              // Auto-connect when all 6 digits entered
+              if (sanitized.length === 6) {
+               
+                setConnectionAttempts(0);
+                setMaxAttemptsReached(false);
+                hasAttemptedConnection.current = false;
+                setHostPeerId(sanitized);
+                setShowCodeInput(false);
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+              const newCode = pastedText.split('').concat(Array(6).fill('')).slice(0, 6);
+              setCodeInput(newCode);
+              if (pastedText.length === 6) {
+                setConnectionAttempts(0);
+                setMaxAttemptsReached(false);
+                hasAttemptedConnection.current = false;
+                setHostPeerId(pastedText);
+                setShowCodeInput(false);
+              }
+            }}
+            className={styles.hiddenCodeInput}
+          />
+
+          {/* Visual digit boxes (click focuses hidden input) */}
+          <div 
+            className={styles.codeInputs}
+            onClick={() => {
+              const hiddenInput = document.querySelector(`.${styles.hiddenCodeInput}`) as HTMLInputElement;
+              hiddenInput?.focus();
+            }}
+          >
             {codeInput.map((digit, index) => (
-              <input
+              <div
                 key={index}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]"
-                maxLength={1}
-                value={digit}
-                className={styles.codeDigit}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value.length <= 1) {
-                    const newCode = [...codeInput];
-                    newCode[index] = value;
-                    setCodeInput(newCode);
-
-                    // Auto-focus next input
-                    if (value && index < 5) {
-                      const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
-                      nextInput?.focus();
-                    }
-
-                    // Auto-connect when all 6 digits entered
-                    if (index === 5 && value && newCode.every(d => d)) {
-                      const code = newCode.join('');
-                      console.log('🔗 Connecting with code:', code);
-                      setConnectionAttempts(0);
-                      setMaxAttemptsReached(false);
-                      hasAttemptedConnection.current = false;
-                      setHostPeerId(code);
-                      setShowCodeInput(false);
-                    }
-                  }
-                }}
-                onKeyDown={(e) => {
-                  // Backspace: move to previous input
-                  if (e.key === 'Backspace' && !codeInput[index] && index > 0) {
-                    const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
-                    prevInput?.focus();
-                  }
-                }}
-                onPaste={(e) => {
-                  e.preventDefault();
-                  const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-                  if (pastedText.length === 6) {
-                    const newCode = pastedText.split('');
-                    setCodeInput(newCode);
-                    // Auto-connect
-                    const code = newCode.join('');
-                    console.log('🔗 Connecting with code:', code);
-                    setConnectionAttempts(0);
-                    setMaxAttemptsReached(false);
-                    hasAttemptedConnection.current = false;
-                    setHostPeerId(code);
-                    setShowCodeInput(false);
-                  }
-                }}
-                onFocus={(e) => e.target.select()}
-              />
+                className={`${styles.codeDigit} ${index === codeInput.join('').length ? styles.codeDigitActive : ''} ${digit ? styles.codeDigitFilled : ''}`}
+              >
+                {digit}
+              </div>
             ))}
           </div>
 
           <button
             className={styles.connectButton}
-            disabled={!codeInput.every(d => d)}
+            disabled={codeInput.join('').length !== 6}
             onClick={() => {
               const code = codeInput.join('');
-              console.log('🔗 Connecting with code:', code);
               setConnectionAttempts(0);
               setMaxAttemptsReached(false);
               hasAttemptedConnection.current = false;
@@ -737,7 +696,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
   if (!state) {
     // Only log once when we first enter "waiting for data" state
     if (!hasLoggedWaitingRef.current) {
-      console.log('⏳ [VIEWER] Connected but no state yet. isViewer:', shareManager.isViewer);
       hasLoggedWaitingRef.current = true;
     }
     return (
