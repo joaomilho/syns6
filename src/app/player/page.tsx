@@ -18,6 +18,8 @@ import { useYouTubePreloader } from "@/hooks/useYouTubePreloader";
 import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
+import { getPlanFromPriceId, getPriceForPlan, formatPrice } from "@/lib/prices";
+import { CurrencyCode } from "@/components/CurrencyDropdown";
 import { Canvas } from "@react-three/fiber";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
@@ -1787,149 +1789,188 @@ export default function PlayerPage() {
         />
 
         {/* User Profile */}
-        {session?.user && (
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className={styles.userProfile}
-              style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
-            >
-              {session.user.image ? (
-                <Image
-                  src={session.user.image}
-                  alt={session.user.name || "User"}
-                  width={36}
-                  height={36}
-                  className={styles.userAvatar}
-                />
-              ) : (
-                <div className={styles.userAvatarPlaceholder}>
-                  {session.user.name?.charAt(0) || "U"}
-                </div>
-              )}
-            </button>
-            
-            {showProfileDropdown && (
-              <div 
-                className="profileDropdown"
-                style={{
-                  position: 'absolute',
-                  top: '50px',
-                  right: 0,
-                  background: 'rgba(20, 20, 30, 0.98)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  minWidth: '200px',
-                  zIndex: 1000,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-                }}
+        {session?.user && (() => {
+          // Get subscription plan details
+          const planInfo = subscription?.stripePriceId 
+            ? getPlanFromPriceId(subscription.stripePriceId)
+            : null;
+          const detectedCurrency: CurrencyCode = 'USD'; // Default currency
+          
+          return (
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                className={styles.userProfile}
+                style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
               >
-                {/* User Info */}
-                <div style={{
-                  padding: '8px 12px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                  marginBottom: '8px',
-                }}>
-                  <div style={{ 
-                    color: '#fff', 
-                    fontSize: '14px', 
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    {session.user.name}
-                  </div>
-                  <div style={{ 
-                    color: 'rgba(255, 255, 255, 0.6)', 
-                    fontSize: '12px',
-                  }}>
-                    {session.user.email}
-                  </div>
-                </div>
-
-                {/* Subscription Status */}
-                {subscription && (
-                  <div style={{
-                    padding: '8px 12px',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    marginBottom: '8px',
-                  }}>
-                    <div style={{ 
-                      color: subscription.status === 'active' ? '#00ff00' : 'rgba(255, 255, 255, 0.6)', 
-                      fontSize: '12px',
-                      marginBottom: '4px',
-                    }}>
-                      {subscription.status === 'active' ? '✓ Premium Active' : 'Free Plan'}
-                    </div>
-                    {subscription.status === 'active' && subscription.currentPeriodEnd && (
-                      <div style={{ 
-                        color: 'rgba(255, 255, 255, 0.4)', 
-                        fontSize: '11px',
-                      }}>
-                        Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                      </div>
-                    )}
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || "User"}
+                    width={36}
+                    height={36}
+                    className={styles.userAvatar}
+                  />
+                ) : (
+                  <div className={styles.userAvatarPlaceholder}>
+                    {session.user.name?.charAt(0) || "U"}
                   </div>
                 )}
-
-                {/* Action Buttons */}
-                <button
-                  onClick={() => {
-                    router.push('/profile');
-                  }}
+              </button>
+              
+              {showProfileDropdown && (
+                <div 
+                  className="profileDropdown"
                   style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    marginBottom: '6px',
-                    textAlign: 'left',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    background: 'transparent',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    minWidth: '280px',
+                    zIndex: 1000,
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.8)',
                   }}
                 >
-                  View Profile
-                </button>
+                  {/* User Info */}
+                  <div style={{
+                    paddingBottom: '12px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginBottom: '12px',
+                  }}>
+                    <div style={{ 
+                      color: '#fff', 
+                      fontSize: '15px', 
+                      fontWeight: '600',
+                      marginBottom: '4px',
+                    }}>
+                      {session.user.name}
+                    </div>
+                    <div style={{ 
+                      color: 'rgba(255, 255, 255, 0.6)', 
+                      fontSize: '13px',
+                    }}>
+                      {session.user.email}
+                    </div>
+                  </div>
 
-                <button
-                  onClick={() => {
-                    signOut({ callbackUrl: '/' });
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: 'rgba(255, 0, 0, 0.1)',
-                    border: '1px solid rgba(255, 0, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: '#ff6b6b',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 0, 0, 0.1)';
-                  }}
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+                  {/* Subscription Status */}
+                  {isActive && subscription && planInfo ? (
+                    <div style={{
+                      padding: '12px',
+                      background: 'rgba(29, 185, 84, 0.1)',
+                      border: '1px solid rgba(29, 185, 84, 0.3)',
+                      borderRadius: '12px',
+                      marginBottom: '12px',
+                    }}>
+                      <div style={{ 
+                        color: '#1db954',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        marginBottom: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px' }}>✓</span>
+                        {planInfo.name} Plan
+                      </div>
+                      <div style={{ 
+                        color: 'rgba(255, 255, 255, 0.8)', 
+                        fontSize: '12px',
+                        marginBottom: '4px',
+                      }}>
+                        {formatPrice(
+                          getPriceForPlan(planInfo.type, detectedCurrency),
+                          detectedCurrency
+                        )}/{planInfo.interval}
+                      </div>
+                      {subscription.currentPeriodEnd && (
+                        <div style={{ 
+                          color: 'rgba(255, 255, 255, 0.5)', 
+                          fontSize: '11px',
+                        }}>
+                          Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      marginBottom: '12px',
+                    }}>
+                      <div style={{ 
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '13px',
+                        marginBottom: '8px',
+                      }}>
+                        Free Plan
+                      </div>
+                      <button
+                        onClick={() => {
+                          router.push('/pricing');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'rgba(29, 185, 84, 0.2)',
+                          border: '1px solid rgba(29, 185, 84, 0.4)',
+                          borderRadius: '8px',
+                          color: '#1db954',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(29, 185, 84, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(29, 185, 84, 0.2)';
+                        }}
+                      >
+                        Upgrade to Premium
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Sign Out Button */}
+                  <button
+                    onClick={() => {
+                      signOut({ callbackUrl: '/' });
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         </div>
       </div>
 
