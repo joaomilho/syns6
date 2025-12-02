@@ -85,11 +85,11 @@ export default function NowPlayingFooter({
           </div>
         </div>
 
-        {/* RIGHT: Next Songs Queue */}
+        {/* RIGHT: Next Song */}
         {queue.length > 0 && (
           <div className={styles.queueSection}>
             <div className={styles.queueList}>
-              {queue.slice(0, 2).map((track, index) => (
+              {queue.slice(0, 1).map((track, index) => (
                 <div
                   key={track.id}
                   className={`${styles.queueItem} ${
