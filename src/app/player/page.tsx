@@ -32,7 +32,6 @@ import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLam
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
-const FractalVisualization = dynamic(() => import("@/components/FractalVisualization"), { ssr: false });
 const PsychedelicVisualization = dynamic(() => import("@/components/PsychedelicVisualization"), { ssr: false });
 const KaleidoscopeVisualization = dynamic(() => import("@/components/KaleidoscopeVisualization"), { ssr: false });
 const WavyLinesVisualization = dynamic(() => import("@/components/WavyLinesVisualization"), { ssr: false });
@@ -52,7 +51,6 @@ const BlankGridVisualization = dynamic(() => import("@/components/BlankGridVisua
 // Lazy load scene components for unified canvas
 const FFTSpectrumScene = dynamic(() => import("@/components/FFTSpectrumScene"), { ssr: false });
 const OrbitalScene = dynamic(() => import("@/components/OrbitalScene"), { ssr: false });
-const FractalScene = dynamic(() => import("@/components/FractalScene"), { ssr: false });
 const PsychedelicScene = dynamic(() => import("@/components/PsychedelicScene"), { ssr: false });
 const KaleidoscopeScene = dynamic(() => import("@/components/KaleidoscopeScene"), { ssr: false });
 const WavyLinesScene = dynamic(() => import("@/components/WavyLinesScene"), { ssr: false });
@@ -642,16 +640,6 @@ export default function PlayerPage() {
         });
         break;
       
-      case 'fractal':
-        // Don't randomize resolution (keep user choice or default), blobCount [6,12,18,24,36,62], globSize [0.1-1.6], reactivity [0.2-2, step 0.2]
-        setLavaLampControls(prev => ({
-          resolution: prev.resolution, // Keep user's resolution choice
-          blobCount: randomChoice([6, 12, 18, 24, 36, 62]),
-          globSize: randomChoice([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]),
-          reactivity: randomStep(0.2, 2, 0.2),
-        }));
-        break;
-      
       case 'fftspectrum':
         // Ranges: neonIntensity [0,0.4,1.6,3.2], lineWidth [0.01,0.02,0.04,0.08,0.16]
         setFFTControls({
@@ -720,7 +708,6 @@ export default function PlayerPage() {
           "fftspectrum",
           "lyricsonly",
           "particles",
-          "fractal",
           "psychedelic",
           "waves",
           "animated",
@@ -1313,14 +1300,6 @@ export default function PlayerPage() {
           frequencyData={micData.frequencyData}
         />
         );
-      case "fractal":
-        return (
-        <FractalVisualization
-            key="fractal"
-          energy={micData.energy}
-          bass={micData.bass}
-        />
-        );
       case "psychedelic":
         return (
         <PsychedelicVisualization
@@ -1453,7 +1432,6 @@ export default function PlayerPage() {
       case 'particles': return "radial-gradient(circle, #0a0a0a 0%, #000000 100%)";
       case 'psychedelic': return "radial-gradient(circle, #330033 0%, #000000 100%)";
       case 'kaleidoscope': return "#000000";
-      case 'fractal': return "black";
       case 'waves': return "linear-gradient(to bottom, #0a0015 0%, #000000 100%)";
       case 'spectrum3d': return "linear-gradient(to bottom, #000000 0%, #1a0033 100%)";
       case 'lyricsonly': return "linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%)";
@@ -1502,7 +1480,6 @@ export default function PlayerPage() {
           {/* Visualization Scenes - swap based on selection */}
           {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} fftControls={fftControls} />}
           {visualizationType === 'particles' && <OrbitalScene micData={micData} orbitalControls={orbitalControls} />}
-          {visualizationType === 'fractal' && <FractalScene micData={micData} />}
           {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
           {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} videoElement={videoElement} kaleidoscopeControls={kaleidoscopeControls} />}
           {visualizationType === 'waves' && <WavyLinesScene micData={micData} wavyLinesControls={wavyLinesControls} />}

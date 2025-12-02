@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'syns6',
     short_name: 'syns6',
     description: 'Neon-soaked bass-pounding karaoke machine',
-    start_url: '/',
+    start_url: '/start_url',
     display: 'standalone',
     background_color: '#000000',
     theme_color: '#00ff00',

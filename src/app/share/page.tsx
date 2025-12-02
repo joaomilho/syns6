@@ -12,7 +12,6 @@ import { Logo } from "@/components/ds";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import OrbitalVisualization from "@/components/OrbitalVisualization";
-import FractalVisualization from "@/components/FractalVisualization";
 import PsychedelicVisualization from "@/components/PsychedelicVisualization";
 import WavyLinesVisualization from "@/components/WavyLinesVisualization";
 import LavaLampVisualization from "@/components/LavaLampVisualization";
@@ -345,14 +344,6 @@ function SharePageContent({ hostPeerIdParam, textOnlyParam }: SharePageContentPr
             energy={micData.energy}
             treble={micData.treble}
             frequencyData={micData.frequencyData}
-          />
-        );
-      case "fractal":
-        return (
-          <FractalVisualization
-            key="fractal"
-            energy={micData.energy}
-            bass={micData.bass}
           />
         );
       case "psychedelic":
