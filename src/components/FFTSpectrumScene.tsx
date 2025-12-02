@@ -62,10 +62,10 @@ export default function FFTSpectrumScene({ micData, fftControls }: FFTSpectrumSc
         />
       </group>
       
-      {/* Bloom Effect */}
+      {/* Bloom Effect - reduced when lineWidth is large to prevent over-saturation */}
       <EffectComposer>
         <Bloom 
-          intensity={Math.pow(bassIntensity * 4, 2) * neonIntensity}
+          intensity={Math.pow(bassIntensity * 4, 2) * neonIntensity * Math.max(0.3, 1 - (lineWidth * 5))}
           luminanceThreshold={0}
           luminanceSmoothing={0.6}
           radius={0.4}

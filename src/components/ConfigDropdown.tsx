@@ -508,16 +508,16 @@ export default function ConfigDropdown({
                 <div className={styles.sliderControl}>
                   <label className={styles.sliderLabel}>
                     Glob Size
-                    <span className={styles.sliderValue}>{(lavaLampControls.globSize ?? 1.0).toFixed(1)}</span>
+                    <span className={styles.sliderValue}>{(lavaLampControls.globSize ?? 0.8).toFixed(1)}</span>
                   </label>
                   <input
                     type="range"
                     min="0"
-                    max="9"
+                    max="15"
                     step="1"
-                    value={[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0].indexOf(lavaLampControls.globSize ?? 1.0)}
+                    value={[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6].indexOf(lavaLampControls.globSize ?? 0.8)}
                     onChange={(e) => {
-                      const sizes = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
+                      const sizes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6];
                       onLavaLampControlsChange({
                         ...lavaLampControls,
                         globSize: sizes[parseInt(e.target.value)],
@@ -535,7 +535,7 @@ export default function ConfigDropdown({
                   <input
                     type="range"
                     min="0.2"
-                    max="3"
+                    max="2"
                     step="0.2"
                     value={lavaLampControls.reactivity ?? 1.0}
                     onChange={(e) =>
@@ -556,7 +556,7 @@ export default function ConfigDropdown({
                   onLavaLampControlsChange({
                     resolution: 32,
                     blobCount: 18,
-                    globSize: 1.0,
+                    globSize: 0.8,
                     reactivity: 1.0,
                   });
                 }}
@@ -583,11 +583,11 @@ export default function ConfigDropdown({
                   <input
                     type="range"
                     min="0"
-                    max="4"
+                    max="3"
                     step="1"
-                    value={[0, 0.4, 1.6, 3.2, 6.4].indexOf(fftControls.neonIntensity)}
+                    value={[0, 0.4, 1.6, 3.2].indexOf(fftControls.neonIntensity)}
                     onChange={(e) => {
-                      const intensities = [0, 0.4, 1.6, 3.2, 6.4];
+                      const intensities = [0, 0.4, 1.6, 3.2];
                       onFFTControlsChange({
                         ...fftControls,
                         neonIntensity: intensities[parseInt(e.target.value)],
@@ -605,11 +605,11 @@ export default function ConfigDropdown({
                   <input
                     type="range"
                     min="0"
-                    max="5"
+                    max="4"
                     step="1"
-                    value={[0.01, 0.02, 0.04, 0.08, 0.16, 0.32].indexOf(fftControls.lineWidth)}
+                    value={[0.01, 0.02, 0.04, 0.08, 0.16].indexOf(fftControls.lineWidth)}
                     onChange={(e) => {
-                      const widths = [0.01, 0.02, 0.04, 0.08, 0.16, 0.32];
+                      const widths = [0.01, 0.02, 0.04, 0.08, 0.16];
                       onFFTControlsChange({
                         ...fftControls,
                         lineWidth: widths[parseInt(e.target.value)],
@@ -1134,15 +1134,16 @@ export default function ConfigDropdown({
                   <input
                     type="range"
                     min="0"
-                    max="6.4"
-                    step="0.1"
-                    value={spectrum3DControls.neonIntensity}
-                    onChange={(e) =>
+                    max="10"
+                    step="1"
+                    value={[0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0].indexOf(spectrum3DControls.neonIntensity)}
+                    onChange={(e) => {
+                      const intensities = [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
                       onSpectrum3DControlsChange({
                         ...spectrum3DControls,
-                        neonIntensity: parseFloat(e.target.value),
-                      })
-                    }
+                        neonIntensity: intensities[parseInt(e.target.value)],
+                      });
+                    }}
                     className={styles.slider}
                   />
                 </div>
@@ -1185,7 +1186,7 @@ export default function ConfigDropdown({
                 onClick={() => {
                   onSpectrum3DControlsChange({
                     shape: 'circle',
-                    neonIntensity: 2.5,
+                    neonIntensity: 1.0,
                     colorPalette: 'default',
                   });
                 }}
