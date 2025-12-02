@@ -28,6 +28,43 @@ function ReferralCapture() {
 export default function Home() {
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
   const { micData, enable: enableMic } = useMicrophoneAnalysis();
+
+  // Structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "syns6",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres, Hue integration, and viewer mode.",
+    "url": "https://syns6.com",
+    "image": "https://syns6.com/opengraph-image",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    },
+    "featureList": [
+      "Live 3D music visualizations",
+      "AI-powered custom visualization creator",
+      "Lyrics for all music genres and languages",
+      "Smart lights (Hue) integration",
+      "Viewer mode for sharing karaoke sessions",
+      "Real-time audio analysis"
+    ],
+    "sameAs": [
+      "https://www.instagram.com/_syns6_/",
+      "https://www.tiktok.com/@_syns6_",
+      "https://x.com/_syns6_",
+      "https://www.producthunt.com/products/syns6",
+      "https://trylaunch.ai/launch/syns6"
+    ]
+  };
   
   // Cycle through visualization images
   const vizImages = [
@@ -279,6 +316,12 @@ export default function Home() {
 
   return (
     <div className={styles.landingPage}>
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
       {/* Capture referral code from URL */}
       <Suspense fallback={null}>
         <ReferralCapture />
@@ -332,36 +375,36 @@ export default function Home() {
         </section>
 
         {/* Social Links */}
-        <section className={styles.socialLinks}>
-          <a href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Instagram">
+        <nav className={styles.socialLinks} aria-label="Social media links">
+          <a href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Follow us on Instagram">
             Instagram
           </a>
-          <a href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="TikTok">
+          <a href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="Follow us on TikTok">
             TikTok
           </a>
-          <a href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Twitter">
+          <a href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Follow us on Twitter">
             Twitter
           </a>
           
-        </section>
+        </nav>
 
         {/* Features Section */}
         <section className={styles.features}>
           <h2 className={styles.sectionTitle}>Features that slap</h2>
           
           <div className={styles.featureGrid}>
-            <div className={styles.vizMasonrySection}>
+            <article className={styles.vizMasonrySection}>
               <div className={styles.masonryGrid}>
                 {vizImages.slice(0, 4).map((img, index) => {
                   const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
                   return (
-                    <div key={index} className={styles.masonryItem}>
+                    <figure key={index} className={styles.masonryItem}>
                       <ScrollVideo 
                         src={videoSrc}
-                        alt={`Visualization ${index + 1}`}
+                        alt={`Live 3D music visualization responding to voice and beat - example ${index + 1}`}
                         className={styles.masonryImage}
                       />
-                    </div>
+                    </figure>
                   );
                 })}
                 <div className={styles.masonryTextItem}>
@@ -373,26 +416,26 @@ export default function Home() {
                 {vizImages.slice(4).map((img, index) => {
                   const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
                   return (
-                    <div key={index + 4} className={styles.masonryItem}>
+                    <figure key={index + 4} className={styles.masonryItem}>
                       <ScrollVideo 
                         src={videoSrc}
-                        alt={`Visualization ${index + 5}`}
+                        alt={`Live 3D music visualization responding to voice and beat - example ${index + 5}`}
                         className={styles.masonryImage}
                       />
-                    </div>
+                    </figure>
                   );
                 })}
               </div>
-            </div>
+            </article>
 
-            <div className={styles.featureCard}>
-              <div className={styles.featureImageContainer}>
+            <article className={styles.featureCard}>
+              <figure className={styles.featureImageContainer}>
                 <div className={styles.imageStack}>
                   {lyricsImages.map((img, index) => (
                     <img 
                       key={index}
                       src={`/lyrics/${img}`}
-                      alt="Lyrics for all!" 
+                      alt={`Karaoke lyrics display in multiple languages - supporting genres from Norwegian Black Metal to Memphis Hip Hop to Japanese Onkyokei`}
                       className={`${styles.featureImage} ${styles.lyrics} ${styles.stackedImage}`}
                       style={{ opacity: currentLyricsIndex === index ? 1 : 0 }}
                     />
@@ -408,7 +451,7 @@ export default function Home() {
                     />
                   ))}
                 </div>
-              </div>
+              </figure>
               <div className={styles.featureText}>
                 <div className={styles.titleContainer}>
                   <h3 
@@ -417,6 +460,7 @@ export default function Home() {
                       opacity: translationFading ? 0 : 1,
                       transition: 'opacity 1s ease-in-out'
                     }}
+                    lang={lyricsTranslations[currentTranslationIndex].lang}
                   >
                     {lyricsTranslations[currentTranslationIndex].text}
                   </h3>
@@ -430,20 +474,20 @@ export default function Home() {
                   No more <i>Mamma Mia</i>. Real lyrics, real karaoke. 
                 </p>
               </div>
-            </div>
+            </article>
 
-            <div className={`${styles.featureCard}`}>
-              <div className={styles.imageStack}>
+            <article className={`${styles.featureCard}`}>
+              <figure className={styles.imageStack}>
                 {aiImages.map((img, index) => (
                   <img 
                     key={index}
                     src={`/ai/${img}`}
-                    alt="Create with AI" 
+                    alt="AI-powered custom visualization creator - text prompt and generated result example"
                     className={`${styles.featureImage} ${styles.ai} ${styles.stackedImage}`}
                     style={{ opacity: currentAiIndex === index ? 1 : 0 }}
                   />
                 ))}
-              </div>
+              </figure>
               <div className={styles.featureText}>
                 <h3 className={styles.featureTitle}>
                   Create with <span className={styles.aiBadge}><span className={styles.sparkles}>✦</span>AI</span>
@@ -452,10 +496,10 @@ export default function Home() {
                 Your club, your vibe.<br />Create your own visualizations, powered by AI. 
                 </p>
               </div>
-            </div>
+            </article>
 
             <div className={styles.featureCardsGrid}>
-              <div className={styles.featureCardVertical}>
+              <article className={styles.featureCardVertical}>
                 
                 <div className={styles.featureTextVertical}>
                   <h3 className={styles.featureTitleVertical}>Viewer mode</h3>
@@ -463,9 +507,9 @@ export default function Home() {
                     Choose your VIPs. Share your karaoke session - friends can join and sing along.
                   </p>
                 </div>
-              </div>
+              </article>
 
-              <div className={styles.featureCardVertical}>
+              <article className={styles.featureCardVertical}>
                 
                 <div className={styles.featureTextVertical}>
                   <h3 className={styles.featureTitleVertical}>Hue integration</h3>
@@ -473,7 +517,7 @@ export default function Home() {
                     Sync your smart lights to the beat - turn your room into a concert venue with Hue integration and many other peripherals.
                   </p>
                 </div>
-              </div>
+              </article>
             </div>
           </div>
         </section>
@@ -494,25 +538,25 @@ export default function Home() {
           </a>
           <div className={styles.instagramGrid}>
             {/* Instagram Embed - Replace the URLs with your actual Instagram post/reel URLs */}
-            <div className={styles.instagramEmbed}>
+            <article className={styles.instagramEmbed}>
               <InstagramEmbed 
                 
                 url="https://www.instagram.com/reel/DRft3ZmCPE9/" 
                 width={328}
               />
-            </div>
-            <div className={styles.instagramEmbed}>
+            </article>
+            <article className={styles.instagramEmbed}>
               <InstagramEmbed 
                 url="https://www.instagram.com/reel/DRdhNlxiKuS/" 
                 width={328}
               />
-            </div>
-            <div className={styles.instagramEmbed}>
+            </article>
+            <article className={styles.instagramEmbed}>
               <InstagramEmbed 
                 url="https://www.instagram.com/reel/DRcfnrkCJFy/" 
                 width={328}
               />
-            </div>
+            </article>
           </div>
         </section>
 
