@@ -5,7 +5,6 @@ import {
   BarChart3, 
   Music, 
   CircleDot, 
-  TreePine, 
   Sparkles, 
   Aperture, 
   Waves, 
@@ -21,7 +20,6 @@ import { CustomVisualization } from "@/lib/customVisualizations";
 
 export type VisualizationType =
   | "particles"
-  | "fractal"
   | "psychedelic"
   | "kaleidoscope"
   | "youtube"
@@ -77,16 +75,6 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/particles-static.webp",
       animated: "/viz-thumbnails/particles.webm",
-    },
-  },
-  {
-    id: "fractal",
-    name: "Fractal Tree",
-    icon: <TreePine size={18} />,
-    thumbnail: "/viz-thumbnails/fractal-static.webp",
-    assets: {
-      static: "/viz-thumbnails/fractal-static.webp",
-      animated: "/viz-thumbnails/fractal.webm",
     },
   },
   {

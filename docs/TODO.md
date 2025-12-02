@@ -8,14 +8,22 @@
 [ ] Synthwave viz
     https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
 compo? Or getting AT compo?
-[ ] Viz config basics
+[X] Viz config basics
     Add some basic configs for views
-[ ] Slow lyrics change 
-    Debug why the switch of lyrics is slow
+[X] Slow lyrics change 
+    Debug why the switch of lyrics is slow. 
+    Implemewnted background fetch.
+[ ] Upgrade vercel
+    https://vercel.com/pricing
+[ ] Upgrade neon
+[ ] Pay for IG?
+[ ] Put ads where?
+
 Question:
     - Should I ask people what they want instead?
     - Should viewers also log with Spotify?
-
+[ ] Make /profile
+    Be in dropdown (can we keep the URL tho?)
 # Done:
 
 [X] Perf review

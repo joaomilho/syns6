@@ -69,16 +69,10 @@ export default function Home() {
   // Cycle through visualization images
   const vizImages = [
     'psychedelic.webp',
-    
-    'fractal.webp',
-    
-    
-    
     'fftspectrum.webp',
     'animated.webp',
     'particles.webp',
     'waves.webp',
-    
     'spectrum3d.webp',
   ];
   const [currentVizIndex, setCurrentVizIndex] = useState(0);
