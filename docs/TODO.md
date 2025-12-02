@@ -98,3 +98,5 @@ intense. Allow setting max.
     When I'm in my dark bedroom with the projector they interfere in the image when too 
 [ ] Lyrics title improvement
     When lyrics have parenthesis (e.g. STILL IN THE PAINT (with LAZER DIM 700 & Bktherula) — Denzel Curry, LAZER DIM 700, Bktherula) we can either SHOW IT DIFFERENTLY (smaller dim) or if it's already part of the artist like this one, not show.
+[ ] Add to home screen button
+    Use the beforeinstallprompt mechanism to show a button on mobile both for /player and /viewer

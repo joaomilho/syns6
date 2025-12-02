@@ -988,6 +988,35 @@ export default function PlayerPage() {
     }
   }, [playbackState?.item?.id]);
 
+  // Rotating document title: default → song → artist → loop
+  const currentTrackName = playbackState?.item?.name || lastKnownTrack?.item?.name;
+  const currentArtistName = playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name;
+  
+  useEffect(() => {
+    if (!currentTrackName || !currentArtistName) {
+      document.title = "syns6 - Karaoke, redefined.";
+      return;
+    }
+    
+    const titles = [
+      "syns6 - Karaoke, redefined.",
+      currentTrackName,
+      currentArtistName,
+    ];
+    let index = 0;
+    document.title = titles[0];
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % titles.length;
+      document.title = titles[index];
+    }, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      document.title = "syns6 - Karaoke, redefined.";
+    };
+  }, [currentTrackName, currentArtistName]);
+
   // SWITCH TO NEXT TRACK'S LYRICS during instrumental outro (SICK TRANSITION!)
   useEffect(() => {
     if (!playbackState?.item || !playbackState?.is_playing || !queue.length || !lyrics || lyrics.length === 0) return;
