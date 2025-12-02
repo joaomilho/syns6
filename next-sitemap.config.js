@@ -26,8 +26,16 @@ module.exports = {
   ],
   transform: async (config, path) => {
     // Customize priority and change frequency per page
-    const priority = path === '/' ? 1.0 : 0.7;
-    const changefreq = path === '/' ? 'daily' : 'weekly';
+    let priority = 0.7;
+    let changefreq = 'weekly';
+    
+    if (path === '/') {
+      priority = 1.0;
+      changefreq = 'daily';
+    } else if (path === '/faq') {
+      priority = 0.8; // High priority for SEO
+      changefreq = 'weekly';
+    }
     
     return {
       loc: path,

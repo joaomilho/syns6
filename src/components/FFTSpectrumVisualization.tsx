@@ -9,7 +9,7 @@ import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
   frequencyData?: Uint8Array;
-  onWebGLUnavailable?: () => void;
+  
 }
 
 
@@ -18,7 +18,7 @@ export function FFTSpectrumPlanes({
   bassIntensity,
   rows,
   colorPalette = 'default',
-  lineWidth = 0.4
+  lineWidth = 0.04
 
 }: { 
   frequencyData?: Uint8Array; 
@@ -72,10 +72,6 @@ export function FFTSpectrumPlanes({
       prevGeometry.current.dispose();
       prevGeometry.current = null;
     }
-
-    const sampleRate = 48000;
-    const nyquist = sampleRate / 2;
-    const binsPerBar = 1024 / cols;
 
     // Create a cylinder geometry for line segments (rotated to be vertical)
     const cylGeo = new CylinderGeometry(lineWidth, lineWidth, 1, 8);
@@ -334,7 +330,7 @@ export function FFTSpectrumPlanes({
 
 export default function FFTSpectrumVisualization({
   frequencyData,
-  onWebGLUnavailable
+  
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(frequencyData || new Uint8Array(512).fill(0));
@@ -344,7 +340,7 @@ export default function FFTSpectrumVisualization({
     <Canvas
       camera={{ position: [0, 0, 30], fov: 75 }}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
         width: '100vw',

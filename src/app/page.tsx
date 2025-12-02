@@ -641,6 +641,7 @@ export default function Home() {
               <p className={styles.copyright}>© 2025 syns6. All rights reserved.</p>
             </div>
             <div className={styles.footerLinks}>
+              <a href="/faq" className={styles.footerLink}>FAQ</a>
               <a href="/privacy" className={styles.footerLink}>Privacy & Data Protection</a>
               <a href="/terms" className={styles.footerLink}>Terms of Service</a>
             </div>
