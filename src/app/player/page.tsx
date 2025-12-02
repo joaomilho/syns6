@@ -643,21 +643,21 @@ export default function PlayerPage() {
         break;
       
       case 'fractal':
-        // Ranges: resolution [16-64, step 8], blobCount [6,12,18,24,36,62], globSize [0.2-2.0], reactivity [0.2-3, step 0.2]
-        setLavaLampControls({
-          resolution: randomStep(16, 64, 8),
+        // Don't randomize resolution (keep user choice or default), blobCount [6,12,18,24,36,62], globSize [0.1-1.6], reactivity [0.2-2, step 0.2]
+        setLavaLampControls(prev => ({
+          resolution: prev.resolution, // Keep user's resolution choice
           blobCount: randomChoice([6, 12, 18, 24, 36, 62]),
-          globSize: randomChoice([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]),
-          reactivity: randomStep(0.2, 3, 0.2),
-        });
+          globSize: randomChoice([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]),
+          reactivity: randomStep(0.2, 2, 0.2),
+        }));
         break;
       
       case 'fftspectrum':
-        // Ranges: neonIntensity [0,0.4,1.6,3.2,6.4], lineWidth [0.01,0.02,0.04,0.08,0.16,0.32]
+        // Ranges: neonIntensity [0,0.4,1.6,3.2], lineWidth [0.01,0.02,0.04,0.08,0.16]
         setFFTControls({
-          neonIntensity: randomChoice([0, 0.4, 1.6, 3.2, 6.4]),
+          neonIntensity: randomChoice([0, 0.4, 1.6, 3.2]),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
-          lineWidth: randomChoice([0.01, 0.02, 0.04, 0.08, 0.16, 0.32]),
+          lineWidth: randomChoice([0.01, 0.02, 0.04, 0.08, 0.16]),
         });
         break;
       
@@ -690,10 +690,10 @@ export default function PlayerPage() {
         break;
       
       case 'spectrum3d':
-        // Ranges: shape [circle,row], neonIntensity [0-6.4, step 0.1]
+        // Ranges: shape [circle,row], neonIntensity [0, 0.2, 0.4, ... 2.0]
         setSpectrum3DControls({
           shape: randomChoice(['circle', 'row']),
-          neonIntensity: randomStep(0, 6.4, 0.1),
+          neonIntensity: randomChoice([0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
         });
         break;
