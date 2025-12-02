@@ -18,7 +18,7 @@ export function FFTSpectrumPlanes({
   bassIntensity,
   rows,
   colorPalette = 'default',
-  lineWidth = 0.15
+  lineWidth = 0.4
 
 }: { 
   frequencyData?: Uint8Array; 

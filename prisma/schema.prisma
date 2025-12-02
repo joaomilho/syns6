@@ -148,13 +148,15 @@ model LyricsNotFound {
 
 // Cached YouTube videos to avoid repeated API calls
 model YouTubeVideo {
-  id          String   @id @default(cuid())
-  spotifyId   String?  @unique
-  title       String
-  artist      String
-  youtubeId   String   // YouTube video ID
-  source      String   @default("api") // "api", "manual", or "default"
-  fetchedAt   DateTime @default(now())
+  id                String   @id @default(cuid())
+  spotifyId         String?  @unique
+  title             String
+  artist            String
+  youtubeId         String   // Comma-separated list of YouTube video IDs
+  workingYoutubeId  String?  // Last known working video ID (crowdsourced from frontend)
+  verifiedAt        DateTime? // When the working video ID was last verified
+  source            String   @default("api") // "api", "manual", or "default"
+  fetchedAt         DateTime @default(now())
   
   @@index([title, artist])
   @@map("youtube_videos")
