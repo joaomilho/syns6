@@ -9,7 +9,7 @@ import { calculateBassIntensity } from "@/lib/audioAnalysis";
 
 interface FFTSpectrumVisualizationProps {
   frequencyData?: Uint8Array;
-  
+  onWebGLUnavailable?: () => void;
 }
 
 
@@ -330,7 +330,7 @@ export function FFTSpectrumPlanes({
 
 export default function FFTSpectrumVisualization({
   frequencyData,
-  
+  onWebGLUnavailable
 }: FFTSpectrumVisualizationProps) {
   const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(frequencyData || new Uint8Array(512).fill(0));
