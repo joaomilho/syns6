@@ -22,9 +22,34 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "syns6",
-  description: "Neon-soaked bass-pounding karaoke machine",
+  title: {
+    default: 'syns6 - Karaoke, Redefined',
+    template: '%s | syns6',
+  },
+  description: 'Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres, Hue integration, and viewer mode.',
+  keywords: [
+    'karaoke',
+    'karaoke app',
+    'music visualization',
+    '3D visualizations',
+    'AI karaoke',
+    'lyrics',
+    'karaoke machine',
+    'smart lights',
+    'Hue integration',
+    'music player',
+    'live visuals',
+    'karaoke party',
+    'viewer mode',
+    'karaoke sharing',
+  ],
+  authors: [{ name: 'syns6' }],
+  creator: 'syns6',
+  publisher: 'syns6',
   metadataBase: new URL('https://syns6.com'),
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: [
       { url: '/icon', type: 'image/png' },
@@ -38,14 +63,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://syns6.com',
     siteName: 'syns6',
-    title: 'syns6',
-    description: 'Neon-soaked bass-pounding karaoke machine',
+    title: 'syns6 - Karaoke, Redefined',
+    description: 'Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'syns6 - Neon-soaked bass-pounding karaoke machine',
+        alt: 'syns6 - Karaoke, Redefined. Transform your home into a neon-soaked karaoke club.',
       },
     ],
   },
@@ -53,9 +78,20 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@_syns6_',
     creator: '@_syns6_',
-    title: 'syns6',
-    description: 'Neon-soaked bass-pounding karaoke machine',
+    title: 'syns6 - Karaoke, Redefined',
+    description: 'Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres.',
     images: ['/opengraph-image'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   manifest: '/manifest.webmanifest',
   themeColor: '#00ff00',
@@ -64,6 +100,7 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'syns6',
   },
+  category: 'entertainment',
 };
 
 export default function RootLayout({
