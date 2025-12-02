@@ -5,8 +5,21 @@ import Link from 'next/link';
 import Fuse from 'fuse.js';
 import styles from './faq.module.css';
 
+// FAQ types
+type FAQQuestion = {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+};
+
+type FAQCategory = {
+  category: string;
+  questions: FAQQuestion[];
+};
+
 // FAQ data structure
-const faqData = [
+const faqData: FAQCategory[] = [
   {
     category: `Getting Started`,
     questions: [
@@ -294,8 +307,8 @@ export default function FAQPage() {
                 <div className={styles.questionsContainer}>
                   {category.questions.map((item) => (
                     <article key={item.id} className={styles.faqItem} id={item.id}>
-                      {searchQuery && 'category' in item && item.category && (
-                        <div className={styles.categoryBadge}>{item.category as string}</div>
+                      {searchQuery && item.category && (
+                        <div className={styles.categoryBadge}>{item.category}</div>
                       )}
                       <h3 className={styles.question}>{item.question}</h3>
                       <p className={styles.answer}>{item.answer}</p>
