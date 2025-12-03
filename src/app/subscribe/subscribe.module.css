@@ -138,18 +138,6 @@
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
 }
 
-.planOptionDisplay {
-  position: relative;
-  display: block;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  backdrop-filter: blur(20px);
-  flex: 1;
-  min-height: 120px;
-}
-
 .radioInput {
   position: absolute;
   opacity: 0;
@@ -216,15 +204,15 @@
 
 .planMessage {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.4;
   text-align: center;
   padding: 0 0.5rem;
   min-height: 60px;
-  /* display: flex;
+  display: flex;
   align-items: center;
-  justify-content: center; */
+  justify-content: center;
 }
 
 .startTrialSection {
