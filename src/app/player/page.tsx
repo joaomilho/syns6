@@ -68,6 +68,16 @@ import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
 import ShareButton from "@/components/ShareButton";
 import { Logo } from "@/components/ds";
+import {
+  trackSongPlay,
+  trackVisualizationChange,
+  trackConfigChange,
+  trackCamToggle,
+  trackMicToggle,
+  trackAIClick,
+  trackShareClick,
+  trackProfileClick,
+} from "@/lib/analytics";
 
 interface Track {
   id: string;
@@ -829,6 +839,11 @@ export default function PlayerPage() {
         // Only update lastKnownTrack if it's a different track (avoid redundant updates)
         if (!lastKnownTrack?.item || lastKnownTrack.item.id !== data.item.id) {
           setLastKnownTrack(data);
+          // Track song play
+          trackSongPlay(
+            session?.user?.email,
+            `${data.item.name} - ${data.item.artists[0]?.name || 'Unknown'}`
+          );
         }
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
@@ -1599,7 +1614,11 @@ export default function PlayerPage() {
         {micAvailable && (
           <MicrophoneButton
             enabled={isMicEnabled}
-            onToggle={() => (isMicEnabled ? disableMic() : enableMic())}
+            onToggle={() => {
+              const newEnabled = !isMicEnabled;
+              isMicEnabled ? disableMic() : enableMic();
+              trackMicToggle(session?.user?.email, newEnabled);
+            }}
           />
         )}
 
@@ -1607,17 +1626,24 @@ export default function PlayerPage() {
         {webglAvailable && (
           <CameraButton
             enabled={isCameraEnabled}
-            onToggle={() => (isCameraEnabled ? disableCamera() : enableCamera())}
+            onToggle={() => {
+              const newEnabled = !isCameraEnabled;
+              isCameraEnabled ? disableCamera() : enableCamera();
+              trackCamToggle(session?.user?.email, newEnabled);
+            }}
           />
         )}
 
         {/* Hue Dropdown */}
-        <HueDropdown hue={hue} />
+        <HueDropdown hue={hue} userEmail={session?.user?.email} />
 
         {/* AI Create Button */}
         <button
           className={styles.aiButton}
-          onClick={handleCreateNew}
+          onClick={() => {
+            trackAIClick(session?.user?.email);
+            handleCreateNew();
+          }}
           title="Create AI Visualization"
         >
           <span className={styles.sparkles}>✦</span>
@@ -1628,6 +1654,7 @@ export default function PlayerPage() {
         {!shareManager.isShareActive ? (
           // Not sharing yet - show Share button
           <ShareButton onStartSharing={() => {
+            trackShareClick(session?.user?.email);
             shareManager.startHosting();
             hasStartedHosting.current = true;
             setShowQRCodeOnConnect(true); // Auto-expand QR on connect
@@ -1657,7 +1684,10 @@ export default function PlayerPage() {
         {/* Visualization Dropdown */}
         <VisualizationDropdown
           value={visualizationType}
-          onChange={setVisualizationType}
+          onChange={(viz) => {
+            setVisualizationType(viz);
+            trackVisualizationChange(session?.user?.email, viz);
+          }}
           customVisualizations={customVisualizations}
         />
 
@@ -1679,9 +1709,18 @@ export default function PlayerPage() {
           videoElement={videoElement}
           isCameraEnabled={isCameraEnabled}
           currentYouTubeUrl={currentYouTubeVideoId ? `https://www.youtube.com/watch?v=${currentYouTubeVideoId}` : null}
-          onModeChange={setVisualizationMode}
-          onFontChange={setLyricsFont}
-          onColorChange={setLyricsColor}
+          onModeChange={(mode) => {
+            setVisualizationMode(mode);
+            trackConfigChange(session?.user?.email, `mode:${mode}`);
+          }}
+          onFontChange={(font) => {
+            setLyricsFont(font);
+            trackConfigChange(session?.user?.email, `font:${font}`);
+          }}
+          onColorChange={(color) => {
+            setLyricsColor(color);
+            trackConfigChange(session?.user?.email, `color:${color}`);
+          }}
           onShaderControlsChange={setShaderControls}
           onLavaLampControlsChange={setLavaLampControls}
           onFFTControlsChange={setFFTControls}
@@ -1725,7 +1764,12 @@ export default function PlayerPage() {
           return (
             <div style={{ position: 'relative' }}>
               <button 
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                onClick={() => {
+                  if (!showProfileDropdown) {
+                    trackProfileClick(session?.user?.email);
+                  }
+                  setShowProfileDropdown(!showProfileDropdown);
+                }}
                 className={styles.userProfile}
                 style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
               >

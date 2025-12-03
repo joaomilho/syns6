@@ -3,7 +3,7 @@ import SpotifyProvider from "next-auth/providers/spotify";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import { Resend } from "resend";
-import { welcomeEmail } from "@/emails/welcome";
+import { email } from "@/emails/welcome";
 
 // All valid Spotify authorization scopes
 const SPOTIFY_SCOPES = [
@@ -146,10 +146,10 @@ export const authOptions: NextAuthOptions = {
       
       try {
         await resend.emails.send({
-          from: welcomeEmail.from,
+          from: email.from,
           to: user.email,
-          subject: welcomeEmail.subject,
-          html: welcomeEmail.html,
+          subject: email.subject,
+          html: email.html,
         });
         console.log("✅ Welcome email sent for new user:", user.email);
       } catch (error) {

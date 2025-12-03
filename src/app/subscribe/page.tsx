@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prices, formatPrice } from '@/lib/prices';
 import styles from './subscribe.module.css';
+import { trackSubscribeOption } from '@/lib/analytics';
 
 // Country code to currency mapping
 const countryToCurrency: Record<string, CurrencyCode> = {
@@ -295,7 +296,10 @@ export default function SubscribePage() {
                   name="plan"
                   value="weekly"
                   checked={selectedPlan === 'weekly'}
-                  onChange={() => setSelectedPlan('weekly')}
+                  onChange={() => {
+                    setSelectedPlan('weekly');
+                    trackSubscribeOption(session?.user?.email, 'weekly');
+                  }}
                   className={styles.radioInput}
                 />
                 <div className={styles.planContent}>
@@ -320,7 +324,10 @@ export default function SubscribePage() {
                   name="plan"
                   value="monthly"
                   checked={selectedPlan === 'monthly'}
-                  onChange={() => setSelectedPlan('monthly')}
+                  onChange={() => {
+                    setSelectedPlan('monthly');
+                    trackSubscribeOption(session?.user?.email, 'monthly');
+                  }}
                   className={styles.radioInput}
                 />
                 <div className={styles.planContent}>
@@ -344,7 +351,10 @@ export default function SubscribePage() {
                   name="plan"
                   value="yearly"
                   checked={selectedPlan === 'yearly'}
-                  onChange={() => setSelectedPlan('yearly')}
+                  onChange={() => {
+                    setSelectedPlan('yearly');
+                    trackSubscribeOption(session?.user?.email, 'yearly');
+                  }}
                   className={styles.radioInput}
                 />
                 <div className={styles.planContent}>

@@ -19,7 +19,7 @@ import { loadEnv } from './lib/spotifyAuth';
 loadEnv();
 
 // Configuration
-const TO_EMAIL = 'juanmaiz@gmail.com';
+const TO_EMAIL = process.env.TO_EMAIL ?? 'juanmaiz@gmail.com';
 
 // Email template interface
 interface EmailTemplate {
@@ -48,7 +48,7 @@ async function getEmailTemplate(type: string): Promise<EmailTemplate> {
   
   // Dynamic import of the email template
   const templateModule = await import(`../src/emails/${type}`);
-  const templateKey = `${type}Email`;
+  const templateKey = `email`;
   
   if (!templateModule[templateKey]) {
     throw new Error(
