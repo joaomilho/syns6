@@ -134,10 +134,10 @@ function calculateNextInterval(): number {
       return 666; // 0.666 seconds
     } else if (timeRemaining <= 15000) {
       // Song ending in 15 seconds - poll a bit more
-      return 3000; // 3 seconds
+      return 1000; // 3 seconds
     } else {
       // Normal playback - standard polling
-      return 5000; // 5 seconds
+      return 2000; // 5 seconds
     }
   } else {
     // Paused - poll less frequently
