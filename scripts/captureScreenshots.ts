@@ -11,16 +11,13 @@ const allVisualizations = [
   'fftspectrum',
   'lyricsonly',
   'particles',
-  'fractal',
   'psychedelic',
   'kaleidoscope',
   'waves',
   'animated',
   'spectrum3d',
-  'wavespectrum',
   'camera',
   'youtube',
-  'debug',
   'oscilloscope',
 ];
 
@@ -90,7 +87,10 @@ async function captureScreenshots() {
 
   console.log('🚀 Starting Playwright (Chromium)...');
   const browser = await chromium.launch({
-    headless: false, // Set to false to see the browser
+    headless: false,
+    args: [
+      '--use-fake-ui-for-media-stream', // Auto-accept camera/mic permissions
+    ],
   });
 
   try {
@@ -99,13 +99,23 @@ async function captureScreenshots() {
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
       },
-      deviceScaleFactor: 1, // Changed from 2 - thumbnails don't need retina resolution
+      deviceScaleFactor: 1,
+      permissions: ['camera'],
     });
 
     const page = await context.newPage();
 
     for (const vizId of visualizations) {
       console.log(`\n🎬 Capturing ${vizId}...`);
+      
+      // Skip YouTube - use manually created thumbnails (YouTube blocks bots)
+      if (vizId === 'youtube') {
+        console.log('  ⏭️  Skipping YouTube (use manually created thumbnails)');
+        console.log('     Place your files at:');
+        console.log('     - public/viz-thumbnails/youtube-static.webp');
+        console.log('     - public/viz-thumbnails/youtube.webm');
+        continue;
+      }
       
       const url = `${BASE_URL}/screenshots/${vizId}`;
       
@@ -118,6 +128,12 @@ async function captureScreenshots() {
 
         // Wait for animation to start
         await page.waitForTimeout(WAIT_TIME);
+
+        // For camera, wait for feed to initialize (permission auto-granted)
+        if (vizId === 'camera') {
+          console.log('  📷 Waiting for camera feed to initialize...');
+          await page.waitForTimeout(4000); // Wait for camera feed to stabilize
+        }
 
         // Create temp directory for this viz
         const vizFrameDir = path.join(TEMP_DIR, vizId);

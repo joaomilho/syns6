@@ -163,12 +163,46 @@ export default function ScreenshotPage() {
   const vizId = params.vizId as string;
   const micData = useAnimatedMicData();
   const [currentTime, setCurrentTime] = useState(0);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+
+  // Initialize camera for camera visualization
+  useEffect(() => {
+    if (vizId !== 'camera') return;
+    
+    let video: HTMLVideoElement | null = null;
+    
+    const initCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 1280, height: 720 } 
+        });
+        video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+        await video.play();
+        setVideoElement(video);
+        console.log('📷 Camera initialized');
+      } catch (err) {
+        console.error('Failed to initialize camera:', err);
+      }
+    };
+    
+    initCamera();
+    
+    return () => {
+      if (video) {
+        const stream = video.srcObject as MediaStream;
+        stream?.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [vizId]);
 
   // Keep time progression for visualizations that depend on it
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime((prev) => (prev + 100) % 20000); // Loop every 20 seconds
-      // For lyrics, stay at the current line (don't progress)
     }, 100);
     return () => clearInterval(interval);
   }, []);
@@ -234,6 +268,7 @@ export default function ScreenshotPage() {
         return (
           <CameraVisualization
             micData={micData}
+            videoElement={videoElement}
           />
         );
       case "debug":
@@ -243,10 +278,30 @@ export default function ScreenshotPage() {
           />
         );
       case "youtube":
+        // Use the default fallback video from YouTubeVisualization
+        const DEFAULT_VIDEO_ID = "L1vrPpM4eyM";
         return (
-          <YouTubeVisualization
-
-          />
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 0,
+              background: "#000000",
+            }}
+          >
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${DEFAULT_VIDEO_ID}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&start=10`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          </div>
         );
       case "oscilloscope":
         return (
