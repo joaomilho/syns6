@@ -286,9 +286,9 @@ export default function PricingPage() {
 
         <div className={styles.content}>
         <header className={styles.header}>
-          <H1>Start your free trial</H1>
+          <H1>Start your 3 day free trial</H1>
           <p className={styles.subtitle}>
-            Start your 3 day free trial, no Credit Card needed
+            No Credit Card needed. Cancel anytime.
           </p>
         </header>
 
@@ -315,7 +315,7 @@ export default function PricingPage() {
                     {formatPrice(currentPrices.weekly, currency)}
                     <span className={styles.planInterval}>/week</span>
                   </span>
-                  <span className={styles.freePromo}>FREE</span>
+                  <span className={styles.freePromo}>free first week</span>
                 </div>
               </label>
               <p className={styles.planMessage}>

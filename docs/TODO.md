@@ -2,9 +2,9 @@
 
 [ ] Fix Spotify's login
     Still getting 401s fairly often
-[ ] Product Hunt
-    [ ] Animated icon e.g https://www.producthunt.com/products/calk-ai
-    [ ] Improved images: https://www.producthunt.com/products/welltory
+[ ] Make /profile
+    Be in dropdown (can we keep the URL tho?)
+
 [ ] Synthwave viz
     https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
 compo? Or getting AT compo?
@@ -22,10 +22,11 @@ compo? Or getting AT compo?
 Question:
     - Should I ask people what they want instead?
     - Should viewers also log with Spotify?
-[ ] Make /profile
-    Be in dropdown (can we keep the URL tho?)
 # Done:
 
+[X] Product Hunt
+    [NO] Animated icon e.g https://www.producthunt.com/products/calk-ai
+    [X] Improved images: https://www.producthunt.com/products/welltory
 [X] Perf review
     Perf review EVERYTHING
     [X] First pass
