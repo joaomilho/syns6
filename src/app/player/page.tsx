@@ -114,9 +114,6 @@ export default function PlayerPage() {
   const hue = useHueLights();
   const wakeLock = useWakeLock();
   
-  // YouTube preloader - tests videos in background for queued tracks
-  useYouTubePreloader(queue, playbackState?.item?.id);
-  
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [lyricsTimeOffset, setLyricsTimeOffset] = useState(0); // Offset for showing next track's lyrics early
   const hasSwitchedToNextRef = useRef(false); // Track if we've already switched to next lyrics
@@ -158,6 +155,10 @@ export default function PlayerPage() {
     useState<VisualizationType>("fftspectrum");
   const [visualizationMode, setVisualizationMode] =
     useState<VisualizationMode>("STATIC");
+  
+  // YouTube preloader - tests videos in background for queued tracks (only when YouTube viz is active)
+  useYouTubePreloader(queue, playbackState?.item?.id, visualizationType === 'youtube');
+  
   const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
   const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
