@@ -113,7 +113,7 @@ async function captureScreenshots() {
         console.log('  ⏭️  Skipping YouTube (use manually created thumbnails)');
         console.log('     Place your files at:');
         console.log('     - public/viz-thumbnails/youtube-static.webp');
-        console.log('     - public/viz-thumbnails/youtube.webm');
+        console.log('     - public/viz-thumbnails/youtube.webp');
         continue;
       }
       
