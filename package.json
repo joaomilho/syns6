@@ -16,6 +16,7 @@
     "generate-songs": "tsx scripts/generateSongsList.ts",
     "fetch-lyrics": "tsx scripts/fetchLyrics.ts",
     "capture-screenshots": "tsx scripts/captureScreenshots.ts",
+    "screenshots": "tsx scripts/captureScreenshots.ts",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "postinstall": "prisma generate"
   },
