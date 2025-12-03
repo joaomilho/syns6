@@ -883,22 +883,37 @@ export default function PlayerPage() {
         // Don't clear lastKnownTrack - keep it visible!
       }
     } catch (err: any) {
-
-      // Check if it's a 401 error (token expired)
-      if (
-        err.message &&
-        err.message.includes("401") &&
-        tokenRefreshAttempts < 1
-      ) {
+      // Check if it's a token expired error
+      const isTokenError = err.message && (
+        err.message.includes("401") || 
+        err.message.includes("SpotifyTokenExpired")
+      );
+      
+      if (isTokenError && tokenRefreshAttempts < 2) {
         setTokenRefreshAttempts((prev) => prev + 1);
+        console.log("🔄 Token error detected, attempting refresh...");
+        
+        try {
+          // Try to force refresh the token
+          const refreshResponse = await fetch("/api/auth/refresh-token", {
+            method: "POST",
+          });
+          
+          if (refreshResponse.ok) {
+            console.log("✅ Token refreshed, updating session...");
+            // Update the session to get the new token
+            await update();
+            // Don't set error - let next poll retry with new token
+            return;
+          }
+        } catch (refreshErr) {
+          console.error("❌ Failed to refresh token:", refreshErr);
+        }
+        
+        setError("Refreshing session... please wait");
+      } else if (tokenRefreshAttempts >= 2) {
         setPlaybackState(null);
-        setLastKnownTrack(null); // Clear on auth error
-        setError(
-          "Session expired. Please sign out and sign in again to refresh your Spotify connection."
-        );
-      } else if (tokenRefreshAttempts >= 1) {
-        setPlaybackState(null);
-        setLastKnownTrack(null); // Clear on auth error
+        setLastKnownTrack(null);
         setError("Session expired. Please sign out and sign in again.");
       } else {
         setError("Failed to fetch playback state");

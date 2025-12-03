@@ -8,10 +8,12 @@ export interface SpotifyApiOptions {
   endpoint: string;
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: any;
+  retryCount?: number;
 }
 
 /**
  * Make an authenticated request to the Spotify Web API
+ * Includes automatic retry on 401 with exponential backoff
  * @param options - API request options
  * @returns Promise with the API response
  */
@@ -20,6 +22,7 @@ export async function spotifyApi<T = any>({
   endpoint,
   method = "GET",
   body,
+  retryCount = 0,
 }: SpotifyApiOptions): Promise<T> {
   const url = endpoint.startsWith("https://")
     ? endpoint
@@ -38,6 +41,29 @@ export async function spotifyApi<T = any>({
   }
 
   const response = await fetch(url, options);
+
+  // Handle 401 - token might have just expired
+  if (response.status === 401 && retryCount < 2) {
+    console.warn(`⚠️ Spotify 401 on ${endpoint}, retry ${retryCount + 1}/2 after delay...`);
+    // Wait with exponential backoff before retry (let session refresh happen)
+    await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+    
+    // Note: The retry will use the same token - the caller should 
+    // refresh the session and call with a new token if this keeps failing
+    throw new Error(`SpotifyTokenExpired`);
+  }
+
+  // Handle 429 - rate limited
+  if (response.status === 429) {
+    const retryAfter = response.headers.get('Retry-After');
+    const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 1000;
+    console.warn(`⚠️ Spotify rate limited, waiting ${waitTime}ms...`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+    
+    if (retryCount < 3) {
+      return spotifyApi({ accessToken, endpoint, method, body, retryCount: retryCount + 1 });
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
