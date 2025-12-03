@@ -27,7 +27,7 @@ export default function FFTSpectrumScene({ micData, fftControls }: FFTSpectrumSc
   const rows = 100; // Fixed at 100 rows for performance
   const bassIntensity = calculateBassIntensity(micData?.frequencyData || new Uint8Array(512).fill(0));
   
-  const neonIntensity = fftControls?.neonIntensity ?? 1.6;
+  const neonIntensity = fftControls?.neonIntensity ?? 1.2;
   const colorPalette = fftControls?.colorPalette ?? 'default';
   const lineWidth = fftControls?.lineWidth ?? 0.04;
 

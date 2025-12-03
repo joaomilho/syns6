@@ -87,6 +87,11 @@ test('merges feat info with "from" suffix', () => {
     .toEqual({ title: 'Track', artist: 'Artist, John from Band', extra: null });
 });
 
+test('handles "with" pattern when artists overlap', () => {
+  expect(parseSongTitle('STILL IN THE PAINT (with LAZER DIM 700 & Bktherula)', 'Denzel Curry, LAZER DIM 700, Bktherula'))
+    .toEqual({ title: 'STILL IN THE PAINT', artist: 'Denzel Curry, LAZER DIM 700, Bktherula', extra: null });
+});
+
 console.log('\nFeatured artists - no overlap:');
 test('keeps feat as extra when artist not in existing', () => {
   expect(parseSongTitle('Feather (feat. Bill)', 'Nujabes, Cise Starr & Akin'))
@@ -106,6 +111,11 @@ test('handles ft. abbreviation', () => {
 test('handles featuring spelled out', () => {
   expect(parseSongTitle('Track (featuring Someone)', 'Artist'))
     .toEqual({ title: 'Track', artist: 'Artist', extra: 'feat. Someone' });
+});
+
+test('handles "with" pattern when artists dont overlap', () => {
+  expect(parseSongTitle('Song (with Unknown Artist)', 'Main Artist'))
+    .toEqual({ title: 'Song', artist: 'Main Artist', extra: 'with Unknown Artist' });
 });
 
 console.log('\nNo modifications needed:');

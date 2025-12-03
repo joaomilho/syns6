@@ -76,8 +76,8 @@ export function parseSongTitle(title: string, artist: string): ParsedSong {
   if (parenMatch) {
     const [, mainTitle, parenContent] = parenMatch;
     
-    // Check if it's a feat/featuring
-    const featMatch = parenContent.match(/^(?:feat\.?|ft\.?|featuring)\s+(.+)$/i);
+    // Check if it's a feat/featuring/with pattern
+    const featMatch = parenContent.match(/^(?:feat\.?|ft\.?|featuring|with)\s+(.+)$/i);
     if (featMatch) {
       const featArtists = featMatch[1].trim();
       
@@ -102,11 +102,12 @@ export function parseSongTitle(title: string, artist: string): ParsedSong {
         }
         
         cleanTitle = mainTitle.trim();
-        // extra stays null - feat info was merged into artist
+        // extra stays null - feat/with info was merged into artist
       } else {
         // Featured artist not in existing artist - keep as extra
         cleanTitle = mainTitle.trim();
-        extra = `feat. ${featArtists}`;
+        const prefix = parenContent.match(/^with\s/i) ? 'with' : 'feat.';
+        extra = `${prefix} ${featArtists}`;
       }
     } else if (isExtraInfo(parenContent)) {
       // It's remix/remaster/edition info

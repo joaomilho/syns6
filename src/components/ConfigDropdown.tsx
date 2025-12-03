@@ -583,11 +583,11 @@ export default function ConfigDropdown({
                   <input
                     type="range"
                     min="0"
-                    max="3"
+                    max="5"
                     step="1"
-                    value={[0, 0.4, 1.6, 3.2].indexOf(fftControls.neonIntensity)}
+                    value={[0, 0.4, 0.8, 1.2, 1.6, 3.2].indexOf(fftControls.neonIntensity)}
                     onChange={(e) => {
-                      const intensities = [0, 0.4, 1.6, 3.2];
+                      const intensities = [0, 0.4, 0.8, 1.2, 1.6, 3.2];
                       onFFTControlsChange({
                         ...fftControls,
                         neonIntensity: intensities[parseInt(e.target.value)],
@@ -718,7 +718,7 @@ export default function ConfigDropdown({
                 className={styles.resetButton}
                 onClick={() => {
                   onFFTControlsChange({
-                    neonIntensity: 1.6,
+                    neonIntensity: 1.2,
                     colorPalette: 'default',
                     lineWidth: 0.04,
                   });
