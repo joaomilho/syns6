@@ -9,6 +9,7 @@ const execAsync = promisify(exec);
 // List of all visualizations to capture
 const allVisualizations = [
   'fftspectrum',
+  'lyricsonly',
   'particles',
   'fractal',
   'psychedelic',
