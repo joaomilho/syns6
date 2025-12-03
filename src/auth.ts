@@ -71,13 +71,14 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (account) {
-          // Check if token needs refresh
+          // Check if token needs refresh (with 5 minute buffer)
           const now = Math.floor(Date.now() / 1000);
           const expiresAt = account.expires_at || 0;
+          const bufferSeconds = 5 * 60; // Refresh 5 minutes before expiration
 
-          if (now >= expiresAt) {
-            // Token expired, refresh it
-            console.log("🔄 Token expired, refreshing...");
+          if (now >= expiresAt - bufferSeconds) {
+            // Token expired or about to expire, refresh it
+            console.log("🔄 Token expired or expiring soon, refreshing...");
             try {
               const response = await fetch("https://accounts.spotify.com/api/token", {
                 method: "POST",
