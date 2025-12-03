@@ -141,27 +141,23 @@ async function captureScreenshots() {
           fs.mkdirSync(vizFrameDir, { recursive: true });
         }
 
-        // Capture static thumbnail (first frame) as WebP for better compression
+        // Capture static thumbnail as WebP (much smaller than PNG)
         console.log(`  📸 Capturing static thumbnail...`);
-        const staticPath = path.join(OUTPUT_DIR, `${vizId}.png`);
+        const tempPngPath = path.join(TEMP_DIR, `${vizId}-temp.png`);
         const staticWebPPath = path.join(OUTPUT_DIR, `${vizId}-static.webp`);
         
-        // Save as PNG (for compatibility)
+        // Capture as PNG first (Playwright doesn't support WebP directly)
         await page.screenshot({
-          path: staticPath,
+          path: tempPngPath,
           type: 'png',
         });
         
-        // Also save as WebP (much smaller, we'll use this in the dropdown)
-        await page.screenshot({
-          path: staticWebPPath,
-          type: 'png',
-        });
-        
-        // Optimize PNG to WebP using ffmpeg
+        // Convert to WebP using ffmpeg
         try {
-          await execAsync(`ffmpeg -y -i "${staticPath}" -c:v libwebp -quality 80 "${staticWebPPath}"`);
-          console.log(`  ✅ Created optimized static WebP`);
+          await execAsync(`ffmpeg -y -i "${tempPngPath}" -c:v libwebp -quality 80 "${staticWebPPath}"`);
+          // Clean up temp PNG
+          await fs.promises.unlink(tempPngPath);
+          console.log(`  ✅ Created static WebP`);
         } catch (error) {
           console.error(`  ⚠️  Failed to create static WebP:`, error instanceof Error ? error.message : error);
         }
@@ -245,7 +241,7 @@ async function captureScreenshots() {
           // Ignore cleanup errors
         }
 
-        const outputs = [`${vizId}.png`];
+        const outputs = [`${vizId}-static.webp`];
         if (shouldGenerateVideo) outputs.push(`${vizId}.webm`);
         if (!args.includes('--video-only')) outputs.push(`${vizId}.webp`);
         console.log(`  ✅ Saved: ${outputs.join(' & ')}`);
