@@ -14,7 +14,7 @@ import CameraVisualization from "@/components/CameraVisualization";
 import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
-
+import LyricsOnlyVisualization from "@/components/LyricsOnlyVisualization";
 
 // Generate realistic animated microphone data
 function useAnimatedMicData(): MicrophoneData {
@@ -168,6 +168,7 @@ export default function ScreenshotPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime((prev) => (prev + 100) % 20000); // Loop every 20 seconds
+      // For lyrics, stay at the current line (don't progress)
     }, 100);
     return () => clearInterval(interval);
   }, []);
@@ -258,6 +259,46 @@ export default function ScreenshotPage() {
             volume={micData.volume}
             treble={micData.treble}
           />
+        );
+      case "lyricsonly":
+        return (
+          <>
+            <LyricsOnlyVisualization />
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
+                pointerEvents: 'none',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+              }}
+            >
+              {/* Past line */}
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '24px', marginBottom: '16px' }}>
+                My my, how can I resist you?
+              </div>
+              {/* Current line */}
+              <div style={{ 
+                color: '#ffffff', 
+                fontSize: '48px', 
+                fontWeight: 'bold',
+                textShadow: '0 0 20px rgba(255,255,255,0.5)',
+              }}>
+                Mamma mia!
+              </div>
+              {/* Next line */}
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '32px', marginTop: '16px' }}>
+                Here I go again
+              </div>
+            </div>
+          </>
         );
       default:
         return (
