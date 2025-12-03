@@ -2,16 +2,18 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
+import { Resend } from "resend";
+import { welcomeEmailHtml } from "@/emails/welcome";
 
 // All valid Spotify authorization scopes
 const SPOTIFY_SCOPES = [
   // Images
-  "ugc-image-upload",
+  // "ugc-image-upload",
   
   // Listening History
-  "user-read-recently-played",
-  "user-top-read",
-  "user-read-playback-position",
+  // "user-read-recently-played",
+  // "user-top-read",
+  // "user-read-playback-position",
   
   // Spotify Connect
   "user-read-playback-state",
@@ -20,25 +22,25 @@ const SPOTIFY_SCOPES = [
   
   // Playback
   "app-remote-control",
-  "streaming",
+  // "streaming",
   
   // Playlists
-  "playlist-modify-public",
-  "playlist-modify-private",
-  "playlist-read-private",
-  "playlist-read-collaborative",
+  // "playlist-modify-public",
+  // "playlist-modify-private",
+  // "playlist-read-private",
+  // "playlist-read-collaborative",
   
   // Follow
-  "user-follow-modify",
-  "user-follow-read",
+  // "user-follow-modify",
+  // "user-follow-read",
   
   // Library
-  "user-library-modify",
-  "user-library-read",
+  // "user-library-modify",
+  // "user-library-read",
   
   // Users
-  "user-read-email",
-  "user-read-private",
+  // "user-read-email",
+  // "user-read-private",
 ].join(" ");
 
 export const authOptions: NextAuthOptions = {
@@ -134,6 +136,25 @@ export const authOptions: NextAuthOptions = {
     strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours
+  },
+  events: {
+    async createUser({ user }) {
+      if(!user.email) return;
+      // Send welcome email when a new user signs up
+      const resend = new Resend("re_FFTj1hFv_BSHNZgkeg6eW6Ex1a1v6BQFo");
+      
+      try {
+        await resend.emails.send({
+          from: "welcome@syns6.com",
+          to: user.email,
+          subject: "♫ Welcome to syns6!",
+          html: welcomeEmailHtml,
+        });
+        console.log("✅ Welcome email sent for new user:", user.email);
+      } catch (error) {
+        console.error("❌ Failed to send welcome email:", error);
+      }
+    },
   },
 };
 

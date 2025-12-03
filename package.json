@@ -39,6 +39,7 @@
     "react-dom": "19.2.0",
     "react-qr-code": "^2.0.18",
     "react-social-media-embed": "^2.5.18",
+    "resend": "^6.5.2",
     "stripe": "^17.4.0",
     "three": "^0.181.1",
     "three-stdlib": "^2.36.1"
