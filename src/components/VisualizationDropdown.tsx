@@ -61,10 +61,10 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     id: "lyricsonly",
     name: "Lyrics Only",
     icon: <Music size={18} />,
-    thumbnail: "/viz-thumbnails/lyricsonly.png",
+    thumbnail: "/viz-thumbnails/lyricsonly-static.webp",
     assets: {
-      static: "/viz-thumbnails/lyricsonly.png",
-      animated: "/viz-thumbnails/lyricsonly.png",
+      static: "/viz-thumbnails/lyricsonly-static.webp",
+      animated: "/viz-thumbnails/lyricsonly.webp",
     },
   },
   {
