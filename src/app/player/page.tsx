@@ -19,6 +19,7 @@ import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
 import { getPlanFromPriceId, getPriceForPlan, formatPrice } from "@/lib/prices";
+import { parseSongTitle } from "@/lib/songParser";
 import { CurrencyCode } from "@/components/CurrencyDropdown";
 import { Canvas } from "@react-three/fiber";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
@@ -1441,18 +1442,22 @@ export default function PlayerPage() {
           hueConfig={hue.config}
         />
         );
-      case "youtube":
+      case "youtube": {
+        const ytTrackName = playbackState?.item?.name || lastKnownTrack?.item?.name;
+        const ytArtistName = playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name;
+        const ytParsed = ytTrackName && ytArtistName ? parseSongTitle(ytTrackName, ytArtistName) : null;
         return (
         <YouTubeVisualization
             key="youtube"
-          trackName={playbackState?.item?.name || lastKnownTrack?.item?.name}
-          artistName={playbackState?.item?.artists[0]?.name || lastKnownTrack?.item?.artists[0]?.name}
+          trackName={ytParsed?.title || ytTrackName}
+          artistName={ytParsed?.artist || ytArtistName}
           spotifyId={(playbackState?.item as any)?.id || (lastKnownTrack?.item as any)?.id}
           micData={micData}
           effect={youtubeControls.effect}
           onVideoIdChange={setCurrentYouTubeVideoId}
         />
         );
+      }
       default:
         return null;
     }
@@ -1538,18 +1543,34 @@ export default function PlayerPage() {
             position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
             scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
           >
-            <Lyrics3D
-              lyrics={lyrics}
-              currentTimeMs={currentProgress + lyricsTimeOffset}
-              micData={micData}
-              font={getFontPath(lyricsFont)}
-              color={lyricsColor}
-              trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
-              artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
-              nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
-              nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
-              timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
-            />
+            {(() => {
+              const currentTrackName = hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name);
+              const currentArtistName = hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name);
+              const upcomingTrackName = hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name;
+              const upcomingArtistName = hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name;
+              
+              const parsedCurrent = currentTrackName && currentArtistName 
+                ? parseSongTitle(currentTrackName, currentArtistName) 
+                : null;
+              const parsedNext = upcomingTrackName && upcomingArtistName 
+                ? parseSongTitle(upcomingTrackName, upcomingArtistName) 
+                : null;
+              
+              return (
+                <Lyrics3D
+                  lyrics={lyrics}
+                  currentTimeMs={currentProgress + lyricsTimeOffset}
+                  micData={micData}
+                  font={getFontPath(lyricsFont)}
+                  color={lyricsColor}
+                  trackName={parsedCurrent?.title || currentTrackName}
+                  artistName={parsedCurrent?.artist || currentArtistName}
+                  nextTrackName={parsedNext?.title || upcomingTrackName}
+                  nextArtistName={parsedNext?.artist || upcomingArtistName}
+                  timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
+                />
+              );
+            })()}
           </group>
         )}
       </Canvas>
@@ -1940,12 +1961,23 @@ export default function PlayerPage() {
                   {/* Track Info + Progress Column */}
                   <div className={styles.trackInfoContainer}>
                     <div className={styles.trackInfo}>
-                      <h2 className={styles.trackName}>
-                        {displayTrack.name}
-                        <span className={styles.artistName}>
-                          {" — "}{displayTrack.artists.map((a) => a.name).join(", ")}
-                        </span>
-                      </h2>
+                      {(() => {
+                        const parsed = parseSongTitle(
+                          displayTrack.name,
+                          displayTrack.artists.map((a) => a.name).join(", ")
+                        );
+                        return (
+                          <h2 className={styles.trackName}>
+                            {parsed.title}
+                            <span className={styles.artistName}>
+                              {" — "}{parsed.artist}
+                            </span>
+                            {parsed.extra && (
+                              <span className={styles.trackExtra}> ({parsed.extra})</span>
+                            )}
+                          </h2>
+                        );
+                      })()}
                     </div>
 
                     {/* Progress Bar */}
@@ -1995,10 +2027,15 @@ export default function PlayerPage() {
                             
                             {/* Track Info */}
                             <div className={styles.queueTrackInfo}>
-                              <span className={styles.queueTrackName}>{track.name}</span>
-                              <span className={styles.queueArtistName}>
-                                {track.artists[0].name}
-                              </span>
+                              {(() => {
+                                const parsed = parseSongTitle(track.name, track.artists[0].name);
+                                return (
+                                  <>
+                                    <span className={styles.queueTrackName}>{parsed.title}</span>
+                                    <span className={styles.queueArtistName}>{parsed.artist}</span>
+                                  </>
+                                );
+                              })()}
                             </div>
                             
                             {/* Show countdown on first track when it's about to start */}

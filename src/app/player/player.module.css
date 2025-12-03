@@ -471,6 +471,13 @@
   margin: 0;
 }
 
+.trackExtra {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
 .progressContainer {
   display: flex;
   align-items: center;

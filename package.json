@@ -17,6 +17,7 @@
     "fetch-lyrics": "tsx scripts/fetchLyrics.ts",
     "capture-screenshots": "tsx scripts/captureScreenshots.ts",
     "screenshots": "tsx scripts/captureScreenshots.ts",
+    "test:parser": "tsx src/lib/songParser.test.ts",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "postinstall": "prisma generate"
   },
