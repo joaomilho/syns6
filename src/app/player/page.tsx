@@ -185,7 +185,7 @@ export default function PlayerPage() {
     colorPalette: 'default' | 'vaporwave' | 'sunset' | 'fire' | 'neon';
     lineWidth: number;
   }>({
-    neonIntensity: 1.6,
+    neonIntensity: 1.2,
     colorPalette: 'default',
     lineWidth: 0.04,
   });
@@ -643,9 +643,9 @@ export default function PlayerPage() {
         break;
       
       case 'fftspectrum':
-        // Ranges: neonIntensity [0,0.4,1.6,3.2], lineWidth [0.01,0.02,0.04,0.08,0.16]
+        // Ranges: neonIntensity [0,0.4,0.8,1.2,1.6,3.2], lineWidth [0.01,0.02,0.04,0.08,0.16]
         setFFTControls({
-          neonIntensity: randomChoice([0, 0.4, 1.6, 3.2]),
+          neonIntensity: randomChoice([0, 0.4, 0.8, 1.2, 1.6, 3.2]),
           colorPalette: randomChoice(['default', 'vaporwave', 'sunset', 'fire', 'neon']),
           lineWidth: randomChoice([0.01, 0.02, 0.04, 0.08, 0.16]),
         });
