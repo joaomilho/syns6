@@ -141,7 +141,7 @@ export const authOptions: NextAuthOptions = {
     async createUser({ user }) {
       if(!user.email) return;
       // Send welcome email when a new user signs up
-      const resend = new Resend("re_FFTj1hFv_BSHNZgkeg6eW6Ex1a1v6BQFo");
+      const resend = new Resend(process.env.RESEND_API_KEY);
       
       try {
         await resend.emails.send({
