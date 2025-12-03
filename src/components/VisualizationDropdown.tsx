@@ -54,7 +54,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/fftspectrum-static.webp",
     assets: {
       static: "/viz-thumbnails/fftspectrum-static.webp",
-      animated: "/viz-thumbnails/fftspectrum.webm",
+      animated: "/viz-thumbnails/fftspectrum.webp",
     },
   },
   {
@@ -74,7 +74,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/particles-static.webp",
     assets: {
       static: "/viz-thumbnails/particles-static.webp",
-      animated: "/viz-thumbnails/particles.webm",
+      animated: "/viz-thumbnails/particles.webp",
     },
   },
   {
@@ -84,7 +84,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/psychedelic-static.webp",
     assets: {
       static: "/viz-thumbnails/psychedelic-static.webp",
-      animated: "/viz-thumbnails/psychedelic.webm",
+      animated: "/viz-thumbnails/psychedelic.webp",
     },
   },
   {
@@ -94,7 +94,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/kaleidoscope-static.webp",
     assets: {
       static: "/viz-thumbnails/kaleidoscope-static.webp",
-      animated: "/viz-thumbnails/kaleidoscope.webm",
+      animated: "/viz-thumbnails/kaleidoscope.webp",
     },
   },
   {
@@ -104,7 +104,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/waves-static.webp",
     assets: {
       static: "/viz-thumbnails/waves-static.webp",
-      animated: "/viz-thumbnails/waves.webm",
+      animated: "/viz-thumbnails/waves.webp",
     },
   },
   {
@@ -114,7 +114,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/animated-static.webp",
     assets: {
       static: "/viz-thumbnails/animated-static.webp",
-      animated: "/viz-thumbnails/animated.webm",
+      animated: "/viz-thumbnails/animated.webp",
     },
   },
   {
@@ -124,7 +124,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/spectrum3d-static.webp",
     assets: {
       static: "/viz-thumbnails/spectrum3d-static.webp",
-      animated: "/viz-thumbnails/spectrum3d.webm",
+      animated: "/viz-thumbnails/spectrum3d.webp",
     },
   },
   {
@@ -134,7 +134,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/oscilloscope-static.webp",
     assets: {
       static: "/viz-thumbnails/oscilloscope-static.webp",
-      animated: "/viz-thumbnails/oscilloscope.webm",
+      animated: "/viz-thumbnails/oscilloscope.webp",
     },
   },
   {
@@ -144,7 +144,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/camera-static.webp",
     assets: {
       static: "/viz-thumbnails/camera-static.webp",
-      animated: "/viz-thumbnails/camera.webm",
+      animated: "/viz-thumbnails/camera.webp",
     },
   },
   {
@@ -154,7 +154,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/youtube-static.webp",
     assets: {
       static: "/viz-thumbnails/youtube-static.webp",
-      animated: "/viz-thumbnails/youtube.webm",
+      animated: "/viz-thumbnails/youtube.webp",
     },
   },
   {
@@ -164,7 +164,7 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     thumbnail: "/viz-thumbnails/debug-static.webp",
     assets: {
       static: "/viz-thumbnails/debug-static.webp",
-      animated: "/viz-thumbnails/debug.webm",
+      animated: "/viz-thumbnails/debug.webp",
     },
   },
 ];
@@ -262,13 +262,10 @@ export default function VisualizationDropdown({
                       backgroundPosition: 'center'
                     }}
                   />
-                  <video
+                  <img
                     className={`${styles.thumbnail} ${styles.thumbnailAnimated}`}
                     src={viz.assets.animated}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
+                    alt={viz.name}
                     style={{
                       width: '100%',
                       height: '100%',
