@@ -136,6 +136,11 @@ export function useMicrophoneAnalysis() {
         // Create audio context and analyser (MONO only - phase shift for oscilloscope)
         const audioContext = new AudioContext();
         const source = audioContext.createMediaStreamSource(stream);
+
+        //// TODO this code connects the in to the out
+        // const dest = audioContext.destination;
+        // source.connect(dest);
+        ////////
         
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 1024;

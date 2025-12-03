@@ -1725,6 +1725,10 @@ export default function PlayerPage() {
               alert('Failed to open billing portal. Please try again.');
             }
           };
+
+          // return <pre>
+          //   {JSON.stringify({planInfo,subscription}, null, 2)}
+          // </pre>
           
           return (
             <div style={{ position: 'relative' }}>
@@ -1805,10 +1809,9 @@ export default function PlayerPage() {
                         alignItems: 'center',
                         gap: '6px',
                       }}>
-                        <span style={{ fontSize: '16px' }}>✓</span>
                         {planInfo.name} Plan
                       </div>
-                      <div style={{ 
+                      {/* <div style={{ 
                         color: 'rgba(255, 255, 255, 0.8)', 
                         fontSize: '12px',
                         marginBottom: '4px',
@@ -1817,7 +1820,7 @@ export default function PlayerPage() {
                           getPriceForPlan(planInfo.type, detectedCurrency),
                           detectedCurrency
                         )}/{planInfo.interval}
-                      </div>
+                      </div> */}
                       {subscription.currentPeriodEnd && (
                         <div style={{ 
                           color: 'rgba(255, 255, 255, 0.5)', 
