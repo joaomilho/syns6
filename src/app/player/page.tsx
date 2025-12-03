@@ -1494,109 +1494,64 @@ export default function PlayerPage() {
 
   return (
     <div className={styles.fullscreenPage}>
-      {/* UNIFIED CANVAS - Single WebGL context for visualizations + lyrics! */}
-      {!isSpecialVisualization && (
-        <Canvas
-          camera={getCameraSettings()}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: getBackground(),
-            zIndex: 0,
-          }}
-          gl={{
-            antialias: true,
-            alpha: false,
-            powerPreference: "high-performance",
-            failIfMajorPerformanceCaveat: false,
-          }}
-          dpr={1}
-          onCreated={({ camera }) => {
-            // TODO is this needed?
-            // Enable camera to see both layer 0 (visualizations with bloom) and layer 1 (text without bloom)
-            camera.layers.enable(0);
-            camera.layers.enable(1);
-          }}
-        >
-          {/* Visualization Scenes - swap based on selection */}
-          {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} fftControls={fftControls} />}
-          {visualizationType === 'particles' && <OrbitalScene micData={micData} orbitalControls={orbitalControls} />}
-          {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
-          {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} videoElement={videoElement} kaleidoscopeControls={kaleidoscopeControls} />}
-          {visualizationType === 'waves' && <WavyLinesScene micData={micData} wavyLinesControls={wavyLinesControls} />}
-          {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
-          {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} spectrum3DControls={spectrum3DControls} />}
-          {/* lyricsonly has no scene content - just background */}
+      {/* Special visualizations render BELOW the unified canvas (they have their own canvas) */}
+      {isSpecialVisualization && renderVisualization()}
 
-          {/* LYRICS - ALWAYS RENDERED IN SAME CANVAS! Never unmounts! */}
-          {lyrics && lyrics.length > 0 && (
-            <group 
-              position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
-              scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
-            >
-              <Lyrics3D
-                lyrics={lyrics}
-                currentTimeMs={currentProgress + lyricsTimeOffset}
-                micData={micData}
-                font={getFontPath(lyricsFont)}
-                color={lyricsColor}
-                trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
-                artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
-                nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
-                nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
-                timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
-              />
-            </group>
-          )}
-        </Canvas>
-      )}
+      {/* UNIFIED CANVAS - Always mounted! Contains viz scenes OR just lyrics overlay */}
+      <Canvas
+        camera={getCameraSettings()}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: isSpecialVisualization ? 'transparent' : getBackground(),
+          zIndex: isSpecialVisualization ? 2 : 0,
+          pointerEvents: isSpecialVisualization ? 'none' : 'auto',
+        }}
+        gl={{
+          antialias: !isSpecialVisualization,
+          alpha: isSpecialVisualization,
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false,
+        }}
+        dpr={1}
+      >
+        {/* Visualization Scenes - only render for non-special visualizations */}
+        {!isSpecialVisualization && (
+          <>
+            {visualizationType === 'fftspectrum' && <FFTSpectrumScene micData={micData} fftControls={fftControls} />}
+            {visualizationType === 'particles' && <OrbitalScene micData={micData} orbitalControls={orbitalControls} />}
+            {visualizationType === 'psychedelic' && <PsychedelicScene micData={micData} />}
+            {visualizationType === 'kaleidoscope' && <KaleidoscopeScene micData={micData} albumArt={playbackState?.item?.album?.images?.[0]?.url || lastKnownTrack?.item?.album?.images?.[0]?.url} videoElement={videoElement} kaleidoscopeControls={kaleidoscopeControls} />}
+            {visualizationType === 'waves' && <WavyLinesScene micData={micData} wavyLinesControls={wavyLinesControls} />}
+            {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
+            {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} spectrum3DControls={spectrum3DControls} />}
+          </>
+        )}
 
-      {/* Special visualizations - need separate rendering (oscilloscope, camera, youtube, debug) */}
-      {isSpecialVisualization && (
-        <>
-          {/* Render the special visualization */}
-          {renderVisualization()}
-          
-          {/* Separate lyrics canvas ONLY for special visualizations */}
-          {lyrics && lyrics.length > 0 && (
-            <Canvas
-              camera={{ position: [0, 3, 30] as [number, number, number], fov: 75 }}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100vw',
-                height: '100vh',
-                background: 'transparent',
-                zIndex: 2,
-                pointerEvents: 'none',
-              }}
-              gl={{
-                antialias: false,
-                alpha: true,
-                powerPreference: "high-performance",
-              }}
-              dpr={1}
-            >
-              <Lyrics3D
-                lyrics={lyrics}
-                currentTimeMs={currentProgress + lyricsTimeOffset}
-                micData={micData}
-                font={getFontPath(lyricsFont)}
-                color={lyricsColor}
-                trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
-                artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
-                nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
-                nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
-                timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
-              />
-            </Canvas>
-          )}
-        </>
-      )}
+        {/* LYRICS - Always in this canvas, never unmounts! */}
+        {lyrics && lyrics.length > 0 && (
+          <group 
+            position={visualizationType === 'lyricsonly' ? [0, 0, 0] : [0, 0, 8]} 
+            scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
+          >
+            <Lyrics3D
+              lyrics={lyrics}
+              currentTimeMs={currentProgress + lyricsTimeOffset}
+              micData={micData}
+              font={getFontPath(lyricsFont)}
+              color={lyricsColor}
+              trackName={hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name)}
+              artistName={hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name)}
+              nextTrackName={hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name}
+              nextArtistName={hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name}
+              timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
+            />
+          </group>
+        )}
+      </Canvas>
 
       {/* Performance Stats Monitor - Toggle with 'S' key */}
       <PerformanceStats 
