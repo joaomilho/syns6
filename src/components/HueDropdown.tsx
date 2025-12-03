@@ -4,13 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { HueConnection } from "@/hooks/useHueLights";
 import { Toggle } from "@/components/ds";
 import { Lightbulb, Construction, Search, AlertTriangle, Info } from "lucide-react";
+import { trackHueClick } from "@/lib/analytics";
 import styles from "./HueDropdown.module.css";
 
 interface HueDropdownProps {
   hue: HueConnection;
+  userEmail?: string | null;
 }
 
-export default function HueDropdown({ hue }: HueDropdownProps) {
+export default function HueDropdown({ hue, userEmail }: HueDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [manualIp, setManualIp] = useState("");
@@ -77,7 +79,12 @@ export default function HueDropdown({ hue }: HueDropdownProps) {
     <div className={styles.dropdown} ref={dropdownRef}>
       <button
         className={`${styles.dropdownButton} ${isActive ? styles.active : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen) {
+            trackHueClick(userEmail);
+          }
+          setIsOpen(!isOpen);
+        }}
         title={isConnected ? (isActive ? "Hue Active" : "Hue Connected") : "Connect Hue Lights"}
       >
         <Lightbulb size={20} />
