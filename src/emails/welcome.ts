@@ -1,4 +1,7 @@
-export const welcomeEmailHtml = `
+export const welcomeEmail = {
+  from: "Yohanan from syns6 <yo@syns6.com>",
+  subject: "🎶✨ Welcome to syns6!",
+  html: `
 <img src="https://syns6.com/icon" alt="syns6 logo" />
 <p>Hey,</p>
 
@@ -20,5 +23,5 @@ Neon-soaked, bass-pounding 3d viz with perfectly readable lyrics.
 
 <p>Cheers,<br/>
     Yohanan</p>
-`;
-
+`,
+};
