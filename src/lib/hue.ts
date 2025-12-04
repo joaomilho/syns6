@@ -3,20 +3,41 @@
  * Controls local Hue lights with music-reactive colors
  */
 
-// Detect if running in Tauri and get the fetch function
+// Detect if running in Tauri
 const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
 
-// Tauri fetch wrapper - dynamically imports Tauri HTTP plugin when needed
+// Tauri fetch wrapper - uses Tauri's invoke to make HTTP requests through Rust
 async function tauriFetch(url: string, options?: RequestInit): Promise<Response> {
-  if (isTauri) {
+  if (isTauri && typeof window !== 'undefined') {
     try {
-      // Use string variable to bypass TypeScript module resolution at build time
-      const moduleName = '@tauri-apps/plugin-http';
-      const tauriHttp = await import(/* webpackIgnore: true */ moduleName);
-      return tauriHttp.fetch(url, options as any);
+      // Access Tauri's HTTP plugin through the window object
+      // The plugin exposes fetch through window.__TAURI__.http or via invoke
+      const tauri = (window as any).__TAURI__;
+      
+      if (tauri?.http?.fetch) {
+        // Direct plugin API access
+        return await tauri.http.fetch(url, options);
+      }
+      
+      // Fallback: use invoke to call a custom Rust command
+      if (tauri?.core?.invoke) {
+        const response = await tauri.core.invoke('plugin:http|fetch', {
+          method: options?.method || 'GET',
+          url,
+          headers: options?.headers || {},
+          body: options?.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : null,
+        });
+        
+        // Convert Tauri response to standard Response
+        return new Response(JSON.stringify(response.data), {
+          status: response.status,
+          headers: response.headers,
+        });
+      }
+      
+      console.warn('Tauri HTTP plugin not found, falling back to native fetch');
     } catch (e) {
-      console.warn('Tauri HTTP plugin not available, falling back to native fetch', e);
-      return fetch(url, options);
+      console.warn('Tauri HTTP fetch failed, falling back to native fetch:', e);
     }
   }
   return fetch(url, options);
