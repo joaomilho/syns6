@@ -130,6 +130,7 @@ export default function PlayerPage() {
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
   const [lyricsTimeOffset, setLyricsTimeOffset] = useState(0); // Offset for showing next track's lyrics early
   const hasSwitchedToNextRef = useRef(false); // Track if we've already switched to next lyrics
+  const switchedAtProgressRef = useRef<number | null>(null); // Progress when we switched to next lyrics
   
   // Lyrics worker for background fetching (keeps main thread smooth)
   const lyricsWorker = useLyricsWorker({
@@ -1016,9 +1017,8 @@ export default function PlayerPage() {
   // Reset the "switched to next" flag when track actually changes
   useEffect(() => {
     if (playbackState?.item?.id) {
-      if (hasSwitchedToNextRef.current) {
-      }
       hasSwitchedToNextRef.current = false;
+      switchedAtProgressRef.current = null; // Reset switch progress tracker
       setLyricsTimeOffset(0); // Reset offset when track changes
     }
   }, [playbackState?.item?.id]);
@@ -1079,8 +1079,8 @@ export default function PlayerPage() {
           setLyrics(nextLyrics);
           setLastFetchedTrackId(nextTrack.id);
           
-          // Set time offset to show next lyrics from beginning
-          // The offset is negative of current progress, so lyrics display time = 0
+          // Store the progress at switch time so we can keep lyrics frozen at time 0
+          switchedAtProgressRef.current = currentProgress;
           setLyricsTimeOffset(-currentProgress);
           
           // Mark that we've switched so we don't do it again
@@ -1577,7 +1577,9 @@ export default function PlayerPage() {
               return (
                 <Lyrics3D
                   lyrics={lyrics}
-                  currentTimeMs={currentProgress + lyricsTimeOffset}
+                  currentTimeMs={hasSwitchedToNextRef.current && switchedAtProgressRef.current !== null 
+                    ? 0 // Keep at 0 while showing next song's lyrics early
+                    : currentProgress + lyricsTimeOffset}
                   micData={micData}
                   font={getFontPath(lyricsFont)}
                   color={lyricsColor}
