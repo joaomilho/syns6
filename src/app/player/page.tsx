@@ -15,6 +15,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useLyricsWorker } from "@/hooks/useLyricsWorker";
 import { useSmartPolling } from "@/hooks/useSmartPolling";
 import { useYouTubePreloader } from "@/hooks/useYouTubePreloader";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
@@ -28,7 +29,7 @@ import VisualizationDropdown, {
 } from "@/components/VisualizationDropdown";
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
-import { PlaybackStatusButton, MicrophoneButton, CameraButton } from "@/components/ToolsMenu";
+import { PlaybackStatusButton, MicrophoneButton, CameraButton, FullscreenButton } from "@/components/ToolsMenu";
 import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls } from "@/lib/storage";
 
 // Lazy load all visualization components (only loaded when needed)
@@ -256,6 +257,7 @@ export default function PlayerPage() {
   const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
   const [showPerformanceStats, setShowPerformanceStats] = useState(false); // Toggle performance monitor
   const [showProfileDropdown, setShowProfileDropdown] = useState(false); // Profile dropdown
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
   
   // Share Manager for broadcasting to viewers
   const shareManager = useShareManager();
@@ -1729,6 +1731,12 @@ export default function PlayerPage() {
           onWavyLinesControlsChange={setWavyLinesControls}
           onSpectrum3DControlsChange={setSpectrum3DControls}
           onYouTubeControlsChange={setYouTubeControls}
+        />
+
+        {/* Fullscreen Toggle */}
+        <FullscreenButton
+          isFullscreen={isFullscreen}
+          onToggle={toggleFullscreen}
         />
 
         {/* User Profile */}

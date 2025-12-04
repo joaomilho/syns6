@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Pause, Square, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { Play, Pause, Square, Mic, MicOff, Video, VideoOff, Maximize, Minimize } from "lucide-react";
 import { IconButton } from "@/components/ds";
 
 // Play/Pause Status Button
@@ -66,6 +66,24 @@ export function CameraButton({ enabled, onToggle }: CameraButtonProps) {
       title={enabled ? "Disable Camera" : "Enable Camera"}
     >
       {enabled ? <Video size={18} /> : <VideoOff size={18} />}
+    </IconButton>
+  );
+}
+
+// Fullscreen Toggle Button
+interface FullscreenButtonProps {
+  isFullscreen: boolean;
+  onToggle: () => void;
+}
+
+export function FullscreenButton({ isFullscreen, onToggle }: FullscreenButtonProps) {
+  return (
+    <IconButton
+      active={isFullscreen}
+      onClick={onToggle}
+      title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+    >
+      {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
     </IconButton>
   );
 }
