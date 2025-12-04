@@ -1,10 +1,14 @@
 /**
  * Hook to manage Hue Worker
  * Offloads all Hue HTTP requests to a Web Worker
+ * Falls back to main-thread fetch when in Tauri (workers can't use Tauri HTTP plugin)
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { HueLightState } from '@/lib/hue';
+import { HueLightState, setLightState, lightConfigToState } from '@/lib/hue';
+
+// Detect if running in Tauri
+const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
 
 interface AudioData {
   bass: number;
@@ -41,8 +45,32 @@ export function useHueWorker(): HueWorkerHook {
     onSuccess?: (lightId: string, brightness: number) => void;
     onFailure?: (lightId: string, failures: number) => void;
   }>({});
+  
+  // Tauri mode: store config for main-thread updates
+  const tauriConfigRef = useRef<{
+    bridgeIp: string;
+    username: string;
+    selectedLights: string[];
+    smoothness: number;
+    isActive: boolean;
+    lastBrightness: Map<string, number>;
+    lightUpdating: Map<string, boolean>;
+  }>({
+    bridgeIp: '',
+    username: '',
+    selectedLights: [],
+    smoothness: 6,
+    isActive: false,
+    lastBrightness: new Map(),
+    lightUpdating: new Map(),
+  });
 
   useEffect(() => {
+    // In Tauri mode, don't create worker - use main thread
+    if (isTauri) {
+      return;
+    }
+    
     // Create worker
     workerRef.current = new Worker(
       new URL('../workers/hue.worker.ts', import.meta.url),
@@ -69,6 +97,11 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const initWorker = useCallback((bridgeIp: string, username: string) => {
+    if (isTauri) {
+      tauriConfigRef.current.bridgeIp = bridgeIp;
+      tauriConfigRef.current.username = username;
+      return;
+    }
     if (workerRef.current) {
       workerRef.current.postMessage({
         type: 'INIT',
@@ -79,6 +112,21 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const updateLight = useCallback((lightId: string, state: HueLightState) => {
+    if (isTauri) {
+      const config = tauriConfigRef.current;
+      if (!config.isActive || !config.bridgeIp || !config.username) return;
+      
+      // Main thread fetch for Tauri
+      setLightState(config.bridgeIp, config.username, lightId, state)
+        .then(() => {
+          config.lastBrightness.set(lightId, state.bri || 0);
+          handlersRef.current.onSuccess?.(lightId, state.bri || 0);
+        })
+        .catch(() => {
+          handlersRef.current.onFailure?.(lightId, 1);
+        });
+      return;
+    }
     if (workerRef.current) {
       workerRef.current.postMessage({
         type: 'UPDATE_LIGHT',
@@ -89,6 +137,54 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const updateAudio = useCallback((audioData: AudioData, lightConfigs: Record<string, { mode: string }>) => {
+    if (isTauri) {
+      const config = tauriConfigRef.current;
+      if (!config.isActive || !config.bridgeIp || !config.username) return;
+      
+      // Process each selected light on main thread
+      for (const lightId of config.selectedLights) {
+        const lightConfig = lightConfigs[lightId];
+        if (!lightConfig) continue;
+        
+        // Skip if already updating this light
+        if (config.lightUpdating.get(lightId)) continue;
+        
+        // Calculate state
+        const state = lightConfigToState(
+          lightConfig as { mode: 'bass' | 'voice' | 'drums' },
+          {
+            bass: audioData.bass,
+            mid: audioData.mid,
+            treble: audioData.treble,
+            subBass: audioData.subBass,
+            presence: audioData.presence,
+            voice: audioData.voiceStrength,
+            drums: audioData.instruments?.drumComponents,
+          },
+          config.smoothness
+        );
+        
+        // Skip if brightness unchanged
+        if (config.lastBrightness.get(lightId) === state.bri) continue;
+        
+        // Mark as updating
+        config.lightUpdating.set(lightId, true);
+        
+        // Send update
+        setLightState(config.bridgeIp, config.username, lightId, state)
+          .then(() => {
+            config.lastBrightness.set(lightId, state.bri || 0);
+            handlersRef.current.onSuccess?.(lightId, state.bri || 0);
+          })
+          .catch(() => {
+            handlersRef.current.onFailure?.(lightId, 1);
+          })
+          .finally(() => {
+            config.lightUpdating.set(lightId, false);
+          });
+      }
+      return;
+    }
     if (workerRef.current) {
       workerRef.current.postMessage({
         type: 'UPDATE_AUDIO',
@@ -99,6 +195,19 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const terminateWorker = useCallback(() => {
+    if (isTauri) {
+      // Reset Tauri config
+      tauriConfigRef.current = {
+        bridgeIp: '',
+        username: '',
+        selectedLights: [],
+        smoothness: 6,
+        isActive: false,
+        lastBrightness: new Map(),
+        lightUpdating: new Map(),
+      };
+      return;
+    }
     if (workerRef.current) {
       workerRef.current.terminate();
       workerRef.current = null;
@@ -106,6 +215,11 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const updateConfig = useCallback((selectedLights: string[], smoothness: number) => {
+    if (isTauri) {
+      tauriConfigRef.current.selectedLights = selectedLights;
+      tauriConfigRef.current.smoothness = smoothness;
+      return;
+    }
     if (!workerRef.current) {
       return;
     }
@@ -118,6 +232,14 @@ export function useHueWorker(): HueWorkerHook {
   }, []);
 
   const setActive = useCallback((isActive: boolean) => {
+    if (isTauri) {
+      tauriConfigRef.current.isActive = isActive;
+      if (!isActive) {
+        // Clear pending state when deactivated
+        tauriConfigRef.current.lightUpdating.clear();
+      }
+      return;
+    }
     if (!workerRef.current) {
       return;
     }

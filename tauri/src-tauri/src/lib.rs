@@ -19,6 +19,7 @@ fn send_to_tauri(message: String) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![send_to_web, send_to_tauri])
         .setup(|app| {
             // Listen for messages from the web page
