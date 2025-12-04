@@ -3,12 +3,14 @@
  * Controls local Hue lights with music-reactive colors
  */
 
-// Detect if running in Tauri
-const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
+// Detect if running in Tauri (lazy check to avoid worker issues)
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
+}
 
 // Tauri fetch wrapper - uses Tauri's invoke to make HTTP requests through Rust
 async function tauriFetch(url: string, options?: RequestInit): Promise<Response> {
-  if (isTauri && typeof window !== 'undefined') {
+  if (isTauri() && typeof window !== 'undefined') {
     try {
       // Access Tauri's HTTP plugin through the window object
       // The plugin exposes fetch through window.__TAURI__.http or via invoke

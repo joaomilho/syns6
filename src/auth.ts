@@ -45,6 +45,18 @@ const SPOTIFY_SCOPES = [
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  debug: process.env.NODE_ENV === 'development', // Enable debug logging
+  logger: {
+    error: (code, metadata) => {
+      console.error("❌ NextAuth Error:", code, metadata);
+    },
+    warn: (code) => {
+      console.warn("⚠️ NextAuth Warning:", code);
+    },
+    debug: (code, metadata) => {
+      console.log("🔍 NextAuth Debug:", code, metadata);
+    },
+  },
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID!,
@@ -57,6 +69,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log("🔐 SignIn callback:", { 
+        userId: user?.id, 
+        email: user?.email,
+        provider: account?.provider,
+        profileEmail: (profile as any)?.email,
+      });
+      return true; // Allow sign in
+    },
     async session({ session, user }) {
       // With database sessions, we need to get tokens from the database
       if (user) {
