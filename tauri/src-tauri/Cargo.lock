@@ -3739,7 +3739,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "syns6-app"
+name = "syns6"
 version = "0.1.0"
 dependencies = [
  "serde",

@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    syns6_app_lib::run()
+    syns6_lib::run()
 }
