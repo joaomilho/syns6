@@ -12,6 +12,6 @@
     "opener:default"
   ],
   "remote": {
-    "urls": ["https://syns6.com/*", "https://*.syns6.com/*"]
+    "urls": ["https://syns6.com/*", "https://*.syns6.com/*", "http://127.0.0.1:3000/*", "http://localhost:3000/*"]
   }
 }
