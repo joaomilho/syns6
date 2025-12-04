@@ -418,16 +418,16 @@ export default function PlayerPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileDropdown]);
   
-  // Check subscription and redirect to pricing if not active
+  // Check subscription and redirect to subscribe if not active
   useEffect(() => {
     // Wait for authentication and subscription data to load
     if (status === 'loading' || subscriptionLoading) {
       return;
     }
 
-    // If authenticated but no active subscription, redirect to pricing
+    // If authenticated but no active subscription, redirect to subscribe
     if (status === 'authenticated' && !isActive) {
-      router.push('/pricing');
+      router.push('/subscribe');
     }
   }, [status, subscriptionLoading, isActive, router]);
   
@@ -1908,7 +1908,7 @@ export default function PlayerPage() {
                       </div>
                       <button
                         onClick={() => {
-                          router.push('/pricing');
+                          router.push('/subscribe');
                         }}
                         style={{
                           width: '100%',
