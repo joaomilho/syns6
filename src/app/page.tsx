@@ -357,15 +357,16 @@ export default function Home() {
           </p>
           <div className={styles.ctaContainer}>
             <button 
-              onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
+              onClick={() => signIn('spotify', { callbackUrl: '/player' })} 
               className={styles.ctaButton}
             >
-              Join the waitlist
+              Get Started – It’s Free
             </button>
             <a href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" target="_blank" rel="noopener noreferrer">
               <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1042868&theme=light&t=1764195048977" alt="syns6 - Karaoke&#0046;&#0032;Redefined&#0046; | Product Hunt" style={{width: '250px', height: '54px'}} width="250" height="54" />
             </a>
           </div>
+          <p>3 day free trial. No credit card needed. Cancel anytime.</p>
         </section>
 
         {/* Social Links */}
@@ -621,11 +622,12 @@ export default function Home() {
           </div> */}
 
           <button 
-            onClick={() => signIn('spotify', { callbackUrl: '/waitlist' })} 
+            onClick={() => signIn('spotify', { callbackUrl: '/player' })} 
             className={styles.ctaButton}
           >
-            Join the waitlist
+            Get Started – It’s Free
           </button>
+          <p>3 day free trial. No credit card needed. Cancel anytime.</p>
         </section>
 
         {/* Footer */}
