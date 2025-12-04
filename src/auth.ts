@@ -38,9 +38,9 @@ const SPOTIFY_SCOPES = [
   // "user-library-modify",
   // "user-library-read",
   
-  // Users
-  // "user-read-email",
-  // "user-read-private",
+  // Users (required for auth)
+  "user-read-email",
+  "user-read-private",
 ].join(" ");
 
 export const authOptions: NextAuthOptions = {
@@ -140,6 +140,7 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async createUser({ user }) {
+      console.log("🆕 New user created:", user.id, user.email);
       if(!user.email) return;
       // Send welcome email when a new user signs up
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -154,6 +155,7 @@ export const authOptions: NextAuthOptions = {
         console.log("✅ Welcome email sent for new user:", user.email);
       } catch (error) {
         console.error("❌ Failed to send welcome email:", error);
+        // Don't throw - let user creation succeed even if email fails
       }
     },
   },
