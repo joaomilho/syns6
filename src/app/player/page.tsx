@@ -31,6 +31,7 @@ import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton, FullscreenButton } from "@/components/ToolsMenu";
 import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls } from "@/lib/storage";
+import { MessageSquare, HelpCircle } from "lucide-react";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -1601,6 +1602,21 @@ export default function PlayerPage() {
       {/* Top Controls */}
       <div className={styles.topBar}>
         <Logo loading={subscriptionLoading} />
+        
+        {/* DEV indicator */}
+        {process.env.NODE_ENV === 'development' && (
+          <span style={{
+            background: 'rgba(255, 100, 0, 0.8)',
+            color: '#fff',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            letterSpacing: '0.5px',
+          }}>
+            DEV
+          </span>
+        )}
 
         <div className={styles.controlGroups}>
         {/* Playback Status */}
@@ -1940,6 +1956,73 @@ export default function PlayerPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* Feedback & Help Links */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginBottom: '12px',
+                  }}>
+                    <a
+                      href="https://syns6.canny.io/feedback"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px 12px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        textDecoration: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                      }}
+                    >
+                      <MessageSquare size={16} style={{ opacity: 0.7 }} />
+                      Feedback & Features
+                    </a>
+                    <a
+                      href="mailto:help@syns6.com"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px 12px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        textDecoration: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                      }}
+                    >
+                      <HelpCircle size={16} style={{ opacity: 0.7 }} />
+                      Help & Support
+                    </a>
+                  </div>
 
                   {/* Sign Out Button */}
                   <button
