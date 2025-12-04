@@ -5,7 +5,7 @@
   "identifier": "com.syns6",
   "build": {
     "beforeDevCommand": "",
-    "devUrl": "https://syns6.com/player",
+    "devUrl": "http://127.0.0.1:3000/player",
     "beforeBuildCommand": "",
     "frontendDist": "https://syns6.com/player"
   },
@@ -14,8 +14,7 @@
       {
         "title": "Syns6",
         "width": 1200,
-        "height": 800,
-        "url": "https://syns6.com/player"
+        "height": 800
       }
     ],
     "security": {
