@@ -88,7 +88,24 @@ export async function POST(req: NextRequest) {
       checkoutSessionConfig.allow_promotion_codes = true;
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create(checkoutSessionConfig);
+    let checkoutSession;
+    try {
+      checkoutSession = await stripe.checkout.sessions.create(checkoutSessionConfig);
+    } catch (stripeError: any) {
+      // If promo code fails due to customer having prior transactions, retry without it
+      if (
+        promoCode &&
+        stripeError?.message?.includes('promotion code cannot be redeemed') &&
+        stripeError?.message?.includes('prior transactions')
+      ) {
+        console.log('Promo code not applicable for returning customer, retrying without promo code');
+        delete checkoutSessionConfig.discounts;
+        checkoutSessionConfig.allow_promotion_codes = true;
+        checkoutSession = await stripe.checkout.sessions.create(checkoutSessionConfig);
+      } else {
+        throw stripeError;
+      }
+    }
 
     return NextResponse.json({ sessionId: checkoutSession.id, url: checkoutSession.url });
   } catch (error) {
