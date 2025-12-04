@@ -1,20 +1,6 @@
 # Soft launch checklist
 
-[ ] Fix Spotify's login
-    Still getting 401s fairly often
-[ ] Make /profile
-    Be in dropdown (can we keep the URL tho?)
 [ ] Connect canny to ProductHunt
-[ ] Synthwave viz
-    https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
-compo? Or getting AT compo?
-[X] Viz config basics
-    Add some basic configs for views
-[X] Slow lyrics change 
-    Debug why the switch of lyrics is slow. 
-    Implemewnted background fetch.
-[ ] Upgrade vercel
-    https://vercel.com/pricing
 [ ] Upgrade neon
 [ ] Pay for IG?
 [ ] Put ads where?
@@ -24,6 +10,17 @@ Question:
     - Should viewers also log with Spotify?
 # Done:
 
+[X] Fix Spotify's login
+    Still getting 401s fairly often
+[X] Make /profile
+    Be in dropdown (can we keep the URL tho?)
+[X] Viz config basics
+    Add some basic configs for views
+[X] Slow lyrics change 
+    Debug why the switch of lyrics is slow. 
+    Implemewnted background fetch.
+[X] Upgrade vercel
+    https://vercel.com/pricing
 [X] Product Hunt
     [NO] Animated icon e.g https://www.producthunt.com/products/calk-ai
     [X] Improved images: https://www.producthunt.com/products/welltory
@@ -101,3 +98,6 @@ intense. Allow setting max.
     When lyrics have parenthesis (e.g. STILL IN THE PAINT (with LAZER DIM 700 & Bktherula) — Denzel Curry, LAZER DIM 700, Bktherula) we can either SHOW IT DIFFERENTLY (smaller dim) or if it's already part of the artist like this one, not show.
 [ ] Add to home screen button
     Use the beforeinstallprompt mechanism to show a button on mobile both for /player and /viewer
+[ ] Synthwave viz
+    https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
+compo? Or getting AT compo?

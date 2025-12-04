@@ -12,6 +12,7 @@ module.exports = {
           '/player',
           '/share',
           '/waitlist',
+          '/download',
           '/api/*',
         ],
       },
@@ -21,6 +22,7 @@ module.exports = {
     '/player',
     '/share',
     '/waitlist',
+    '/download', // Redirects to /app
     '/api/*',
     '/screenshots/*',
   ],
@@ -34,6 +36,9 @@ module.exports = {
       changefreq = 'daily';
     } else if (path === '/faq') {
       priority = 0.8; // High priority for SEO
+      changefreq = 'weekly';
+    } else if (path === '/app') {
+      priority = 0.9; // High priority for app download page
       changefreq = 'weekly';
     }
     
