@@ -4,7 +4,7 @@
     Still getting 401s fairly often
 [ ] Make /profile
     Be in dropdown (can we keep the URL tho?)
-
+[ ] Connect canny to ProductHunt
 [ ] Synthwave viz
     https://www.reddit.com/r/threejs/comments/gge90b/threejs_retrowavesynthwave_scene_made_for_my/
 compo? Or getting AT compo?
