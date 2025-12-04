@@ -1,0 +1,225 @@
+.container {
+  min-height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.content {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.logoLink {
+  display: inline-block;
+  margin-bottom: 48px;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 16px 0;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 48px 0;
+}
+
+.platforms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.platformCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.platformCard:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 255, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.platformCard.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.platformIcon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.platformInfo {
+  flex: 1;
+  text-align: left;
+}
+
+.platformName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.platformStatus {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.downloadBadge {
+  padding: 8px 16px;
+  background: rgba(0, 255, 0, 0.15);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-radius: 20px;
+  color: #0f0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.comingSoonBadge {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.note {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+.olderVersionsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.olderVersionsToggle:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.chevron {
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.olderVersionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.olderVersionItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.olderVersionItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.versionNumber {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  min-width: 60px;
+}
+
+.versionArch {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.versionDate {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 36px;
+  }
+  
+  .platformCard {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .platformIcon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .platformIcon svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .platformName {
+    font-size: 16px;
+  }
+  
+  .downloadBadge,
+  .comingSoonBadge {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+}
+
