@@ -3,6 +3,23 @@
  * Controls local Hue lights with music-reactive colors
  */
 
+// Detect if running in Tauri and get the fetch function
+const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
+
+// Tauri fetch wrapper - dynamically imports Tauri HTTP plugin when needed
+async function tauriFetch(url: string, options?: RequestInit): Promise<Response> {
+  if (isTauri) {
+    try {
+      const { fetch: tFetch } = await import('@tauri-apps/plugin-http');
+      return tFetch(url, options as any);
+    } catch (e) {
+      console.warn('Tauri HTTP plugin not available, falling back to native fetch', e);
+      return fetch(url, options);
+    }
+  }
+  return fetch(url, options);
+}
+
 export interface HueBridge {
   id: string;
   internalipaddress: string;
@@ -77,7 +94,7 @@ export async function createUser(
   appName: string = "syns-karaoke"
 ): Promise<string> {
   try {
-    const response = await fetch(`http://${bridgeIp}/api`, {
+    const response = await tauriFetch(`http://${bridgeIp}/api`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -110,7 +127,7 @@ export async function getLights(
   username: string
 ): Promise<Record<string, HueLight>> {
   try {
-    const response = await fetch(`http://${bridgeIp}/api/${username}/lights`);
+    const response = await tauriFetch(`http://${bridgeIp}/api/${username}/lights`);
     
     if (!response.ok) {
       throw new Error("Failed to get lights");
@@ -139,7 +156,7 @@ export async function setLightState(
   state: HueLightState
 ): Promise<void> {
   try {
-    const response = await fetch(
+    const response = await tauriFetch(
       `http://${bridgeIp}/api/${username}/lights/${lightId}/state`,
       {
         method: "PUT",
