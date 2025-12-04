@@ -1,0 +1,204 @@
+.container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #fff;
+  padding: 20px;
+}
+
+.loading,
+.error,
+.done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+}
+
+.error h1 {
+  color: #f44;
+  margin-bottom: 16px;
+}
+
+.done h1 {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.remaining {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f0;
+}
+
+.progress {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.currentSong {
+  flex: 1;
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.artist {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.skipButton {
+  padding: 12px 24px;
+  background: rgba(255, 100, 100, 0.2);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  border-radius: 8px;
+  color: #f88;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skipButton:hover:not(:disabled) {
+  background: rgba(255, 100, 100, 0.3);
+  border-color: rgba(255, 100, 100, 0.6);
+}
+
+.skipButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.main {
+  flex: 1;
+}
+
+.loadingVideos,
+.noVideos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.videoGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1400px) {
+  .videoGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .videoGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .videoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.videoCard {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  padding: 0;
+}
+
+.videoCard:hover:not(:disabled) {
+  border-color: #0f0;
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.videoCard:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.videoThumbnail {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: #000;
+  overflow: hidden;
+}
+
+.videoThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  font-size: 48px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.videoCard:hover .playOverlay {
+  opacity: 1;
+}
+
+.videoTitle {
+  padding: 12px;
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
