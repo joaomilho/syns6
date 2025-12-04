@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { HueConnection } from "@/hooks/useHueLights";
 import { Toggle } from "@/components/ds";
-import { Lightbulb, Construction, Search, AlertTriangle, Info } from "lucide-react";
+import { Lightbulb, Download, Search, AlertTriangle, Info } from "lucide-react";
 import { trackHueClick } from "@/lib/analytics";
 import styles from "./HueDropdown.module.css";
 
@@ -97,7 +97,7 @@ export default function HueDropdown({ hue, userEmail }: HueDropdownProps) {
       {isOpen && (
         <div className={styles.dropdownMenu}>
           {!showFullControls ? (
-            // Coming soon in production (web only)
+            // Desktop app required (web only)
             <div className={styles.comingSoon}>
               <div className={styles.header}>
                 <span className={styles.title}>
@@ -107,12 +107,20 @@ export default function HueDropdown({ hue, userEmail }: HueDropdownProps) {
               </div>
               <div className={styles.comingSoonContent}>
                 <p className={styles.comingSoonText}>
-                  <Construction size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
-                  Coming Soon
+                  <Download size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+                  Desktop App Required
                 </p>
                 <p className={styles.comingSoonHint}>
-                  Hue integration is currently in development.
+                  Hue integration is available in the desktop app.
                 </p>
+                <a
+                  href="/app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.downloadAppLink}
+                >
+                  Download syns6 for macOS
+                </a>
               </div>
             </div>
           ) : isConnected && config ? (
