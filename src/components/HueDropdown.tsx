@@ -7,6 +7,9 @@ import { Lightbulb, Construction, Search, AlertTriangle, Info } from "lucide-rea
 import { trackHueClick } from "@/lib/analytics";
 import styles from "./HueDropdown.module.css";
 
+// Detect if running in Tauri
+const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
+
 interface HueDropdownProps {
   hue: HueConnection;
   userEmail?: string | null;
@@ -16,7 +19,8 @@ export default function HueDropdown({ hue, userEmail }: HueDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [manualIp, setManualIp] = useState("");
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Show full controls in dev OR in Tauri (even in production)
+  const showFullControls = process.env.NODE_ENV !== 'production' || isTauri;
 
   const {
     isConnected,
@@ -92,8 +96,8 @@ export default function HueDropdown({ hue, userEmail }: HueDropdownProps) {
 
       {isOpen && (
         <div className={styles.dropdownMenu}>
-          {isProduction ? (
-            // Coming soon in production
+          {!showFullControls ? (
+            // Coming soon in production (web only)
             <div className={styles.comingSoon}>
               <div className={styles.header}>
                 <span className={styles.title}>
