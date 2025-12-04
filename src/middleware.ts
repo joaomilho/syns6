@@ -12,9 +12,9 @@ export async function middleware(request: NextRequest) {
       const hasSubscription = await checkUserSubscription(token.sub);
       
       if (!hasSubscription) {
-        // Redirect to pricing if no active subscription
+        // Redirect to subscribe if no active subscription
         const url = request.nextUrl.clone();
-        url.pathname = '/pricing';
+        url.pathname = '/subscribe';
         return NextResponse.redirect(url);
       }
     }
