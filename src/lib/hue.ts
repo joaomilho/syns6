@@ -10,8 +10,10 @@ const isTauri = typeof window !== 'undefined' && ('__TAURI__' in window || '__TA
 async function tauriFetch(url: string, options?: RequestInit): Promise<Response> {
   if (isTauri) {
     try {
-      const { fetch: tFetch } = await import('@tauri-apps/plugin-http');
-      return tFetch(url, options as any);
+      // Use string variable to bypass TypeScript module resolution at build time
+      const moduleName = '@tauri-apps/plugin-http';
+      const tauriHttp = await import(/* webpackIgnore: true */ moduleName);
+      return tauriHttp.fetch(url, options as any);
     } catch (e) {
       console.warn('Tauri HTTP plugin not available, falling back to native fetch', e);
       return fetch(url, options);
