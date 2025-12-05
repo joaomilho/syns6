@@ -154,6 +154,13 @@ export interface YouTubeControls {
   effect: 'none' | '3d-flip' | 'black-white' | 'glitch' | 'bloom';
 }
 
+export interface BlackHoleControls {
+  intensity: number;        // Bloom intensity (0-3)
+  psychedelia: number;      // How much bass affects bloom radius (0-2)
+  lensingStrength: number;  // Gravitational lensing (0-10 UI, 0-0.2 actual)
+  diskSize: number;         // Accretion disk outer radius (4-12)
+}
+
 interface ConfigDropdownProps {
   mode: VisualizationMode;
   font: LyricsFont;
@@ -166,6 +173,7 @@ interface ConfigDropdownProps {
   wavyLinesControls: WavyLinesControls;
   spectrum3DControls: Spectrum3DControls;
   youtubeControls: YouTubeControls;
+  blackHoleControls: BlackHoleControls;
   currentVisualization: string; // Current viz type to show relevant controls
   albumArt?: string; // For kaleidoscope thumbnails
   videoElement?: HTMLVideoElement | null; // For video thumbnail
@@ -182,6 +190,7 @@ interface ConfigDropdownProps {
   onWavyLinesControlsChange: (controls: WavyLinesControls) => void;
   onSpectrum3DControlsChange: (controls: Spectrum3DControls) => void;
   onYouTubeControlsChange: (controls: YouTubeControls) => void;
+  onBlackHoleControlsChange: (controls: BlackHoleControls) => void;
 }
 
 export default function ConfigDropdown({
@@ -196,6 +205,7 @@ export default function ConfigDropdown({
   wavyLinesControls,
   spectrum3DControls,
   youtubeControls,
+  blackHoleControls,
   currentVisualization,
   albumArt,
   videoElement,
@@ -212,6 +222,7 @@ export default function ConfigDropdown({
   onWavyLinesControlsChange,
   onSpectrum3DControlsChange,
   onYouTubeControlsChange,
+  onBlackHoleControlsChange,
 }: ConfigDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1271,6 +1282,117 @@ export default function ConfigDropdown({
                             effect: 'none',
                           });
                         }}
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
+
+          {/* Black Hole Config */}
+          {currentVisualization === "blackhole" && (
+            <>
+              {/* Divider */}
+              <div className={styles.divider} />
+
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Black Hole</div>
+                
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Intensity
+                    <span className={styles.sliderValue}>{blackHoleControls.intensity.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="3"
+                    step="0.1"
+                    value={blackHoleControls.intensity}
+                    onChange={(e) =>
+                      onBlackHoleControlsChange({
+                        ...blackHoleControls,
+                        intensity: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Psychedelia
+                    <span className={styles.sliderValue}>{blackHoleControls.psychedelia.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    value={blackHoleControls.psychedelia}
+                    onChange={(e) =>
+                      onBlackHoleControlsChange({
+                        ...blackHoleControls,
+                        psychedelia: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Lensing Strength
+                    <span className={styles.sliderValue}>{blackHoleControls.lensingStrength.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    value={blackHoleControls.lensingStrength}
+                    onChange={(e) =>
+                      onBlackHoleControlsChange({
+                        ...blackHoleControls,
+                        lensingStrength: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.sliderControl}>
+                  <label className={styles.sliderLabel}>
+                    Disk Size
+                    <span className={styles.sliderValue}>{blackHoleControls.diskSize.toFixed(0)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="4"
+                    max="12"
+                    step="1"
+                    value={blackHoleControls.diskSize}
+                    onChange={(e) =>
+                      onBlackHoleControlsChange({
+                        ...blackHoleControls,
+                        diskSize: parseFloat(e.target.value),
+                      })
+                    }
+                    className={styles.slider}
+                  />
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  onBlackHoleControlsChange({
+                    intensity: 0.6,
+                    psychedelia: 0.5,
+                    lensingStrength: 5,
+                    diskSize: 8,
+                  });
+                }}
               >
                 Reset Settings
               </button>

@@ -3,7 +3,7 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
-import { Group } from "three";
+import { Group, DoubleSide } from "three";
 import { LyricLine, getCurrentLyricIndex, getVisibleLines } from "@/lib/lyrics";
 import { MicrophoneData } from "@/hooks/useMicrophoneAnalysis";
 
@@ -133,6 +133,7 @@ function TitleArtistGroup({
           roughness={1}
           transparent
           opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
+          side={DoubleSide}
         />
       </Text>
       
@@ -434,6 +435,7 @@ function LyricText3D({
               roughness={1}
               transparent
               opacity={isCurrent ? 1.0 : isPast ? 0.8 : 0.9}
+              side={DoubleSide}
             />
           </Text>
         </group>
@@ -465,6 +467,7 @@ function LyricText3D({
             roughness={1}
             transparent
             opacity={1.0}
+            side={DoubleSide}
           />
         </Text>
       </>
@@ -627,6 +630,7 @@ export default function Lyrics3D({
             roughness={1}
             transparent
             opacity={0.9}
+            side={DoubleSide}
           />
         </Text>
       </group>
