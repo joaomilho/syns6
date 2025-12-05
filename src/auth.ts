@@ -7,36 +7,10 @@ import { email } from "@/emails/welcome";
 
 // All valid Spotify authorization scopes
 const SPOTIFY_SCOPES = [
-  // Images
-  // "ugc-image-upload",
-  
-  // Listening History
-  // "user-read-recently-played",
-  // "user-top-read",
-  // "user-read-playback-position",
-  
   // Spotify Connect
   "user-read-playback-state",
   "user-modify-playback-state",
   "user-read-currently-playing",
-  
-  // Playback
-  "app-remote-control",
-  // "streaming",
-  
-  // Playlists
-  // "playlist-modify-public",
-  // "playlist-modify-private",
-  // "playlist-read-private",
-  // "playlist-read-collaborative",
-  
-  // Follow
-  // "user-follow-modify",
-  // "user-follow-read",
-  
-  // Library
-  // "user-library-modify",
-  // "user-library-read",
   
   // Users (required for auth)
   "user-read-email",
@@ -64,6 +38,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
+          show_dialog: true, // Force re-auth to get fresh tokens with correct scopes
         },
       },
     }),
