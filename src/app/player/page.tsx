@@ -30,7 +30,7 @@ import VisualizationDropdown, {
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton, FullscreenButton } from "@/components/ToolsMenu";
-import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls } from "@/lib/storage";
+import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls, getBlackHoleControls, saveBlackHoleControls } from "@/lib/storage";
 import { MessageSquare, HelpCircle } from "lucide-react";
 
 // Lazy load all visualization components (only loaded when needed)
@@ -59,6 +59,7 @@ const KaleidoscopeScene = dynamic(() => import("@/components/KaleidoscopeScene")
 const WavyLinesScene = dynamic(() => import("@/components/WavyLinesScene"), { ssr: false });
 const LavaLampScene = dynamic(() => import("@/components/LavaLampScene"), { ssr: false });
 const Spectrum3DScene = dynamic(() => import("@/components/Spectrum3DScene"), { ssr: false });
+const BlackHoleScene = dynamic(() => import("@/components/BlackHoleScene"), { ssr: false });
 import {
   CustomVisualization as CustomVizType,
   getAllCustomVisualizations,
@@ -245,6 +246,17 @@ export default function PlayerPage() {
   }>({
     effect: 'none',
   });
+  const [blackHoleControls, setBlackHoleControls] = useState<{
+    intensity: number;
+    psychedelia: number;
+    lensingStrength: number;
+    diskSize: number;
+  }>({
+    intensity: 0.6,
+    psychedelia: 0.5,
+    lensingStrength: 5,
+    diskSize: 8,
+  });
   const [currentYouTubeVideoId, setCurrentYouTubeVideoId] = useState<string | null>(null);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
@@ -375,6 +387,20 @@ export default function PlayerPage() {
   useEffect(() => {
     saveYouTubeControls(youtubeControls).catch(() => {});
   }, [youtubeControls]);
+  
+  // Load Black Hole controls on mount
+  useEffect(() => {
+    getBlackHoleControls().then((savedControls) => {
+      if (savedControls) {
+        setBlackHoleControls(savedControls);
+      }
+    }).catch(() => {});
+  }, []);
+  
+  // Save Black Hole controls whenever they change
+  useEffect(() => {
+    saveBlackHoleControls(blackHoleControls).catch(() => {});
+  }, [blackHoleControls]);
   
   // Auto-switch to video mode when Kaleidoscope is selected and camera is on
   useEffect(() => {
@@ -1489,6 +1515,7 @@ export default function PlayerPage() {
       case 'animated': return { position: [0, 3, 30] as [number, number, number], fov: 75 };
       case 'waves': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
       case 'kaleidoscope': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
+      case 'blackhole': return { position: [0, 0, 30] as [number, number, number], fov: 75 };
       default: return { position: [0, 0, 30] as [number, number, number], fov: 75 };
     }
   };
@@ -1504,6 +1531,7 @@ export default function PlayerPage() {
       case 'spectrum3d': return "linear-gradient(to bottom, #000000 0%, #1a0033 100%)";
       case 'lyricsonly': return "linear-gradient(135deg, #0a0015 0%, #1a0033 50%, #000000 100%)";
       case 'animated': return "#050505"; // Lava lamp has fog
+      case 'blackhole': return "#000002"; // Deep space black
       default: return "black";
     }
   };
@@ -1552,6 +1580,7 @@ export default function PlayerPage() {
             {visualizationType === 'waves' && <WavyLinesScene micData={micData} wavyLinesControls={wavyLinesControls} />}
             {visualizationType === 'animated' && <LavaLampScene micData={micData} lavaLampControls={lavaLampControls} />}
             {visualizationType === 'spectrum3d' && <Spectrum3DScene micData={micData} spectrum3DControls={spectrum3DControls} />}
+            {visualizationType === 'blackhole' && <BlackHoleScene micData={micData} blackHoleControls={blackHoleControls} />}
           </>
         )}
 
@@ -1749,6 +1778,8 @@ export default function PlayerPage() {
           onWavyLinesControlsChange={setWavyLinesControls}
           onSpectrum3DControlsChange={setSpectrum3DControls}
           onYouTubeControlsChange={setYouTubeControls}
+          blackHoleControls={blackHoleControls}
+          onBlackHoleControlsChange={setBlackHoleControls}
         />
 
         {/* Fullscreen Toggle */}
