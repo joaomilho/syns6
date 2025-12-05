@@ -859,7 +859,7 @@ export default function PlayerPage() {
 
   // Derive error state from session
   const sessionError =
-    session?.error === "RefreshAccessTokenError"
+    session?.error === "RefreshAccessTokenError" || session?.error === "NoRefreshToken"
       ? "Session expired. Please sign out and sign in again to refresh your Spotify connection."
       : null;
 
@@ -1560,8 +1560,80 @@ export default function PlayerPage() {
     'debug'
   ].includes(visualizationType) || visualizationType.startsWith('custom-') || visualizationType.startsWith('dsl-');
 
+  // Determine if we should show the session error overlay
+  const showSessionError = sessionError || (error && error.includes("Session expired"));
+
   return (
     <div className={styles.fullscreenPage}>
+      {/* Session Error Overlay - prompts user to sign in again */}
+      {showSessionError && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          gap: '24px',
+          padding: '20px',
+        }}>
+          <div style={{
+            fontSize: '48px',
+            marginBottom: '8px',
+          }}>
+            ⚠️
+          </div>
+          <h2 style={{
+            color: '#fff',
+            fontSize: '24px',
+            fontWeight: 600,
+            margin: 0,
+            textAlign: 'center',
+          }}>
+            Session Expired
+          </h2>
+          <p style={{
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '16px',
+            margin: 0,
+            textAlign: 'center',
+            maxWidth: '400px',
+          }}>
+            Your Spotify connection has expired. Please sign in again to continue.
+          </p>
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            style={{
+              background: '#1DB954',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '24px',
+              padding: '14px 32px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              marginTop: '8px',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#1ed760';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#1DB954';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            Sign In Again
+          </button>
+        </div>
+      )}
+
       {/* Special visualizations render BELOW the unified canvas (they have their own canvas) */}
       {isSpecialVisualization && renderVisualization()}
 

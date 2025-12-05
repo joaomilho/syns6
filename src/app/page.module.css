@@ -502,6 +502,108 @@ button.secondary {
   transform: translateY(-2px);
 }
 
+/* Waitlist Form */
+.waitlistForm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.emailInput {
+  flex: 1;
+  min-width: 250px;
+  padding: 18px 24px;
+  font-size: 18px;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 36px;
+  color: #fff;
+  outline: none;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.emailInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.emailInput:focus {
+  border-color: #00ff00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.emailInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ctaButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.successMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 32px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 2px solid #00ff00;
+  border-radius: 24px;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.successMessage p {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.successIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #00ff00;
+  border-radius: 50%;
+  color: #000;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.errorMessage {
+  color: #ff4444;
+  font-size: 14px;
+  margin: 8px 0 0;
+  width: 100%;
+  text-align: center;
+}
+
+.waitlistSubtext {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* Social Links */
 .socialLinks {
@@ -1204,6 +1306,25 @@ button.secondary {
     width: 100%;
     max-width: 400px;
     margin-top: 8px;
+  }
+
+  .waitlistForm {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .emailInput {
+    width: 100%;
+    min-width: unset;
+    max-width: 400px;
+  }
+
+  .successMessage {
+    padding: 20px 24px;
+  }
+
+  .successMessage p {
+    font-size: 18px;
   }
 
   /* Features section - minimal margins */
