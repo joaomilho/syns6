@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -39,6 +37,7 @@ export async function POST(request: Request) {
 
     // Send notification email to yo@syns6.com
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: "syns6 Waitlist <yo@syns6.com>",
         to: "yo@syns6.com",
