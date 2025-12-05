@@ -5,15 +5,39 @@
 
 import localforage from 'localforage';
 
-// Configure localforage
-localforage.config({
-  name: 'syns',
-  storeName: 'preferences',
-  description: 'Syns app preferences and settings'
-});
-
 // Flag to track if IndexedDB is available
 let useLocalStorageFallback = false;
+let isConfigured = false;
+
+// Configure localforage only on client side
+function ensureConfigured() {
+  if (isConfigured || typeof window === 'undefined') return;
+  
+  try {
+    localforage.config({
+      name: 'syns',
+      storeName: 'preferences',
+      description: 'Syns app preferences and settings',
+      // Try IndexedDB first, then WebSQL, then localStorage
+      driver: [
+        localforage.INDEXEDDB,
+        localforage.WEBSQL,
+        localforage.LOCALSTORAGE
+      ]
+    });
+    isConfigured = true;
+    
+    // Initialize and detect available drivers
+    localforage.ready().catch(() => {
+      console.warn('[Storage] No persistent storage available, using localStorage fallback');
+      useLocalStorageFallback = true;
+    });
+  } catch (error) {
+    console.warn('[Storage] Failed to configure localforage:', error);
+    useLocalStorageFallback = true;
+    isConfigured = true;
+  }
+}
 
 // Safe storage wrapper that falls back to localStorage on IndexedDB errors
 async function safeGet<T>(key: string): Promise<T | null> {
