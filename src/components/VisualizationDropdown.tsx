@@ -13,7 +13,8 @@ import {
   Activity, 
   Video, 
   Youtube, 
-  Bug 
+  Bug,
+  Eclipse
 } from "lucide-react";
 import styles from "./VisualizationDropdown.module.css";
 import { CustomVisualization } from "@/lib/customVisualizations";
@@ -31,6 +32,7 @@ export type VisualizationType =
   | "lyricsonly"
   | "oscilloscope"
   | "camera"
+  | "blackhole"
   | "debug"
   | string; // Allow custom IDs
 
@@ -155,6 +157,16 @@ const visualizations: (VisualizationOption & { assets: VisualizationAssets })[] 
     assets: {
       static: "/viz-thumbnails/youtube-static.webp",
       animated: "/viz-thumbnails/youtube.webp",
+    },
+  },
+  {
+    id: "blackhole",
+    name: "Black Hole",
+    icon: <Eclipse size={18} />,
+    thumbnail: "/viz-thumbnails/blackhole-static.webp",
+    assets: {
+      static: "/viz-thumbnails/blackhole-static.webp",
+      animated: "/viz-thumbnails/blackhole.webp",
     },
   },
   {

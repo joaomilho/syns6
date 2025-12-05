@@ -26,6 +26,7 @@ const KEYS = {
   WAVY_LINES_CONTROLS: 'wavyLinesControls',
   SPECTRUM3D_CONTROLS: 'spectrum3DControls',
   YOUTUBE_CONTROLS: 'youtubeControls',
+  BLACKHOLE_CONTROLS: 'blackHoleControls',
   HUE_CONTROLS_VISIBLE: 'hueControlsVisible',
   LYRICS_FONT: 'lyricsFont',
   LYRICS_COLOR: 'lyricsColor',
@@ -137,6 +138,15 @@ export async function saveYouTubeControls(controls: { effect: string }): Promise
 
 export async function getYouTubeControls(): Promise<{ effect: string } | null> {
   return await localforage.getItem<{ effect: string }>(KEYS.YOUTUBE_CONTROLS);
+}
+
+// Black Hole controls
+export async function saveBlackHoleControls(controls: { intensity: number; psychedelia: number; lensingStrength: number; diskSize: number }): Promise<void> {
+  await localforage.setItem(KEYS.BLACKHOLE_CONTROLS, controls);
+}
+
+export async function getBlackHoleControls(): Promise<{ intensity: number; psychedelia: number; lensingStrength: number; diskSize: number } | null> {
+  return await localforage.getItem<{ intensity: number; psychedelia: number; lensingStrength: number; diskSize: number }>(KEYS.BLACKHOLE_CONTROLS);
 }
 
 // Hue controls visibility
