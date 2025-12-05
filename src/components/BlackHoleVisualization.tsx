@@ -31,7 +31,7 @@ export default function BlackHoleVisualization({
       }}
     >
       <Canvas
-        camera={{ position: [0.5, 5.0, 6.5], fov: 60, near: 0.1, far: 1000 }}
+        camera={{ position: [0, 0, 30], fov: 75, near: 0.1, far: 1000 }}
         dpr={1}
       >
         <BlackHoleScene
@@ -47,11 +47,12 @@ export default function BlackHoleVisualization({
           enableDamping
           dampingFactor={0.035}
           rotateSpeed={0.4}
-          autoRotate={false}
-          autoRotateSpeed={0.1}
-          minDistance={2.5}
-          maxDistance={100}
+          autoRotate
+          autoRotateSpeed={0.3}
+          minDistance={10}
+          maxDistance={150}
           enablePan={false}
+          target={[0, 0, -80]}
         />
       </Canvas>
     </div>
