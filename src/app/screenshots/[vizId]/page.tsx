@@ -15,6 +15,7 @@ import DebugVisualization from "@/components/DebugVisualization";
 import YouTubeVisualization from "@/components/YouTubeVisualization";
 import OscilloscopeVisualization from "@/components/OscilloscopeVisualization";
 import LyricsOnlyVisualization from "@/components/LyricsOnlyVisualization";
+import BlackHoleVisualization from "@/components/BlackHoleVisualization";
 
 // Generate realistic animated microphone data
 function useAnimatedMicData(): MicrophoneData {
@@ -354,6 +355,16 @@ export default function ScreenshotPage() {
               </div>
             </div>
           </>
+        );
+      case "blackhole":
+        return (
+          <BlackHoleVisualization
+            energy={micData.energy}
+            bass={micData.bass}
+            mid={micData.mid}
+            treble={micData.treble}
+            volume={micData.volume}
+          />
         );
       default:
         return (

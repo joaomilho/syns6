@@ -19,6 +19,7 @@ const allVisualizations = [
   'camera',
   'youtube',
   'oscilloscope',
+  'blackhole',
 ];
 
 // Check if a specific visualization was requested via command line
