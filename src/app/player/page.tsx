@@ -271,6 +271,7 @@ export default function PlayerPage() {
   const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
   const [showPerformanceStats, setShowPerformanceStats] = useState(false); // Toggle performance monitor
   const [showProfileDropdown, setShowProfileDropdown] = useState(false); // Profile dropdown
+  const [showWelcomeNotice, setShowWelcomeNotice] = useState(false); // First-time welcome notice
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   
   // Share Manager for broadcasting to viewers
@@ -496,6 +497,21 @@ export default function PlayerPage() {
     setMicAvailable(isHttps || isLocalhost);
   }, []);
   
+  // Check if this is first time usage (show welcome notice)
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('syns6_has_seen_welcome');
+    if (!hasSeenWelcome) {
+      setShowWelcomeNotice(true);
+    }
+  }, []);
+  
+  // Hide welcome notice and mark as seen when song starts playing
+  useEffect(() => {
+    if (playbackState?.item && showWelcomeNotice) {
+      setShowWelcomeNotice(false);
+      localStorage.setItem('syns6_has_seen_welcome', 'true');
+    }
+  }, [playbackState?.item, showWelcomeNotice]);
   
   // Keyboard shortcut: Press 'S' to toggle performance stats
   useEffect(() => {
@@ -2336,6 +2352,52 @@ export default function PlayerPage() {
           error={generationError}
           disabled={true}
         />
+      )}
+
+      {/* Spotify Welcome Notice - shown on first time + no song playing */}
+      {showWelcomeNotice && !playbackState?.item && !lastKnownTrack?.item && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '24px',
+              padding: '48px 64px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              textAlign: 'center',
+              pointerEvents: 'auto',
+            }}
+          >
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: '600',
+              color: '#fff',
+              margin: '0 0 12px 0',
+            }}>
+              Go ahead, play a song on Spotify
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              margin: 0,
+              maxWidth: '480px',
+            }}>
+              Turn your mic on. Play a song on Spotify and you're ready to go.
+              Got that bass? Crank it up and bring it closer to your mic.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
