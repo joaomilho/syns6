@@ -44,9 +44,10 @@ export const authOptions: NextAuthOptions = {
       // Custom userinfo to handle 403 errors gracefully
       userinfo: {
         url: "https://api.spotify.com/v1/me",
-        async request({ tokens, provider }) {
+        async request({ tokens }) {
+          const userinfoUrl = "https://api.spotify.com/v1/me";
           try {
-            const response = await fetch(provider.userinfo?.url as string, {
+            const response = await fetch(userinfoUrl, {
               headers: {
                 Authorization: `Bearer ${tokens.access_token}`,
               },
