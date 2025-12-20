@@ -15,6 +15,15 @@ interface TauriSpotifyState {
   duration_ms: number | null;
   position_ms: number | null;
   track_id: string | null;
+  fetch_time_ms: number;
+}
+
+/** Fast position-only state from Tauri */
+interface TauriSpotifyPosition {
+  is_running: boolean;
+  is_playing: boolean;
+  position_ms: number | null;
+  fetch_time_ms: number;
 }
 
 /** Track interface matching the existing player page structure */
@@ -34,32 +43,86 @@ export interface LocalPlaybackState {
   item: LocalTrack | null;
   is_playing: boolean;
   progress_ms: number;
+  fetch_time_ms?: number;  // How long full osascript took (for debugging)
 }
 
-/** Check if running inside Tauri */
-export function isTauriEnvironment(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window;
+/** Fast position update result */
+export interface LocalPositionUpdate {
+  is_running: boolean;
+  is_playing: boolean;
+  progress_ms: number;
+  fetch_time_ms: number;
 }
+
+/** Check if running inside Tauri - cached result */
+let _isTauriCached: boolean | null = null;
+
+export function isTauriEnvironment(): boolean {
+  if (_isTauriCached !== null) {
+    return _isTauriCached;
+  }
+  
+  if (typeof window === "undefined") {
+    return false;
+  }
+  
+  // Check for Tauri globals
+  const hasTauri = "__TAURI__" in window || "__TAURI_INTERNALS__" in window;
+  
+  // Only cache if we found Tauri (might not be ready yet on first check)
+  if (hasTauri) {
+    _isTauriCached = true;
+  }
+  
+  return hasTauri;
+}
+
+/** Reset the Tauri cache (useful for testing) */
+export function resetTauriCache(): void {
+  _isTauriCached = null;
+}
+
+// Cache album art URLs to avoid repeated fetches (including failed ones)
+const albumArtCache = new Map<string, string | null>();
+const pendingFetches = new Map<string, Promise<string | null>>();
 
 /**
- * Get album art URL from Spotify track ID
- * Uses the Spotify oEmbed endpoint which doesn't require authentication
+ * Get album art URL from our API endpoint (avoids CORS issues)
  */
 async function getAlbumArtUrl(trackId: string): Promise<string | null> {
-  try {
-    const response = await fetch(
-      `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`
-    );
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.thumbnail_url || null;
-  } catch {
-    return null;
+  // Return cached result
+  if (albumArtCache.has(trackId)) {
+    return albumArtCache.get(trackId) || null;
   }
+  
+  // Return pending fetch if one exists
+  if (pendingFetches.has(trackId)) {
+    return pendingFetches.get(trackId)!;
+  }
+  
+  // Start new fetch
+  const fetchPromise = (async () => {
+    try {
+      const response = await fetch(`/api/album-art?trackId=${trackId}`);
+      if (!response.ok) {
+        albumArtCache.set(trackId, null);
+        return null;
+      }
+      const data = await response.json();
+      const url = data.url || null;
+      albumArtCache.set(trackId, url);
+      return url;
+    } catch {
+      albumArtCache.set(trackId, null);
+      return null;
+    } finally {
+      pendingFetches.delete(trackId);
+    }
+  })();
+  
+  pendingFetches.set(trackId, fetchPromise);
+  return fetchPromise;
 }
-
-// Cache album art URLs to avoid repeated fetches
-const albumArtCache = new Map<string, string>();
 
 /**
  * Get the currently playing track from local Spotify app
@@ -67,7 +130,6 @@ const albumArtCache = new Map<string, string>();
  */
 export async function getLocallyPlaying(): Promise<LocalPlaybackState | null> {
   if (!isTauriEnvironment()) {
-    console.warn("getLocallyPlaying called outside Tauri environment");
     return null;
   }
 
@@ -78,16 +140,16 @@ export async function getLocallyPlaying(): Promise<LocalPlaybackState | null> {
       return null;
     }
 
-    // Get album art (from cache or fetch)
-    let albumArtUrl = albumArtCache.get(state.track_id);
-    if (!albumArtUrl) {
-      albumArtUrl = (await getAlbumArtUrl(state.track_id)) || "";
-      if (albumArtUrl) {
-        albumArtCache.set(state.track_id, albumArtUrl);
-      }
+    // Get album art from cache, or start background fetch
+    const cachedArt = albumArtCache.get(state.track_id);
+    const albumArtUrl = cachedArt || "";
+    
+    // Start fetching if not cached (getAlbumArtUrl handles deduplication)
+    if (!albumArtCache.has(state.track_id)) {
+      getAlbumArtUrl(state.track_id);
     }
 
-    return {
+    const result: LocalPlaybackState = {
       item: {
         id: state.track_id,
         name: state.track_name,
@@ -100,9 +162,37 @@ export async function getLocallyPlaying(): Promise<LocalPlaybackState | null> {
       },
       is_playing: state.is_playing,
       progress_ms: state.position_ms || 0,
+      fetch_time_ms: state.fetch_time_ms,
     };
+    return result;
   } catch (error) {
-    console.error("Failed to get Spotify state:", error);
+    return null;
+  }
+}
+
+/**
+ * Get just the current position (fast - for frequent polling)
+ * Use this for progress bar updates, use getLocallyPlaying for full track info
+ */
+export async function getLocalPosition(): Promise<LocalPositionUpdate | null> {
+  if (!isTauriEnvironment()) {
+    return null;
+  }
+
+  try {
+    const state = await invoke<TauriSpotifyPosition>("get_spotify_position");
+    
+    if (!state.is_running) {
+      return null;
+    }
+
+    return {
+      is_running: state.is_running,
+      is_playing: state.is_playing,
+      progress_ms: state.position_ms || 0,
+      fetch_time_ms: state.fetch_time_ms,
+    };
+  } catch {
     return null;
   }
 }
