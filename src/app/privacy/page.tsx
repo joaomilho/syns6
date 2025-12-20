@@ -69,17 +69,8 @@ export default function PrivacyPage() {
             <strong> This audio is processed locally in your browser and is never recorded, stored, or transmitted to our servers.</strong>
           </p>
 
-          <h3>2.5 Payment Information</h3>
-          <p>
-            Payment processing is handled by Stripe. We store:
-          </p>
-          <ul>
-            <li><strong>Stripe Customer ID:</strong> Links your account to Stripe</li>
-            <li><strong>Subscription Details:</strong> Plan type (weekly/monthly/yearly), status, billing period, and trial information</li>
-            <li><strong>Note:</strong> We never store your credit card details. All payment information is securely handled by Stripe.</li>
-          </ul>
 
-          <h3>2.6 Technical Data</h3>
+          <h3>2.5 Technical Data</h3>
           <ul>
             <li><strong>Browser Information:</strong> Browser type, version, and capabilities (WebGL support)</li>
             <li><strong>Device Data:</strong> Operating system, screen resolution</li>
@@ -87,7 +78,7 @@ export default function PrivacyPage() {
             <li><strong>Analytics:</strong> Page views, session duration, and feature usage (via Vercel Analytics)</li>
           </ul>
 
-          <h3>2.7 Cookies and Local Storage</h3>
+          <h3>2.6 Cookies and Local Storage</h3>
           <p>We use:</p>
           <ul>
             <li><strong>Session Cookies:</strong> To keep you logged in</li>
