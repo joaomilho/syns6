@@ -19,6 +19,7 @@
         { "url": "http://*" },
         { "url": "https://*" }
       ]
-    }
+    },
+    "shell:allow-execute"
   ]
 }

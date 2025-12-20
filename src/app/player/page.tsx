@@ -1,27 +1,20 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { getCurrentlyPlaying, getUserQueue, QueueItem } from "@/lib/spotify";
+import { getLocallyPlaying, isTauriEnvironment, LocalPlaybackState } from "@/lib/spotifyLocal";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
 import { useCamera } from "@/hooks/useCamera";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useShareManager, SharedState } from "@/hooks/useShareManager";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useLyricsWorker } from "@/hooks/useLyricsWorker";
-import { useSmartPolling } from "@/hooks/useSmartPolling";
-import { useYouTubePreloader } from "@/hooks/useYouTubePreloader";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import HueDropdown from "@/components/HueDropdown";
 import PerformanceStats from "@/components/PerformanceStats";
 import Lyrics3D from "@/components/Lyrics3D";
-import { getPlanFromPriceId, getPriceForPlan, formatPrice } from "@/lib/prices";
 import { parseSongTitle } from "@/lib/songParser";
-import { CurrencyCode } from "@/components/CurrencyDropdown";
 import { Canvas } from "@react-three/fiber";
 import { isDSLFormat } from "@/lib/visualizationDSL/schema";
 import VisualizationDropdown, {
@@ -31,7 +24,6 @@ import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath
 import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton, FullscreenButton } from "@/components/ToolsMenu";
 import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls, getBlackHoleControls, saveBlackHoleControls } from "@/lib/storage";
-import { MessageSquare, HelpCircle } from "lucide-react";
 
 // Lazy load all visualization components (only loaded when needed)
 const OrbitalVisualization = dynamic(() => import("@/components/OrbitalVisualization"), { ssr: false });
@@ -67,7 +59,6 @@ import {
 } from "@/lib/customVisualizations";
 import styles from "./player.module.css";
 import Link from "next/link";
-import Image from "next/image";
 import ShareQRCode from "@/components/ShareQRCode";
 import ShareButton from "@/components/ShareButton";
 import { Logo } from "@/components/ds";
@@ -100,9 +91,6 @@ interface PlaybackState {
 }
 
 export default function PlayerPage() {
-  const { data: session, status, update } = useSession();
-  const router = useRouter();
-  const { subscription, isActive, loading: subscriptionLoading } = useSubscription();
   const [playbackState, setPlaybackState] = useState<PlaybackState | null>(
     null
   );
@@ -111,8 +99,7 @@ export default function PlayerPage() {
   ); // Keep last track even when Spotify stops reporting
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [nextTrack, setNextTrack] = useState<QueueItem | null>(null);
+  const [isTauri, setIsTauri] = useState(false);
   const {
     micData,
     isEnabled: isMicEnabled,
@@ -129,17 +116,11 @@ export default function PlayerPage() {
   const wakeLock = useWakeLock();
   
   const [lyrics, setLyrics] = useState<LyricLine[] | null>(null);
-  const [lyricsTimeOffset, setLyricsTimeOffset] = useState(0); // Offset for showing next track's lyrics early
-  const hasSwitchedToNextRef = useRef(false); // Track if we've already switched to next lyrics
-  const switchedAtProgressRef = useRef<number | null>(null); // Progress when we switched to next lyrics
   
   // Lyrics worker for background fetching (keeps main thread smooth)
   const lyricsWorker = useLyricsWorker({
     onLyricsReceived: useCallback((spotifyId: string, receivedLyrics: LyricLine[] | null) => {
       lyricsCache.current.set(spotifyId, receivedLyrics);
-      
-      // DON'T update UI if we've already switched to next track's lyrics
-      if (hasSwitchedToNextRef.current) return;
       
       // Only update UI if this is the currently playing track
       if (playbackState?.item?.id === spotifyId) {
@@ -148,31 +129,12 @@ export default function PlayerPage() {
       }
     }, [playbackState?.item?.id]),
     
-    onQueuePrefetched: useCallback((results: Array<{ trackId: string; lyrics: LyricLine[] | null; videoIds?: string[]; success: boolean }>) => {
-      // Cache all prefetched lyrics and update queue with video IDs
-      results.forEach(({ trackId, lyrics: prefetchedLyrics }) => {
-        lyricsCache.current.set(trackId, prefetchedLyrics);
-      });
-      
-      // Update queue with video IDs
-      setQueue(prevQueue => prevQueue.map(track => {
-        const result = results.find(r => r.trackId === track.id);
-        if (result && result.videoIds) {
-          return { ...track, videoIds: result.videoIds };
-        }
-        return track;
-      }));
-    }, []),
-    
     onError: useCallback(() => {}, []),
   });
   const [visualizationType, setVisualizationType] =
     useState<VisualizationType>("fftspectrum");
   const [visualizationMode, setVisualizationMode] =
     useState<VisualizationMode>("STATIC");
-  
-  // YouTube preloader - tests videos in background for queued tracks (only when YouTube viz is active)
-  useYouTubePreloader(queue, playbackState?.item?.id, visualizationType === 'youtube');
   
   const [lyricsFont, setLyricsFont] = useState<LyricsFont>("Poppins");
   const [lyricsColor, setLyricsColor] = useState<LyricsColor>("#ff0");
@@ -270,7 +232,6 @@ export default function PlayerPage() {
   const [micAvailable, setMicAvailable] = useState(true);
   const [showQRCodeOnConnect, setShowQRCodeOnConnect] = useState(false); // Auto-expand QR on first manual share
   const [showPerformanceStats, setShowPerformanceStats] = useState(false); // Toggle performance monitor
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false); // Profile dropdown
   const [showWelcomeNotice, setShowWelcomeNotice] = useState(false); // First-time welcome notice
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   
@@ -434,33 +395,11 @@ export default function PlayerPage() {
     }
   }, [shareManager.shareCode, showQRCodeOnConnect]);
   
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    if (!showProfileDropdown) return;
-    
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.profileDropdown') && !target.closest('[class*="userProfile"]')) {
-        setShowProfileDropdown(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showProfileDropdown]);
   
-  // Check subscription and redirect to subscribe if not active
+  // Check if running in Tauri environment
   useEffect(() => {
-    // Wait for authentication and subscription data to load
-    if (status === 'loading' || subscriptionLoading) {
-      return;
-    }
-
-    // If authenticated but no active subscription, redirect to subscribe
-    if (status === 'authenticated' && !isActive) {
-      router.push('/subscribe');
-    }
-  }, [status, subscriptionLoading, isActive, router]);
+    setIsTauri(isTauriEnvironment());
+  }, []);
   
   // Start hosting when component mounts (only if sharing was previously active)
   useEffect(() => {
@@ -557,14 +496,8 @@ export default function PlayerPage() {
           is_playing: playbackState?.is_playing || false,
         } : undefined,
         
-        // Next 2 songs in queue
-        queue: queue.slice(0, 2).map(track => ({
-          id: track.id,
-          name: track.name,
-          artistName: track.artists[0]?.name || "",
-          albumArt: track.album.images[0]?.url || "",
-          duration_ms: track.duration_ms,
-        })),
+        // No queue in local Spotify mode
+        queue: [],
         
         // Synced lyrics
         lyrics: lyrics || null,
@@ -596,7 +529,6 @@ export default function PlayerPage() {
     playbackState,
     lastKnownTrack,
     currentProgress,
-    queue,
     lyrics,
     visualizationType,
     visualizationMode,
@@ -791,7 +723,6 @@ export default function PlayerPage() {
       lastRandomTrackId.current = null;
     }
   }, [playbackState?.item?.id, visualizationMode]);
-  const [tokenRefreshAttempts, setTokenRefreshAttempts] = useState(0);
   const [lastFetchedTrackId, setLastFetchedTrackId] = useState<string | null>(
     null
   );
@@ -857,51 +788,28 @@ export default function PlayerPage() {
     };
   }, []);
 
-  // Derive error state from session
-  const sessionError =
-    session?.error === "RefreshAccessTokenError" || session?.error === "NoRefreshToken"
-      ? "Session expired. Please sign out and sign in again to refresh your Spotify connection."
-      : null;
-
-  // Proactively refresh token every 30 minutes
-  useEffect(() => {
-    if (!session?.accessToken) return;
-
-    const refreshInterval = setInterval(async () => {
-      await update();
-    }, 30 * 60 * 1000); // 30 minutes
-
-    return () => clearInterval(refreshInterval);
-  }, [session?.accessToken, update]);
-
-  // Fetch current playback state
-  const fetchPlaybackState = async () => {
-    if (!session?.accessToken) return;
+  // Fetch current playback state from local Spotify app via Tauri
+  const fetchPlaybackState = useCallback(async () => {
+    if (!isTauri) return;
 
     try {
-      const data = await getCurrentlyPlaying(session.accessToken);
+      const data = await getLocallyPlaying();
       if (data && data.item) {
         setPlaybackState(data);
-        // Only update lastKnownTrack if it's a different track (avoid redundant updates)
+        // Only update lastKnownTrack if it's a different track
         if (!lastKnownTrack?.item || lastKnownTrack.item.id !== data.item.id) {
           setLastKnownTrack(data);
-          // Track song play
           trackSongPlay(
-            session?.user?.email,
+            undefined,
             `${data.item.name} - ${data.item.artists[0]?.name || 'Unknown'}`
           );
         }
         setCurrentProgress(data.progress_ms || 0);
         setError(null);
-        setTokenRefreshAttempts(0); // Reset on success
 
         // Fetch synced lyrics only if track changed
         if (data.item.id && data.item.id !== lastFetchedTrackId) {
-          // DON'T update lyrics if we've already switched to next track!
-          if (hasSwitchedToNextRef.current) {
-            // Just update the fetched ID to prevent re-fetching
-            setLastFetchedTrackId(data.item.id);
-          } else if (lyricsCache.current.has(data.item.id)) {
+          if (lyricsCache.current.has(data.item.id)) {
             // Check cache first
             const cachedLyrics = lyricsCache.current.get(data.item.id);
             setLyrics(cachedLyrics || null);
@@ -915,27 +823,22 @@ export default function PlayerPage() {
                 data.item.duration_ms,
                 data.item.id
               );
-              // Worker will call onLyricsReceived callback when done
             } else {
               // Fallback to main thread if worker not ready
-              // DON'T update lyrics if we've already switched to next!
-              if (!hasSwitchedToNextRef.current) {
-                try {
-                  const lyricsLines = await fetchSyncedLyrics(
-                    data.item.name,
-                    data.item.artists[0].name,
-                    data.item.duration_ms,
-                    data.item.id
-                  );
-                  lyricsCache.current.set(data.item.id, lyricsLines);
-                  setLyrics(lyricsLines);
-                  setLastFetchedTrackId(data.item.id);
-                } catch (err) {
-                  lyricsCache.current.set(data.item.id, null);
-                  setLyrics(null);
-                  setLastFetchedTrackId(data.item.id);
-                }
-              } else {
+              try {
+                const lyricsLines = await fetchSyncedLyrics(
+                  data.item.name,
+                  data.item.artists[0].name,
+                  data.item.duration_ms,
+                  data.item.id
+                );
+                lyricsCache.current.set(data.item.id, lyricsLines);
+                setLyrics(lyricsLines);
+                setLastFetchedTrackId(data.item.id);
+              } catch (err) {
+                lyricsCache.current.set(data.item.id, null);
+                setLyrics(null);
+                setLastFetchedTrackId(data.item.id);
               }
             }
           }
@@ -943,105 +846,25 @@ export default function PlayerPage() {
       } else {
         // No current track from Spotify, but keep showing last known track
         setPlaybackState(null);
-        // Don't clear lastKnownTrack - keep it visible!
       }
     } catch (err: any) {
-      // Check if it's a token expired error
-      const isTokenError = err.message && (
-        err.message.includes("401") || 
-        err.message.includes("SpotifyTokenExpired")
-      );
-      
-      if (isTokenError && tokenRefreshAttempts < 2) {
-        setTokenRefreshAttempts((prev) => prev + 1);
-        console.log("🔄 Token error detected, attempting refresh...");
-        
-        try {
-          // Try to force refresh the token
-          const refreshResponse = await fetch("/api/auth/refresh-token", {
-            method: "POST",
-          });
-          
-          if (refreshResponse.ok) {
-            console.log("✅ Token refreshed, updating session...");
-            // Update the session to get the new token
-            await update();
-            // Don't set error - let next poll retry with new token
-            return;
-          }
-        } catch (refreshErr) {
-          console.error("❌ Failed to refresh token:", refreshErr);
-        }
-        
-        setError("Refreshing session... please wait");
-      } else if (tokenRefreshAttempts >= 2) {
-        setPlaybackState(null);
-        setLastKnownTrack(null);
-        setError("Session expired. Please sign out and sign in again.");
-      } else {
-        setError("Failed to fetch playback state");
-      }
+      console.error("Failed to fetch Spotify state:", err);
+      setError("Failed to connect to Spotify app. Is Spotify running?");
     }
-  };
+  }, [isTauri, lastKnownTrack?.item, lastFetchedTrackId, lyricsWorker]);
 
-  // Fetch queue and prefetch lyrics
-  const fetchQueueAndPrefetchLyrics = async () => {
-    if (!session?.accessToken) return;
-
-    try {
-      const queueData = await getUserQueue(session.accessToken);
-      
-      if (queueData && queueData.queue && queueData.queue.length > 0) {
-        setQueue(queueData.queue);
-        setNextTrack(queueData.queue[0] || null);
-        
-        
-        // Filter queue to only uncached tracks
-        const uncachedTracks = queueData.queue.filter(track => !lyricsCache.current.has(track.id));
-        
-        
-        if (uncachedTracks.length > 0) {
-          if (lyricsWorker.isWorkerReady) {
-            // Use worker to prefetch lyrics (off main thread)
-            lyricsWorker.prefetchQueue(uncachedTracks, 5);
-            // Worker will call onQueuePrefetched callback when done
-          } else {
-            // Fallback to main thread if worker not ready
-            uncachedTracks.forEach(async (track, index) => {
-              if (index >= 5) return;
-              
-              try {
-                const lyricsLines = await fetchSyncedLyrics(
-                  track.name,
-                  track.artists[0].name,
-                  track.duration_ms,
-                  track.id
-                );
-                lyricsCache.current.set(track.id, lyricsLines);
-              } catch (err) {
-                lyricsCache.current.set(track.id, null);
-              }
-            });
-          }
-        }
-      } else {
-        setQueue([]);
-        setNextTrack(null);
-      }
-    } catch (err) {
-      // Don't set error state - queue is non-critical
-    }
-  };
-
-  // Smart adaptive polling based on playback state
-  useSmartPolling({
-    isEnabled: !!session?.accessToken,
-    playbackState,
-    currentProgress,
-    onFetchPlayback: fetchPlaybackState,
-    onFetchQueue: fetchQueueAndPrefetchLyrics,
-    queueInterval: 10000,
-  });
+  // Polling for Spotify state (simple interval-based polling)
+  useEffect(() => {
+    if (!isTauri) return;
+    
+    // Initial fetch
+    fetchPlaybackState();
+    
+    // Poll every 1 second for smooth progress updates
+    const pollInterval = setInterval(fetchPlaybackState, 1000);
+    
+    return () => clearInterval(pollInterval);
+  }, [isTauri, fetchPlaybackState]);
 
   // Update progress bar in real-time
   useEffect(() => {
@@ -1056,14 +879,6 @@ export default function PlayerPage() {
     }
   }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
 
-  // Reset the "switched to next" flag when track actually changes
-  useEffect(() => {
-    if (playbackState?.item?.id) {
-      hasSwitchedToNextRef.current = false;
-      switchedAtProgressRef.current = null; // Reset switch progress tracker
-      setLyricsTimeOffset(0); // Reset offset when track changes
-    }
-  }, [playbackState?.item?.id]);
 
   // Rotating document title: default → song → artist → loop
   const currentTrackName = playbackState?.item?.name || lastKnownTrack?.item?.name;
@@ -1094,43 +909,6 @@ export default function PlayerPage() {
     };
   }, [currentTrackName, currentArtistName]);
 
-  // SWITCH TO NEXT TRACK'S LYRICS during instrumental outro (SICK TRANSITION!)
-  useEffect(() => {
-    if (!playbackState?.item || !playbackState?.is_playing || !queue.length || !lyrics || lyrics.length === 0) return;
-    if (hasSwitchedToNextRef.current) return; // Already switched, don't do it again!
-
-    const timeRemaining = (playbackState.item.duration_ms || 0) - currentProgress;
-    
-    // Get the last lyric line's timestamp
-    const lastLyric = lyrics[lyrics.length - 1];
-    const timeSinceLastLyric = currentProgress - lastLyric.time;
-    
-    // Smart transition: If last lyric passed 10+ seconds ago AND we have ~15s left in song
-    const lastLyricHasPassed = timeSinceLastLyric >= 10000; // 10 seconds after last lyric
-    const songIsEnding = timeRemaining <= 15000 && timeRemaining > 0; // Less than 15s remaining
-    
-    if (lastLyricHasPassed && songIsEnding) {
-      const nextTrack = queue[0];
-      
-      if (nextTrack && lyricsCache.current.has(nextTrack.id)) {
-        const nextLyrics = lyricsCache.current.get(nextTrack.id);
-        
-        if (nextLyrics && nextLyrics.length > 0) {
-          
-          // Switch to next lyrics WITHOUT touching currentProgress!
-          setLyrics(nextLyrics);
-          setLastFetchedTrackId(nextTrack.id);
-          
-          // Store the progress at switch time so we can keep lyrics frozen at time 0
-          switchedAtProgressRef.current = currentProgress;
-          setLyricsTimeOffset(-currentProgress);
-          
-          // Mark that we've switched so we don't do it again
-          hasSwitchedToNextRef.current = true;
-        }
-      }
-    }
-  }, [playbackState?.item, playbackState?.is_playing, currentProgress, queue, lyrics]);
 
   // Hue lights react to mic input only (ignore play state)
   useEffect(() => {
@@ -1282,29 +1060,18 @@ export default function PlayerPage() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  if (status === "loading") {
+  // Show loading state while checking Tauri environment
+  if (!isTauri) {
     return (
       <div className={styles.fullscreenPage}>
         <div className={styles.centerMessage}>
           <Logo loading={true} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className={styles.fullscreenPage}>
-        <div className={styles.centerMessage}>
-          <h1>Not Authenticated</h1>
-          <p>Please sign in with Spotify to use the player</p>
-          <button 
-            onClick={() => signIn("spotify")} 
-            className={styles.link}
-            style={{ cursor: "pointer" }}
-          >
-            Sign in with Spotify
-          </button>
+          <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.6)' }}>
+            Connecting to Spotify...
+          </p>
+          <p style={{ marginTop: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
+            This app requires the Tauri desktop app to communicate with Spotify.
+          </p>
         </div>
       </div>
     );
@@ -1560,13 +1327,10 @@ export default function PlayerPage() {
     'debug'
   ].includes(visualizationType) || visualizationType.startsWith('custom-') || visualizationType.startsWith('dsl-');
 
-  // Determine if we should show the session error overlay
-  const showSessionError = sessionError || (error && error.includes("Session expired"));
-
   return (
     <div className={styles.fullscreenPage}>
-      {/* Session Error Overlay - prompts user to sign in again */}
-      {showSessionError && (
+      {/* Error Overlay - when Spotify app is not running */}
+      {error && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1586,7 +1350,7 @@ export default function PlayerPage() {
             fontSize: '48px',
             marginBottom: '8px',
           }}>
-            ⚠️
+            🎵
           </div>
           <h2 style={{
             color: '#fff',
@@ -1595,7 +1359,7 @@ export default function PlayerPage() {
             margin: 0,
             textAlign: 'center',
           }}>
-            Session Expired
+            Spotify Not Running
           </h2>
           <p style={{
             color: 'rgba(255, 255, 255, 0.7)',
@@ -1604,33 +1368,8 @@ export default function PlayerPage() {
             textAlign: 'center',
             maxWidth: '400px',
           }}>
-            Your Spotify connection has expired. Please sign in again to continue.
+            Please open the Spotify app and start playing a song.
           </p>
-          <button
-            onClick={() => signOut({ callbackUrl: '/' })}
-            style={{
-              background: '#1DB954',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '24px',
-              padding: '14px 32px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginTop: '8px',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = '#1ed760';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = '#1DB954';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            Sign In Again
-          </button>
         </div>
       )}
 
@@ -1679,32 +1418,22 @@ export default function PlayerPage() {
             scale={visualizationType === 'lyricsonly' ? 1.0 : 0.7}
           >
             {(() => {
-              const currentTrackName = hasSwitchedToNextRef.current ? nextTrack?.name : (playbackState?.item?.name || lastKnownTrack?.item?.name);
-              const currentArtistName = hasSwitchedToNextRef.current ? nextTrack?.artists?.[0]?.name : (playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name);
-              const upcomingTrackName = hasSwitchedToNextRef.current ? queue[1]?.name : nextTrack?.name;
-              const upcomingArtistName = hasSwitchedToNextRef.current ? queue[1]?.artists?.[0]?.name : nextTrack?.artists?.[0]?.name;
+              const currentTrackName = playbackState?.item?.name || lastKnownTrack?.item?.name;
+              const currentArtistName = playbackState?.item?.artists?.[0]?.name || lastKnownTrack?.item?.artists?.[0]?.name;
               
               const parsedCurrent = currentTrackName && currentArtistName 
                 ? parseSongTitle(currentTrackName, currentArtistName) 
-                : null;
-              const parsedNext = upcomingTrackName && upcomingArtistName 
-                ? parseSongTitle(upcomingTrackName, upcomingArtistName) 
                 : null;
               
               return (
                 <Lyrics3D
                   lyrics={lyrics}
-                  currentTimeMs={hasSwitchedToNextRef.current && switchedAtProgressRef.current !== null 
-                    ? 0 // Keep at 0 while showing next song's lyrics early
-                    : currentProgress + lyricsTimeOffset}
+                  currentTimeMs={currentProgress}
                   micData={micData}
                   font={getFontPath(lyricsFont)}
                   color={lyricsColor}
                   trackName={parsedCurrent?.title || currentTrackName}
                   artistName={parsedCurrent?.artist || currentArtistName}
-                  nextTrackName={parsedNext?.title || upcomingTrackName}
-                  nextArtistName={parsedNext?.artist || upcomingArtistName}
-                  timeUntilNextTrack={hasSwitchedToNextRef.current ? ((playbackState?.item?.duration_ms || 0) - currentProgress) : 0}
                 />
               );
             })()}
@@ -1720,7 +1449,7 @@ export default function PlayerPage() {
 
       {/* Top Controls */}
       <div className={styles.topBar}>
-        <Logo loading={subscriptionLoading} />
+        <Logo loading={false} />
         
         {/* DEV indicator */}
         {process.env.NODE_ENV === 'development' && (
@@ -1754,7 +1483,7 @@ export default function PlayerPage() {
             onToggle={() => {
               const newEnabled = !isMicEnabled;
               isMicEnabled ? disableMic() : enableMic();
-              trackMicToggle(session?.user?.email, newEnabled);
+              trackMicToggle(undefined, newEnabled);
             }}
           />
         )}
@@ -1766,19 +1495,19 @@ export default function PlayerPage() {
             onToggle={() => {
               const newEnabled = !isCameraEnabled;
               isCameraEnabled ? disableCamera() : enableCamera();
-              trackCamToggle(session?.user?.email, newEnabled);
+              trackCamToggle(undefined, newEnabled);
             }}
           />
         )}
 
         {/* Hue Dropdown */}
-        <HueDropdown hue={hue} userEmail={session?.user?.email} />
+        <HueDropdown hue={hue} />
 
         {/* AI Create Button */}
         <button
           className={styles.aiButton}
           onClick={() => {
-            trackAIClick(session?.user?.email);
+            trackAIClick(undefined);
             handleCreateNew();
           }}
           title="Create AI Visualization"
@@ -1791,7 +1520,7 @@ export default function PlayerPage() {
         {!shareManager.isShareActive ? (
           // Not sharing yet - show Share button
           <ShareButton onStartSharing={() => {
-            trackShareClick(session?.user?.email);
+            trackShareClick(undefined);
             shareManager.startHosting();
             hasStartedHosting.current = true;
             setShowQRCodeOnConnect(true); // Auto-expand QR on connect
@@ -1823,7 +1552,7 @@ export default function PlayerPage() {
           value={visualizationType}
           onChange={(viz) => {
             setVisualizationType(viz);
-            trackVisualizationChange(session?.user?.email, viz);
+            trackVisualizationChange(undefined, viz);
           }}
           customVisualizations={customVisualizations}
         />
@@ -1848,15 +1577,15 @@ export default function PlayerPage() {
           currentYouTubeUrl={currentYouTubeVideoId ? `https://www.youtube.com/watch?v=${currentYouTubeVideoId}` : null}
           onModeChange={(mode) => {
             setVisualizationMode(mode);
-            trackConfigChange(session?.user?.email, `mode:${mode}`);
+            trackConfigChange(undefined, `mode:${mode}`);
           }}
           onFontChange={(font) => {
             setLyricsFont(font);
-            trackConfigChange(session?.user?.email, `font:${font}`);
+            trackConfigChange(undefined, `font:${font}`);
           }}
           onColorChange={(color) => {
             setLyricsColor(color);
-            trackConfigChange(session?.user?.email, `color:${color}`);
+            trackConfigChange(undefined, `color:${color}`);
           }}
           onShaderControlsChange={setShaderControls}
           onLavaLampControlsChange={setLavaLampControls}
@@ -1875,315 +1604,13 @@ export default function PlayerPage() {
           isFullscreen={isFullscreen}
           onToggle={toggleFullscreen}
         />
-
-        {/* User Profile */}
-        {session?.user && (() => {
-          // Get subscription plan details
-          const planInfo = subscription?.stripePriceId 
-            ? getPlanFromPriceId(subscription.stripePriceId)
-            : null;
-          const detectedCurrency: CurrencyCode = 'USD'; // Default currency
-          
-          // Handle Stripe portal for subscription management
-          const handleManageSubscription = async () => {
-            try {
-              const response = await fetch('/api/stripe/portal', {
-                method: 'POST',
-              });
-              const data = await response.json();
-              if (response.ok && data.url) {
-                window.open(data.url, '_blank');
-              } else {
-                throw new Error(data.error || 'Failed to open billing portal');
-              }
-            } catch (error) {
-              console.error('[PLAYER] Portal error:', error);
-              alert('Failed to open billing portal. Please try again.');
-            }
-          };
-
-          // return <pre>
-          //   {JSON.stringify({planInfo,subscription}, null, 2)}
-          // </pre>
-          
-          return (
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => {
-                  if (!showProfileDropdown) {
-                    trackProfileClick(session?.user?.email);
-                  }
-                  setShowProfileDropdown(!showProfileDropdown);
-                }}
-                className={styles.userProfile}
-                style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
-              >
-                {session.user.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
-                    width={36}
-                    height={36}
-                    className={styles.userAvatar}
-                  />
-                ) : (
-                  <div className={styles.userAvatarPlaceholder}>
-                    {session.user.name?.charAt(0) || "U"}
-                  </div>
-                )}
-              </button>
-              
-              {showProfileDropdown && (
-                <div 
-                  className="profileDropdown"
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    background: 'transparent',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '16px',
-                    padding: '16px',
-                    minWidth: '280px',
-                    zIndex: 1000,
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.8)',
-                  }}
-                >
-                  {/* User Info */}
-                  <div style={{
-                    paddingBottom: '12px',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    marginBottom: '12px',
-                  }}>
-                    <div style={{ 
-                      color: '#fff', 
-                      fontSize: '15px', 
-                      fontWeight: '600',
-                      marginBottom: '4px',
-                    }}>
-                      {session.user.name}
-                    </div>
-                    <div style={{ 
-                      color: 'rgba(255, 255, 255, 0.6)', 
-                      fontSize: '13px',
-                    }}>
-                      {session.user.email}
-                    </div>
-                  </div>
-
-                  {/* Subscription Status */}
-                  {isActive && subscription && planInfo ? (
-                    <div style={{
-                      padding: '12px',
-                      background: 'rgba(29, 185, 84, 0.1)',
-                      border: '1px solid rgba(29, 185, 84, 0.3)',
-                      borderRadius: '12px',
-                      marginBottom: '12px',
-                    }}>
-                      <div style={{ 
-                        color: '#1db954',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        marginBottom: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}>
-                        {planInfo.name} Plan
-                      </div>
-                      {/* <div style={{ 
-                        color: 'rgba(255, 255, 255, 0.8)', 
-                        fontSize: '12px',
-                        marginBottom: '4px',
-                      }}>
-                        {formatPrice(
-                          getPriceForPlan(planInfo.type, detectedCurrency),
-                          detectedCurrency
-                        )}/{planInfo.interval}
-                      </div> */}
-                      {subscription.currentPeriodEnd && (
-                        <div style={{ 
-                          color: 'rgba(255, 255, 255, 0.5)', 
-                          fontSize: '11px',
-                          marginBottom: '8px',
-                        }}>
-                          {subscription.cancelAtPeriodEnd ? 'Expires' : 'Renews'} {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                        </div>
-                      )}
-                      <button
-                        onClick={handleManageSubscription}
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                        }}
-                      >
-                        Manage Subscription
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{
-                      padding: '12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '12px',
-                      marginBottom: '12px',
-                    }}>
-                      <div style={{ 
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontSize: '13px',
-                        marginBottom: '8px',
-                      }}>
-                        Free Plan
-                      </div>
-                      <button
-                        onClick={() => {
-                          router.push('/subscribe');
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          background: 'rgba(29, 185, 84, 0.2)',
-                          border: '1px solid rgba(29, 185, 84, 0.4)',
-                          borderRadius: '8px',
-                          color: '#1db954',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(29, 185, 84, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(29, 185, 84, 0.2)';
-                        }}
-                      >
-                        Upgrade to Premium
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Feedback & Help Links */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    marginBottom: '12px',
-                  }}>
-                    <a
-                      href="https://syns6.canny.io/feedback"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 12px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '10px',
-                        color: '#fff',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        textDecoration: 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                      }}
-                    >
-                      <MessageSquare size={16} style={{ opacity: 0.7 }} />
-                      Feedback & Features
-                    </a>
-                    <a
-                      href="mailto:help@syns6.com"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 12px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '10px',
-                        color: '#fff',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        textDecoration: 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                      }}
-                    >
-                      <HelpCircle size={16} style={{ opacity: 0.7 }} />
-                      Help & Support
-                    </a>
-                  </div>
-
-                  {/* Sign Out Button */}
-                  <button
-                    onClick={() => {
-                      signOut({ callbackUrl: '/' });
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                    }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })()}
         </div>
       </div>
 
       {/* Bottom Player Controls - with transition */}
       <div 
         className={`${styles.bottomControls} ${
-          (playbackState?.item || lastKnownTrack?.item) && !error && !sessionError ? styles.visible : styles.hidden
+          (playbackState?.item || lastKnownTrack?.item) && !error ? styles.visible : styles.hidden
         }`}
       >
         {(playbackState?.item || lastKnownTrack?.item) && (
@@ -2195,7 +1622,6 @@ export default function PlayerPage() {
               
               const timeRemaining = displayTrack.duration_ms - currentProgress;
               const isNearEnd = timeRemaining <= 30000; // 30 seconds
-              const secondsRemaining = Math.ceil(timeRemaining / 1000);
               
               return (
                 <>
@@ -2256,53 +1682,6 @@ export default function PlayerPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* RIGHT: Next Song */}
-                  {queue.length > 0 && (
-                    <div className={styles.queueSection}>
-                      <div className={styles.queueList}>
-                        {queue.slice(0, 1).map((track, index) => (
-                          <div 
-                            key={track.id} 
-                            className={`${styles.queueItem} ${index === 0 && isNearEnd ? styles.upcoming : ''}`}
-                          >
-                            {/* Album Art - smaller for 2nd/3rd tracks */}
-                            <div className={`${styles.queueAlbumArt} ${index > 0 ? styles.smaller : ''}`}>
-                              {track.album.images[0] && (
-                                <img
-                                  src={track.album.images[0].url}
-                                  alt={track.album.name}
-                                />
-                              )}
-                              {/* Queue Lyrics Badge */}
-                              <div 
-                                className={`${styles.queueLyricsBadge} ${lyricsCache.current.has(track.id) && lyricsCache.current.get(track.id) ? styles.hasLyrics : styles.noLyrics}`}
-                                title={lyricsCache.current.has(track.id) && lyricsCache.current.get(track.id) ? "Has lyrics" : "No lyrics"}
-                              />
-                            </div>
-                            
-                            {/* Track Info */}
-                            <div className={styles.queueTrackInfo}>
-                              {(() => {
-                                const parsed = parseSongTitle(track.name, track.artists[0].name);
-                                return (
-                                  <>
-                                    <span className={styles.queueTrackName}>{parsed.title}</span>
-                                    <span className={styles.queueArtistName}>{parsed.artist}</span>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            
-                            {/* Show countdown on first track when it's about to start */}
-                            {index === 0 && isNearEnd && (
-                              <div className={styles.nextUpTimer}>{secondsRemaining}s</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </>
               );
             })()}
