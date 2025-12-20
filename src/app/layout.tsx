@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Space_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/AuthProvider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -111,7 +110,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${spaceMono.variable}`}>
-        <AuthProvider>{children}</AuthProvider>
+        {children}
         <Analytics />
         <SpeedInsights />
       </body>
