@@ -41,11 +41,6 @@ export function trackMicToggle(userEmail: string | null | undefined, enabled: bo
   });
 }
 
-export function trackAIClick(userEmail: string | null | undefined) {
-  track('AI Click', {
-    user: userEmail || 'anonymous',
-  });
-}
 
 export function trackHueClick(userEmail: string | null | undefined) {
   track('Hue Click', {

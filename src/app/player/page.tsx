@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { getLocallyPlaying, isTauriEnvironment, LocalPlaybackState } from "@/lib/spotifyLocal";
+import { getLocallyPlaying, getLocalPosition, isTauriEnvironment, LocalPlaybackState } from "@/lib/spotifyLocal";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
@@ -21,7 +21,6 @@ import VisualizationDropdown, {
   VisualizationType,
 } from "@/components/VisualizationDropdown";
 import ConfigDropdown, { VisualizationMode, LyricsFont, LyricsColor, getFontPath } from "@/components/ConfigDropdown";
-import VisualizationCreator from "@/components/VisualizationCreator";
 import { PlaybackStatusButton, MicrophoneButton, CameraButton, FullscreenButton } from "@/components/ToolsMenu";
 import { getShaderControls, saveShaderControls, getLavaLampControls, saveLavaLampControls, getFFTControls, saveFFTControls, getKaleidoscopeControls, saveKaleidoscopeControls, getOrbitalControls, saveOrbitalControls, getWavyLinesControls, saveWavyLinesControls, getSpectrum3DControls, saveSpectrum3DControls, getYouTubeControls, saveYouTubeControls, getBlackHoleControls, saveBlackHoleControls } from "@/lib/storage";
 
@@ -68,7 +67,6 @@ import {
   trackConfigChange,
   trackCamToggle,
   trackMicToggle,
-  trackAIClick,
   trackShareClick,
   trackProfileClick,
 } from "@/lib/analytics";
@@ -100,6 +98,9 @@ export default function PlayerPage() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isTauri, setIsTauri] = useState(false);
+  const [fetchTimeFullMs, setFetchTimeFullMs] = useState(0);
+  const [fetchTimePosMs, setFetchTimePosMs] = useState(0);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const {
     micData,
     isEnabled: isMicEnabled,
@@ -220,11 +221,6 @@ export default function PlayerPage() {
     diskSize: 8,
   });
   const [currentYouTubeVideoId, setCurrentYouTubeVideoId] = useState<string | null>(null);
-  const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState<string>("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
-  const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [useCompiledMode, setUseCompiledMode] = useState(true); // Performance mode toggle
   const lastRandomTrackId = useRef<string | null>(null); // Track last track for RANDOM mode
   const hasStartedHosting = useRef(false); // Track if we've already called startHosting
@@ -396,9 +392,25 @@ export default function PlayerPage() {
   }, [shareManager.shareCode, showQRCodeOnConnect]);
   
   
-  // Check if running in Tauri environment
+  // Check if running in Tauri environment - with retries
   useEffect(() => {
-    setIsTauri(isTauriEnvironment());
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const checkTauri = () => {
+      const result = isTauriEnvironment();
+      
+      if (result) {
+        setIsTauri(true);
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        setTimeout(checkTauri, 100);
+      } else {
+        setError("This app requires the Tauri desktop environment.");
+      }
+    };
+    
+    checkTauri();
   }, []);
   
   // Start hosting when component mounts (only if sharing was previously active)
@@ -462,6 +474,9 @@ export default function PlayerPage() {
       
       if (e.key === 's' || e.key === 'S') {
         setShowPerformanceStats(prev => !prev);
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        setShowDebugPanel(prev => !prev);
       }
     };
     
@@ -737,31 +752,6 @@ export default function PlayerPage() {
     return code.replace(/^```(?:json|javascript|js)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
   };
 
-  // Memoize parsed configs to prevent re-renders
-  const previewConfig = useMemo(() => {
-    if (isCreatingVisualization && generatedCode && isDSLFormat(generatedCode)) {
-      try {
-        const cleanCode = stripCodeFences(generatedCode);
-        return JSON.parse(cleanCode);
-      } catch (error) {
-        return null;
-      }
-    }
-    return null;
-  }, [generatedCode, isCreatingVisualization]);
-
-  // Compile preview DSL immediately for better performance
-  const previewCompiledCode = useMemo(() => {
-    if (previewConfig) {
-      try {
-        const { compileDSL } = require('@/lib/visualizationDSL/compiler');
-        return compileDSL(previewConfig);
-      } catch (error) {
-        return null;
-      }
-    }
-    return null;
-  }, [previewConfig]);
 
   const customVizConfig = useMemo(() => {
     const customViz = customVisualizations.find((v) => v.id === visualizationType);
@@ -805,6 +795,7 @@ export default function PlayerPage() {
           );
         }
         setCurrentProgress(data.progress_ms || 0);
+        setFetchTimeFullMs(data.fetch_time_ms || 0);
         setError(null);
 
         // Fetch synced lyrics only if track changed
@@ -853,31 +844,56 @@ export default function PlayerPage() {
     }
   }, [isTauri, lastKnownTrack?.item, lastFetchedTrackId, lyricsWorker]);
 
-  // Polling for Spotify state (simple interval-based polling)
+  // Ref to hold the fetchPlaybackState function to avoid dependency issues
+  const fetchPlaybackStateRef = useRef(fetchPlaybackState);
+  fetchPlaybackStateRef.current = fetchPlaybackState;
+  
+  // Dual polling strategy:
+  // 1. Full state (track, artist, album, etc.) every 5 seconds - slow but complete
+  // 2. Position only every 500ms - fast for smooth progress bar
   useEffect(() => {
     if (!isTauri) return;
     
-    // Initial fetch
-    fetchPlaybackState();
+    let isActive = true;
+    let lastFullPoll = 0;
+    const FULL_POLL_INTERVAL = 5000;
+    const POSITION_POLL_INTERVAL = 500;
     
-    // Poll every 1 second for smooth progress updates
-    const pollInterval = setInterval(fetchPlaybackState, 1000);
+    const poll = async () => {
+      if (!isActive) return;
+      
+      const now = Date.now();
+      
+      try {
+        if (now - lastFullPoll >= FULL_POLL_INTERVAL) {
+          await fetchPlaybackStateRef.current();
+          lastFullPoll = now;
+        } else {
+          const posData = await getLocalPosition();
+          if (posData) {
+            setCurrentProgress(posData.progress_ms);
+            setFetchTimePosMs(posData.fetch_time_ms);
+            setPlaybackState(prev => prev ? { ...prev, is_playing: posData.is_playing } : null);
+          }
+        }
+      } catch {
+        // Silent fail - will retry on next poll
+      }
+      
+      if (isActive) {
+        setTimeout(poll, POSITION_POLL_INTERVAL);
+      }
+    };
     
-    return () => clearInterval(pollInterval);
-  }, [isTauri, fetchPlaybackState]);
-
-  // Update progress bar in real-time
-  useEffect(() => {
-    if (playbackState?.is_playing) {
-      const interval = setInterval(() => {
-        setCurrentProgress((prev) => {
-          const next = prev + 1000;
-          return next <= (playbackState.item?.duration_ms || 0) ? next : prev;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [playbackState?.is_playing, playbackState?.item?.duration_ms]);
+    fetchPlaybackStateRef.current().then(() => {
+      lastFullPoll = Date.now();
+      poll();
+    });
+    
+    return () => {
+      isActive = false;
+    };
+  }, [isTauri]);
 
 
   // Rotating document title: default → song → artist → loop
@@ -926,139 +942,24 @@ export default function PlayerPage() {
     }
   }, [micData, hue.isActive, hue.reactToMusic]);
 
-  // Handle creating new visualization
-  const handleCreateNew = () => {
-    setIsCreatingVisualization(true);
-    setGeneratedCode("");
-    setGenerationError(null);
-    setCurrentPrompt("");
-  };
-
-  // Handle cancelling visualization creation
-  const handleCancelCreate = () => {
-    setIsCreatingVisualization(false);
-    setGeneratedCode("");
-    setGenerationError(null);
-    setCurrentPrompt("");
-  };
-
-  // Handle generating visualization code from prompt
-  const handleGenerate = async (prompt: string) => {
-    setIsGenerating(true);
-    setGenerationError(null);
-    setCurrentPrompt(prompt);
-
-    try {
-      // If we already have generated code, send it as context for improvements
-      const previousCode = generatedCode ? stripCodeFences(generatedCode) : undefined;
-      
-      const response = await fetch("/api/generate-visualization", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          prompt,
-          previousCode // Send previous code for iterative improvements
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate visualization");
-      }
-
-      const data = await response.json();
-      setGeneratedCode(data.code);
-    } catch (error) {
-      setGenerationError(
-        error instanceof Error ? error.message : "Failed to generate"
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Handle saving custom visualization
-  const handleSave = async (name: string) => {
-    if (!generatedCode) return;
-
-
-    // Strip markdown code fences before saving
-    const cleanCode = stripCodeFences(generatedCode);
-
-    // Try to compile DSL to JS for performance
-    let compiledCode: string | undefined;
-    if (isDSLFormat(cleanCode)) {
-      try {
-        const { compileDSL } = await import('@/lib/visualizationDSL/compiler');
-        const dslConfig = JSON.parse(cleanCode);
-        compiledCode = compileDSL(dslConfig);
-      } catch (error) {
-        compiledCode = undefined;
-      }
-    }
-
-    // Create a clean object with only serializable data (no thumbnail yet)
-    const newViz: CustomVizType = {
-      id: `custom_${Date.now()}`,
-      name: String(name),
-      prompt: String(currentPrompt),
-      code: String(cleanCode),
-      compiledCode: compiledCode,
-      createdAt: Date.now(),
-      icon: "✦",
-      thumbnail: undefined, // Will capture after rendering
-    };
-
-
-    try {
-      // Save to IndexedDB first
-      await saveCustomVisualization(newViz);
-      
-      // Reload custom visualizations
-      const customViz = await getAllCustomVisualizations();
-      setCustomVisualizations(customViz);
-
-      // Close creator first
-      setIsCreatingVisualization(false);
-      setGeneratedCode("");
-      setCurrentPrompt("");
-      setGenerationError(null);
-
-      // Switch to the new visualization to render it
-      setVisualizationType(newViz.id);
-
-      // Capture screenshot after visualization renders
-      setTimeout(async () => {
-        try {
-          const { captureAndCompressThumbnail } = await import('@/lib/screenshotCapture');
-          const thumbnail = await captureAndCompressThumbnail('body');
-          
-          
-          // Update visualization with thumbnail
-          newViz.thumbnail = thumbnail;
-          await saveCustomVisualization(newViz);
-          
-          // Reload to show new thumbnail
-          const updated = await getAllCustomVisualizations();
-          setCustomVisualizations(updated);
-          
-        } catch (error) {
-          // Continue anyway - viz is still usable
-        }
-      }, 3000); // Wait 3 seconds for viz to render
-
-    } catch (error) {
-      setGenerationError('Failed to save visualization');
-    }
-  };
-
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  // Debug info for development
+  const debugInfo = process.env.NODE_ENV === 'development' ? {
+    isTauri,
+    hasPlayback: !!playbackState,
+    trackName: playbackState?.item?.name || 'none',
+    progress: currentProgress,
+    duration: playbackState?.item?.duration_ms || 0,
+    fetchTimeFull: fetchTimeFullMs,
+    fetchTimePos: fetchTimePosMs,
+    error,
+  } : null;
 
   // Show loading state while checking Tauri environment
   if (!isTauri) {
@@ -1072,6 +973,11 @@ export default function PlayerPage() {
           <p style={{ marginTop: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
             This app requires the Tauri desktop app to communicate with Spotify.
           </p>
+          {error && (
+            <p style={{ marginTop: '16px', color: '#ff6b6b', fontSize: '14px' }}>
+              {error}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -1089,39 +995,7 @@ export default function PlayerPage() {
 
   // Determine which visualization to show
   const renderVisualization = () => {
-    // Priority 1: Create mode overrides everything
-    if (isCreatingVisualization && generatedCode) {
-      // Check if it's DSL or JavaScript
-      const isDSL = isDSLFormat(generatedCode);
-      
-      // Always use compiled version for AI-generated DSL visualizations
-      if (isDSL && previewCompiledCode) {
-        return (
-          <CompiledVisualization
-            key="preview-compiled"
-            compiledCode={previewCompiledCode}
-            micData={micData}
-          />
-        );
-      } else if (isDSL && !previewConfig) {
-        return <BlankGridVisualization key="blank-error" micData={micData} />;
-      } else {
-        // JavaScript fallback
-        return (
-          <CustomVisualization
-            key="preview"
-            code={generatedCode}
-            micData={micData}
-          />
-        );
-      }
-    }
-
-    if (isCreatingVisualization && !generatedCode) {
-      return <BlankGridVisualization key="blank" micData={micData} />;
-    }
-
-    // Priority 2: Custom visualizations
+    // Priority 1: Custom visualizations
     const customViz = customVisualizations.find((v) => v.id === visualizationType);
     if (customViz) {
       // Check if it's DSL JSON or JavaScript
@@ -1329,6 +1203,32 @@ export default function PlayerPage() {
 
   return (
     <div className={styles.fullscreenPage}>
+      {/* Debug Panel - only in development, toggle with 'D' key */}
+      {debugInfo && showDebugPanel && (
+        <div style={{
+          position: 'fixed',
+          bottom: '100px',
+          right: '10px',
+          background: 'rgba(0,0,0,0.9)',
+          color: '#0f0',
+          padding: '10px',
+          borderRadius: '8px',
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          zIndex: 99999,
+          maxWidth: '300px',
+          border: '1px solid #0f0',
+        }}>
+          <div><strong>DEBUG</strong></div>
+          <div>Tauri: {debugInfo.isTauri ? '✓' : '✗'}</div>
+          <div>Track: {debugInfo.trackName}</div>
+          <div>Progress: {debugInfo.progress}ms</div>
+          <div>Duration: {debugInfo.duration}ms</div>
+          <div>Full: {debugInfo.fetchTimeFull}ms | Pos: {debugInfo.fetchTimePos}ms</div>
+          <div>Error: {debugInfo.error || 'none'}</div>
+        </div>
+      )}
+
       {/* Error Overlay - when Spotify app is not running */}
       {error && (
         <div style={{
@@ -1502,19 +1402,6 @@ export default function PlayerPage() {
 
         {/* Hue Dropdown */}
         <HueDropdown hue={hue} />
-
-        {/* AI Create Button */}
-        <button
-          className={styles.aiButton}
-          onClick={() => {
-            trackAIClick(undefined);
-            handleCreateNew();
-          }}
-          title="Create AI Visualization"
-        >
-          <span className={styles.sparkles}>✦</span>
-          <span>AI</span>
-        </button>
 
         {/* Share Controls */}
         {!shareManager.isShareActive ? (
@@ -1791,19 +1678,6 @@ export default function PlayerPage() {
           </div>
         );
       })()}
-
-      {/* Visualization Creator */}
-      {isCreatingVisualization && (
-        <VisualizationCreator
-          onGenerate={handleGenerate}
-          onSave={handleSave}
-          onCancel={handleCancelCreate}
-          isGenerating={isGenerating}
-          hasCode={!!generatedCode}
-          error={generationError}
-          disabled={true}
-        />
-      )}
 
       {/* Spotify Welcome Notice - shown on first time + no song playing */}
       {showWelcomeNotice && !playbackState?.item && !lastKnownTrack?.item && (
