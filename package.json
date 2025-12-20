@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:tauri": "concurrently -n web,tauri -c blue,green \"npm run dev\" \"cd tauri && npm run tauri dev\"",
     "build": "prisma generate && prisma migrate deploy && next build",
     "postbuild": "next-sitemap",
     "start": "next start",
@@ -28,6 +29,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
     "@react-three/postprocessing": "^3.0.4",
+    "@tauri-apps/api": "^2.9.1",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "ai": "^5.0.98",
@@ -50,6 +52,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "next-sitemap": "^4.2.3",
