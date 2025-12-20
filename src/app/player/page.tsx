@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { getLocallyPlaying, getLocalPosition, isTauriEnvironment, LocalPlaybackState } from "@/lib/spotifyLocal";
+import { getLocallyPlaying, getLocalPosition, isTauriEnvironment, onUiReady, LocalPlaybackState } from "@/lib/spotifyLocal";
 import { fetchSyncedLyrics, LyricLine } from "@/lib/lyrics";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { useHueLights } from "@/hooks/useHueLights";
@@ -397,11 +397,13 @@ export default function PlayerPage() {
     let attempts = 0;
     const maxAttempts = 10;
     
-    const checkTauri = () => {
+    const checkTauri = async () => {
       const result = isTauriEnvironment();
       
       if (result) {
         setIsTauri(true);
+        // UI is ready - ensure Spotify is running
+        await onUiReady();
       } else if (attempts < maxAttempts) {
         attempts++;
         setTimeout(checkTauri, 100);
