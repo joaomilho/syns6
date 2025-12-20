@@ -82,6 +82,25 @@ export function resetTauriCache(): void {
   _isTauriCached = null;
 }
 
+/**
+ * Called when UI is ready - ensures Spotify is running
+ * If Spotify is not running, opens it and plays a default track
+ * Returns true if Spotify was opened, false if it was already running
+ */
+export async function onUiReady(): Promise<boolean> {
+  if (!isTauriEnvironment()) {
+    return false;
+  }
+
+  try {
+    const spotifyWasOpened = await invoke<boolean>("on_ui_ready");
+    return spotifyWasOpened;
+  } catch (error) {
+    console.error("[SpotifyLocal] onUiReady failed:", error);
+    return false;
+  }
+}
+
 // Cache album art URLs to avoid repeated fetches (including failed ones)
 const albumArtCache = new Map<string, string | null>();
 const pendingFetches = new Map<string, Promise<string | null>>();

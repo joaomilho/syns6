@@ -33,12 +33,41 @@ fn run_osascript(script: &str) -> Result<String, String> {
     }
 }
 
-/// Check if Spotify is running (quick check via System Events)
+/// Check if Spotify is running using pgrep (faster than osascript)
 fn is_spotify_running() -> bool {
-    let script = r#"tell application "System Events" to (name of processes) contains "Spotify""#;
-    run_osascript(script)
-        .map(|s| s.to_lowercase() == "true")
+    Command::new("pgrep")
+        .arg("-x")
+        .arg("Spotify")
+        .output()
+        .map(|o| o.status.success())
         .unwrap_or(false)
+}
+
+/// Open Spotify app and play a specific track by ID (hidden/headless)
+fn open_spotify_with_track(track_id: &str) {
+    // Launch Spotify, hide it, then play - runs "headless"
+    let script = format!(
+        r#"
+tell application "Spotify"
+    launch
+end tell
+
+-- Wait for Spotify to be ready
+delay 1
+
+-- Hide Spotify so it runs in background
+tell application "System Events"
+    set visible of process "Spotify" to false
+end tell
+
+-- Now play the track
+tell application "Spotify"
+    play track "spotify:track:{}"
+end tell
+"#,
+        track_id
+    );
+    let _ = run_osascript(&script);
 }
 
 /// Get the current Spotify playback state via a SINGLE osascript call
@@ -141,16 +170,22 @@ pub struct SpotifyPosition {
 async fn get_spotify_position() -> Result<SpotifyPosition, String> {
     let start = Instant::now();
     
+    // Fast check using pgrep instead of osascript
+    if !is_spotify_running() {
+        let elapsed = start.elapsed().as_millis() as u64;
+        return Ok(SpotifyPosition {
+            is_running: false,
+            is_playing: false,
+            position_ms: None,
+            fetch_time_ms: elapsed,
+        });
+    }
+    
     // Quick script - only gets position and play state
     let script = r#"
-tell application "System Events"
-    if not (exists process "Spotify") then
-        return "not_running||"
-    end if
-end tell
 tell application "Spotify"
     if player state is stopped then
-        return "stopped||"
+        return "stopped|"
     end if
     set playerState to player state as string
     set playerPos to player position
@@ -161,15 +196,6 @@ end tell
     let result = run_osascript(script)?;
     let elapsed = start.elapsed().as_millis() as u64;
     let parts: Vec<&str> = result.split('|').collect();
-    
-    if parts[0] == "not_running" {
-        return Ok(SpotifyPosition {
-            is_running: false,
-            is_playing: false,
-            position_ms: None,
-            fetch_time_ms: elapsed,
-        });
-    }
     
     if parts[0] == "stopped" || parts.len() < 2 {
         return Ok(SpotifyPosition {
@@ -241,6 +267,19 @@ async fn spotify_previous() -> Result<(), String> {
     Ok(())
 }
 
+/// Called by frontend when UI is ready - ensures Spotify is running
+#[tauri::command]
+async fn on_ui_ready() -> Result<bool, String> {
+    if !is_spotify_running() {
+        println!("[Tauri] Spotify not running, opening with default track...");
+        open_spotify_with_track("3V8nBJQ29jLhnOytk8xqSz"); // Special K by BLP KOSHER
+        Ok(true) // Spotify was opened
+    } else {
+        println!("[Tauri] Spotify already running");
+        Ok(false) // Spotify was already running
+    }
+}
+
 /// Command to send a message to the webview (Tauri → Web)
 #[tauri::command]
 fn send_to_web(app: tauri::AppHandle, message: String) -> Result<(), String> {
@@ -271,7 +310,8 @@ pub fn run() {
             spotify_pause,
             spotify_play_pause,
             spotify_next,
-            spotify_previous
+            spotify_previous,
+            on_ui_ready
         ])
         .setup(|app| {
             println!("[Tauri] App starting...");
