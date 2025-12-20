@@ -147,8 +147,8 @@ export async function GET(request: NextRequest) {
       console.log(`[YouTube API] Searching by title + artist: "${title}" / "${artist}"`);
       cachedVideo = await prisma.youTubeVideo.findFirst({
         where: {
-          title: { equals: title, mode: 'insensitive' },
-          artist: { equals: artist, mode: 'insensitive' },
+          title: title,
+          artist: artist,
         },
       });
       console.log(`[YouTube API] Found by title+artist: ${cachedVideo ? 'YES' : 'NO'}`);

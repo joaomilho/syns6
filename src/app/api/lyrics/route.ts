@@ -328,8 +328,8 @@ export async function GET(request: NextRequest) {
         { spotifyId: spotifyId } : 
         {
           AND: [
-            { title: { equals: trackName, mode: 'insensitive' } },
-            { artist: { equals: artistName, mode: 'insensitive' } },
+            { title: trackName },
+            { artist: artistName },
           ],
         },
     });
@@ -345,15 +345,15 @@ export async function GET(request: NextRequest) {
     // Ignore errors, proceed to fetch
   }
 
-  // 2. Check PostgreSQL DB for cached lyrics
+  // 2. Check database for cached lyrics
   console.log("💾 [API] Checking database cache...");
   try {
-    // Build query conditions
+    // Build query conditions (SQLite doesn't support case-insensitive mode)
     const whereConditions: any[] = [
       {
         AND: [
-          { title: { equals: trackName, mode: 'insensitive' } },
-          { artist: { equals: artistName, mode: 'insensitive' } },
+          { title: trackName },
+          { artist: artistName },
         ],
       },
     ];
