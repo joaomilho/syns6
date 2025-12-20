@@ -1,28 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { InstagramEmbed } from "react-social-media-embed";
 import styles from "./page.module.css";
 import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
 import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { Logo } from "@/components/ds";
 import ScrollVideo from "@/components/ScrollVideo";
-
-// Component that uses searchParams - wrapped in Suspense
-function ReferralCapture() {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const refCode = searchParams.get('ref');
-    if (refCode) {
-      localStorage.setItem('referralCode', refCode);
-      console.log('Referral code captured:', refCode);
-    }
-  }, [searchParams]);
-
-  return null;
-}
 
 export default function Home() {
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
@@ -350,11 +334,6 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       
-      {/* Capture referral code from URL */}
-      <Suspense fallback={null}>
-        <ReferralCapture />
-      </Suspense>
-
       {/* Background Visualization or Fallback Image */}
       <div className={styles.backgroundViz}>
         {webglAvailable === null ? (
