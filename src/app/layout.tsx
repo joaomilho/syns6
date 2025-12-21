@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'syns6' }],
   creator: 'syns6',
   publisher: 'syns6',
-  metadataBase: new URL('https://syns6.com'),
+  metadataBase: new URL('http://localhost:3000'),
   alternates: {
     canonical: '/',
   },
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://syns6.com',
+    url: 'http://localhost:3000',
     siteName: 'syns6',
     title: 'syns6 - Karaoke, Redefined',
     description: 'Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres.',

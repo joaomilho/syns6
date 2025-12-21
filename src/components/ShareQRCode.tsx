@@ -15,6 +15,7 @@ interface ShareQRCodeProps {
 export default function ShareQRCode({ peerId, connectedViewers, autoExpand = false, onDisconnect }: ShareQRCodeProps) {
   const [shareUrl, setShareUrl] = useState<string>("");
   const [shareCode, setShareCode] = useState<string>("");
+  const [shareBaseUrl, setShareBaseUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -52,9 +53,11 @@ export default function ShareQRCode({ peerId, connectedViewers, autoExpand = fal
     // peerId is now just the 6-digit code (e.g., "123456")
     setShareCode(peerId);
     
-    // Full URL for QR code
-    const url = `${window.location.origin}/share?host=${peerId}`;
+    // Full URL for QR code - use current origin (works for both local and production)
+    const origin = window.location.origin;
+    const url = `${origin}/share?host=${peerId}`;
     setShareUrl(url);
+    setShareBaseUrl(`${origin}/share`);
     
     // Auto-expand if requested
     if (autoExpand) {
@@ -112,7 +115,7 @@ export default function ShareQRCode({ peerId, connectedViewers, autoExpand = fal
             )}
             
             <p className={styles.instruction}>
-              Visit <strong>syns6.com/share</strong>
+              Visit <strong>{shareBaseUrl.replace(/^https?:\/\//, '')}</strong>
             </p>
             
             <div className={styles.qrContainer}>
