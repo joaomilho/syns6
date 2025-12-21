@@ -1,7 +1,33 @@
 use serde::Serialize;
-use std::process::Command;
-use std::time::Instant;
+use std::process::{Command, Child};
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+use std::thread;
+use std::fs::OpenOptions;
+use std::io::Write;
 use tauri::{Emitter, Listener, Manager};
+
+/// Global handle to the sidecar process for cleanup
+static SIDECAR_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
+
+/// Log to a file in the user's home directory for debugging
+fn log_to_file(message: &str) {
+    if let Some(home) = std::env::var_os("HOME") {
+        let log_path = std::path::PathBuf::from(home).join("syns6-debug.log");
+        if let Ok(mut file) = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)
+        {
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            let _ = writeln!(file, "[{}] {}", timestamp, message);
+        }
+    }
+    println!("{}", message);
+}
 
 /// Spotify playback state returned to the frontend
 #[derive(Serialize, Debug)]
@@ -293,6 +319,142 @@ fn send_to_tauri(_message: String) {
     // Silent - no logging for performance
 }
 
+/// Check if the server is ready by polling localhost:3000
+fn wait_for_server_ready(timeout_secs: u64) -> bool {
+    let start = Instant::now();
+    let timeout = Duration::from_secs(timeout_secs);
+    
+    log_to_file("[Tauri] Waiting for server to be ready...");
+    
+    while start.elapsed() < timeout {
+        // Try to connect to the server
+        if let Ok(output) = Command::new("curl")
+            .args(["-s", "-o", "/dev/null", "-w", "%{http_code}", "http://127.0.0.1:3000/player"])
+            .output()
+        {
+            let status = String::from_utf8_lossy(&output.stdout);
+            if status.starts_with("2") || status.starts_with("3") {
+                log_to_file(&format!("[Tauri] Server ready! ({}ms)", start.elapsed().as_millis()));
+                return true;
+            }
+        }
+        thread::sleep(Duration::from_millis(200));
+    }
+    
+    log_to_file(&format!("[Tauri] Server timeout after {}s", timeout_secs));
+    false
+}
+
+/// Spawn the Node.js sidecar to run the Next.js server
+fn spawn_server_sidecar(app: &tauri::App) -> Result<(), String> {
+    log_to_file("[Tauri] spawn_server_sidecar called");
+    
+    let resource_path = app.path().resource_dir()
+        .map_err(|e| format!("Failed to get resource dir: {}", e))?;
+    
+    log_to_file(&format!("[Tauri] Resource path: {:?}", resource_path));
+    
+    // Resources are bundled into a "resources" subdirectory
+    let resources_subdir = resource_path.join("resources");
+    let server_dir = resources_subdir.join("server");
+    let start_script = server_dir.join("start.js");
+    
+    // Determine the sidecar binary name based on platform (must match Tauri target triple)
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    let sidecar_name = "node-sidecar-aarch64-apple-darwin";
+    
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    let sidecar_name = "node-sidecar-x86_64-apple-darwin";
+    
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    let sidecar_name = "node-sidecar-aarch64-unknown-linux-gnu";
+    
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    let sidecar_name = "node-sidecar-x86_64-unknown-linux-gnu";
+    
+    #[cfg(target_os = "windows")]
+    let sidecar_name = "node-sidecar-x86_64-pc-windows-msvc.exe";
+    
+    let node_binary = resources_subdir.join(sidecar_name);
+    
+    log_to_file(&format!("[Tauri] Node binary: {:?}", node_binary));
+    log_to_file(&format!("[Tauri] Start script: {:?}", start_script));
+    log_to_file(&format!("[Tauri] Server dir: {:?}", server_dir));
+    
+    // List contents of resources subdirectory
+    if let Ok(entries) = std::fs::read_dir(&resources_subdir) {
+        log_to_file("[Tauri] Resources subdir contents:");
+        for entry in entries.flatten() {
+            log_to_file(&format!("  - {:?}", entry.path()));
+        }
+    } else {
+        log_to_file(&format!("[Tauri] Cannot read resources subdir: {:?}", resources_subdir));
+    }
+    
+    if !node_binary.exists() {
+        let err = format!("Node binary not found: {:?}", node_binary);
+        log_to_file(&err);
+        return Err(err);
+    }
+    
+    if !start_script.exists() {
+        let err = format!("Start script not found: {:?}", start_script);
+        log_to_file(&err);
+        return Err(err);
+    }
+    
+    log_to_file("[Tauri] Spawning Node process...");
+    
+    // Create log file for Node output
+    let node_log_path = std::env::var_os("HOME")
+        .map(|h| std::path::PathBuf::from(h).join("syns6-node.log"))
+        .unwrap_or_else(|| std::path::PathBuf::from("/tmp/syns6-node.log"));
+    
+    let node_log = std::fs::File::create(&node_log_path)
+        .map_err(|e| format!("Failed to create node log: {}", e))?;
+    let node_log_err = node_log.try_clone()
+        .map_err(|e| format!("Failed to clone log handle: {}", e))?;
+    
+    log_to_file(&format!("[Tauri] Node log: {:?}", node_log_path));
+    
+    // Spawn the Node process with output redirected to log
+    let child = Command::new(&node_binary)
+        .arg(&start_script)
+        .current_dir(&server_dir)
+        .env("NODE_ENV", "production")
+        .env("PORT", "3000")
+        .env("HOSTNAME", "127.0.0.1")
+        .stdout(std::process::Stdio::from(node_log))
+        .stderr(std::process::Stdio::from(node_log_err))
+        .spawn()
+        .map_err(|e| {
+            let err = format!("Failed to spawn sidecar: {}", e);
+            log_to_file(&err);
+            err
+        })?;
+    
+    // Store the child process for cleanup
+    if let Ok(mut guard) = SIDECAR_PROCESS.lock() {
+        *guard = Some(child);
+    }
+    
+    log_to_file("[Tauri] Sidecar spawned successfully");
+    Ok(())
+}
+
+/// Kill the sidecar process on exit
+fn kill_sidecar() {
+    if let Ok(mut guard) = SIDECAR_PROCESS.lock() {
+        if let Some(ref mut child) = *guard {
+            println!("[Tauri] Killing sidecar process...");
+            let _ = child.kill();
+            let _ = child.wait();
+            println!("[Tauri] Sidecar terminated");
+        }
+        *guard = None;
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -314,7 +476,53 @@ pub fn run() {
             on_ui_ready
         ])
         .setup(|app| {
-            println!("[Tauri] App starting...");
+            log_to_file("[Tauri] App starting...");
+            
+            // Get the main window
+            let window = app.get_webview_window("main");
+            
+            // In production, spawn the sidecar server
+            #[cfg(not(debug_assertions))]
+            {
+                log_to_file("[Tauri] Production mode - starting sidecar server...");
+                
+                // Show window immediately so user sees something
+                if let Some(ref w) = window {
+                    let _ = w.show();
+                }
+                
+                // Spawn the Node.js sidecar
+                match spawn_server_sidecar(app) {
+                    Ok(_) => {
+                        log_to_file("[Tauri] Sidecar spawned, waiting for server...");
+                        if !wait_for_server_ready(30) {
+                            log_to_file("[Tauri] Server failed to start within timeout!");
+                            // Navigate to an error page
+                            if let Some(ref w) = window {
+                                let _ = w.eval("document.body.innerHTML = '<div style=\"display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:system-ui;\"><div style=\"text-align:center;\"><h1>Server Failed to Start</h1><p>The embedded server did not start in time.</p><p>Check ~/syns6-debug.log for details.</p></div></div>';");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log_to_file(&format!("[Tauri] Failed to spawn sidecar: {}", e));
+                        // Show error in window
+                        if let Some(ref w) = window {
+                            let error_html = format!(
+                                "document.body.innerHTML = '<div style=\"display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:system-ui;\"><div style=\"text-align:center;\"><h1>Startup Error</h1><p>{}</p><p>Check ~/syns6-debug.log for details.</p></div></div>';",
+                                e.replace("'", "\\'")
+                            );
+                            let _ = w.eval(&error_html);
+                        }
+                    }
+                }
+            }
+            
+            // In dev mode, just show the window (server is external)
+            #[cfg(debug_assertions)]
+            if let Some(ref w) = window {
+                w.open_devtools();
+                let _ = w.show();
+            }
             
             // Listen for messages from the web page
             let handle = app.handle().clone();
@@ -322,14 +530,14 @@ pub fn run() {
                 let _ = handle.emit("tauri-to-web", format!("Received: {}", event.payload()));
             });
 
-            // Open devtools in debug mode for easier development
-            #[cfg(debug_assertions)]
-            if let Some(window) = app.get_webview_window("main") {
-                window.open_devtools();
-            }
-
             println!("[Tauri] Ready!");
             Ok(())
+        })
+        .on_window_event(|_window, event| {
+            // Kill sidecar when app is closed
+            if let tauri::WindowEvent::Destroyed = event {
+                kill_sidecar();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -42,3 +42,11 @@ next-env.d.ts
 
 # heap snapshots
 *.heapsnapshot
+
+# Tauri build artifacts
+tauri/src-tauri/target/
+tauri/src-tauri/resources/node-sidecar-*
+tauri/src-tauri/resources/server/
+
+# Debug logs
+syns6-debug.log

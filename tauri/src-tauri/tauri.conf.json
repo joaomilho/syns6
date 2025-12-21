@@ -1,13 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "syns6",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.syns6",
   "build": {
     "beforeDevCommand": "",
     "devUrl": "http://127.0.0.1:3000/player",
-    "beforeBuildCommand": "",
-    "frontendDist": "https://syns6.com/player"
+    "beforeBuildCommand": "cd .. && npm run build:prod",
+    "frontendDist": "http://127.0.0.1:3000/player"
   },
   "app": {
     "withGlobalTauri": true,
@@ -15,7 +15,9 @@
       {
         "title": "",
         "width": 1200,
-        "height": 800
+        "height": 800,
+        "fullscreen": true,
+        "visible": false
       }
     ],
     "security": {
@@ -31,6 +33,13 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "resources/*",
+      "resources/server/**/*"
+    ],
+    "externalBin": [
+      "resources/node-sidecar"
     ],
     "macOS": {
       "entitlements": "./entitlements.plist",

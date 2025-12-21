@@ -8,7 +8,8 @@ import styles from "./app.module.css";
 
 // Version history - newest first
 const macOSVersions = [
-  { version: "0.1.0", arch: "x64", filename: "syns6_0.1.0_x64.dmg", date: "2024-12-04", current: true },
+  { version: "0.2.0", arch: "x64", filename: "syns6_0.2.0_x64.dmg", date: "2024-12-21", current: true },
+  { version: "0.1.0", arch: "x64", filename: "syns6_0.1.0_x64.dmg", date: "2024-12-04", current: false },
 ];
 
 export default function AppDownloadPage() {

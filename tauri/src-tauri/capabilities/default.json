@@ -4,7 +4,7 @@
   "description": "Capability for the main window",
   "windows": ["main"],
   "remote": {
-    "urls": ["https://syns6.com/*", "https://*.syns6.com/*", "http://127.0.0.1:3000/*", "http://localhost:3000/*"]
+    "urls": ["http://127.0.0.1:3000/*", "http://localhost:3000/*"]
   },
   "permissions": [
     "core:default",
@@ -20,6 +20,8 @@
         { "url": "https://*" }
       ]
     },
-    "shell:allow-execute"
+    "shell:allow-execute",
+    "shell:allow-spawn",
+    "shell:allow-kill"
   ]
 }
