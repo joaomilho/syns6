@@ -11,12 +11,6 @@ import ScrollVideo from "@/components/ScrollVideo";
 export default function Home() {
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
   const { micData, enable: enableMic } = useMicrophoneAnalysis();
-  
-  // Waitlist form state
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Structured data for SEO
   const structuredData = {
@@ -30,9 +24,9 @@ export default function Home() {
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "Transform your home into a neon-soaked karaoke club. Live 3D visualizations, AI-powered custom visuals, lyrics for all genres, Hue integration, and viewer mode.",
-    "url": "https://syns6.com",
-    "image": "https://syns6.com/opengraph-image",
+    "description": "Transform your home into a neon-soaked karaoke club. Live 3D visualizations, lyrics for all genres, Hue integration, and viewer mode.",
+    "url": "http://localhost:3000",
+    "image": "http://localhost:3000/opengraph-image",
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "5",
@@ -40,7 +34,6 @@ export default function Home() {
     },
     "featureList": [
       "Live 3D music visualizations",
-      "AI-powered custom visualization creator",
       "Lyrics for all music genres and languages",
       "Smart lights (Hue) integration",
       "Viewer mode for sharing karaoke sessions",
@@ -178,9 +171,6 @@ export default function Home() {
   const [currentTranslationIndex, setCurrentTranslationIndex] = useState(0);
   const [translationFading, setTranslationFading] = useState(false);
 
-  // AI images to cycle through
-  const aiImages = ['prompt.webp', 'result.webp'];
-  const [currentAiIndex, setCurrentAiIndex] = useState(0);
 
   // Cycle through viz images every 6 seconds (slower) with fade
   useEffect(() => {
@@ -217,14 +207,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [lyricsTranslations.length]);
 
-  // Cycle through AI images every 4 seconds with crossfade
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAiIndex((prev) => (prev + 1) % aiImages.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [aiImages.length]);
 
   // Check WebGL availability
   useEffect(() => {
@@ -297,35 +279,6 @@ export default function Home() {
     };
   }, []);
 
-  // Handle waitlist form submission
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      const response = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setSubmitError(data.error || "Something went wrong");
-        return;
-      }
-
-      setSubmitSuccess(true);
-      setEmail("");
-    } catch (error) {
-      setSubmitError("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className={styles.landingPage}>
       {/* Structured Data for SEO */}
@@ -369,39 +322,16 @@ export default function Home() {
             A neon-soaked, bass-pounding private club. */}
           </p>
           <div className={styles.ctaContainer}>
-            {submitSuccess ? (
-              <div className={styles.successMessage}>
-                <span className={styles.successIcon}>✓</span>
-                <p>We'll send you an invite to your inbox soon!</p>
-              </div>
-            ) : (
-              <form onSubmit={handleWaitlistSubmit} className={styles.waitlistForm}>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={styles.emailInput}
-                  required
-                  disabled={isSubmitting}
-                />
-                <button 
-                  type="submit"
-                  className={styles.ctaButton}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "..." : "Get Started – It's Free"}
-                </button>
-                {submitError && (
-                  <p className={styles.errorMessage}>{submitError}</p>
-                )}
-              </form>
-            )}
-            <a href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" target="_blank" rel="noopener noreferrer">
+            <a href="/app" className={styles.ctaButton}>
+              Download
+            </a>
+            
+          </div>
+          <p>Free macOS app. No account needed.</p>
+
+          <a href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" target="_blank" rel="noopener noreferrer">
               <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1042868&theme=light&t=1764195048977" alt="syns6 - Karaoke&#0046;&#0032;Redefined&#0046; | Product Hunt" style={{width: '250px', height: '54px'}} width="250" height="54" />
             </a>
-          </div>
-          <p>3 day free trial. No credit card needed. Cancel anytime.</p>
         </section>
 
         {/* Social Links */}
@@ -506,28 +436,6 @@ export default function Home() {
               </div>
             </article>
 
-            <article className={`${styles.featureCard}`}>
-              <figure className={styles.imageStack}>
-                {aiImages.map((img, index) => (
-                  <img 
-                    key={index}
-                    src={`/ai/${img}`}
-                    alt="AI-powered custom visualization creator - text prompt and generated result example"
-                    className={`${styles.featureImage} ${styles.ai} ${styles.stackedImage}`}
-                    style={{ opacity: currentAiIndex === index ? 1 : 0 }}
-                  />
-                ))}
-              </figure>
-              <div className={styles.featureText}>
-                <h3 className={styles.featureTitle}>
-                  Create with <span className={styles.aiBadge}><span className={styles.sparkles}>✦</span>AI</span>
-                </h3>
-                <p className={styles.featureDescription}>
-                Your club, your vibe.<br />Create your own visualizations, powered by AI. 
-                </p>
-              </div>
-            </article>
-
             <div className={styles.featureCardsGrid}>
               <article className={styles.featureCardVertical}>
                 
@@ -627,64 +535,13 @@ export default function Home() {
           </div>
         </section> */}
 
-        {/* Pricing Section */}
+        {/* Download Section */}
         <section className={styles.pricing}>
-          {/* <h2 className={styles.sectionTitle}>Simple Pricing</h2>
-          
-          <div className={styles.pricingGrid}>
-            <div className={styles.pricingCard}>
-              <h3 className={styles.pricingTier}>Free</h3>
-              <p className={styles.pricingPrice}>$0</p>
-              <ul className={styles.pricingFeatures}>
-                <li>✓ All visualizations</li>
-                <li>✓ Lyrics for all songs</li>
-                <li>✓ Basic features</li>
-              </ul>
-            </div>
-
-            <div className={`${styles.pricingCard} ${styles.featured}`}>
-              <div className={styles.popularBadge}>Popular</div>
-              <h3 className={styles.pricingTier}>Pro</h3>
-              <p className={styles.pricingPrice}>$9.99<span>/month</span></p>
-              <ul className={styles.pricingFeatures}>
-                <li>✓ Everything in Free</li>
-                <li>✓ AI visualization creator</li>
-                <li>✓ Hue integration</li>
-                <li>✓ Viewer mode</li>
-                <li>✓ Priority support</li>
-              </ul>
-        </div>
-          </div> */}
-
-          {submitSuccess ? (
-            <div className={styles.successMessage}>
-
-              <p>We'll send you an invite to your inbox soon!</p>
-            </div>
-          ) : (
-            <form onSubmit={handleWaitlistSubmit} className={styles.waitlistForm}>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={styles.emailInput}
-                required
-                disabled={isSubmitting}
-              />
-              <button 
-                type="submit"
-                className={styles.ctaButton}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "..." : "Get Started – It's Free"}
-              </button>
-              {submitError && (
-                <p className={styles.errorMessage}>{submitError}</p>
-              )}
-            </form>
-          )}
-          <p>3 day free trial. No credit card needed. Cancel anytime.</p>
+          <h2 className={styles.sectionTitle}>Ready to get started?</h2>
+          <a href="/app" className={styles.ctaButton}>
+          Download
+          </a>
+          <p>Free macOS app. No account needed.</p>
         </section>
 
         {/* Footer */}
