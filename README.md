@@ -1,18 +1,35 @@
-# syns6
+<div align="center">
 
-**Karaoke, redefined.**
+<img src="https://syns6.com/icon-240.svg" width="32" alt="syns6 logo" />
 
-By day, your home. By night, the sickest club in the world. And **you** own it.
+<h1><a href="https://syns6.com">syns6</a></h1>
 
-**[syns6.com](https://syns6.com)**
+<p><strong>Karaoke, redefined.</strong></p>
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS-00ff00?style=for-the-badge&logo=apple)](https://github.com/joaomilho/syns6/releases/latest)
+<p>By day, your home. By night, the sickest club in the world. And <strong>you</strong> own it.</p>
 
+<p>
+  <a href="https://github.com/joaomilho/syns6/releases/latest">
+    <img src="https://img.shields.io/badge/Download-macOS-00ff00?style=for-the-badge&logo=apple" alt="Download for macOS" />
+  </a>
+</p>
 
-[![Instagram](https://img.shields.io/badge/Instagram-@__syns6__-E4405F?style=flat-square&logo=instagram)](https://www.instagram.com/_syns6_/)
-[![TikTok](https://img.shields.io/badge/TikTok-@__syns6__-000000?style=flat-square&logo=tiktok)](https://www.tiktok.com/@_syns6_)
-[![Twitter](https://img.shields.io/badge/Twitter-@__syns6__-1DA1F2?style=flat-square&logo=twitter)](https://x.com/_syns6_)
-[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-syns6-DA552F?style=flat-square&logo=producthunt)](https://www.producthunt.com/products/syns6)
+<p>
+  <a href="https://www.instagram.com/_syns6_/">
+    <img src="https://img.shields.io/badge/Instagram-@__syns6__-E4405F?style=flat-square&logo=instagram" alt="Instagram" />
+  </a>
+  <a href="https://www.tiktok.com/@_syns6_">
+    <img src="https://img.shields.io/badge/TikTok-@__syns6__-000000?style=flat-square&logo=tiktok" alt="TikTok" />
+  </a>
+  <a href="https://x.com/_syns6_">
+    <img src="https://img.shields.io/badge/Twitter-@__syns6__-1DA1F2?style=flat-square&logo=twitter" alt="Twitter" />
+  </a>
+  <a href="https://www.producthunt.com/products/syns6">
+    <img src="https://img.shields.io/badge/Product%20Hunt-syns6-DA552F?style=flat-square&logo=producthunt" alt="Product Hunt" />
+  </a>
+</p>
+
+</div>
 
 
 <p align="center">
