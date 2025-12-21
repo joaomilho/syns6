@@ -50,3 +50,4 @@ tauri/src-tauri/resources/server/
 
 # Debug logs
 syns6-debug.log
+.env
