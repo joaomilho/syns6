@@ -4,11 +4,16 @@
 
 By day, your home. By night, the sickest club in the world. And **you** own it.
 
+**[syns6.com](https://syns6.com)**
+
 [![Download for macOS](https://img.shields.io/badge/Download-macOS-00ff00?style=for-the-badge&logo=apple)](https://github.com/joaomilho/syns6/releases/latest)
 
----
 
-## 🖼️ Screenshots
+[![Instagram](https://img.shields.io/badge/Instagram-@__syns6__-E4405F?style=flat-square&logo=instagram)](https://www.instagram.com/_syns6_/)
+[![TikTok](https://img.shields.io/badge/TikTok-@__syns6__-000000?style=flat-square&logo=tiktok)](https://www.tiktok.com/@_syns6_)
+[![Twitter](https://img.shields.io/badge/Twitter-@__syns6__-1DA1F2?style=flat-square&logo=twitter)](https://x.com/_syns6_)
+[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-syns6-DA552F?style=flat-square&logo=producthunt)](https://www.producthunt.com/products/syns6)
+
 
 <p align="center">
   <img src="https://syns6.com/viz-thumbnails/psychedelic.webp" width="400" alt="Psychedelic visualization" />
@@ -41,34 +46,10 @@ Choose your VIPs. Share your karaoke session - friends can join and sing along.
 ### 💡 Hue Integration
 Sync your smart lights to the beat - turn your room into a concert venue with Philips Hue integration.
 
----
 
-## 📥 Download
-
-**[Download the latest version for macOS](https://github.com/joaomilho/syns6/releases/latest)**
-
-Free. No account needed.
-
----
-
-## 🎵 Compatibility
+### 🎵 Compatibility
 
 Currently works with **Spotify**. Support for Apple Music, YouTube, and other sources may be added in future updates.
-
----
-
-## 📱 Follow Us
-
-[![Instagram](https://img.shields.io/badge/Instagram-@__syns6__-E4405F?style=flat-square&logo=instagram)](https://www.instagram.com/_syns6_/)
-[![TikTok](https://img.shields.io/badge/TikTok-@__syns6__-000000?style=flat-square&logo=tiktok)](https://www.tiktok.com/@_syns6_)
-[![Twitter](https://img.shields.io/badge/Twitter-@__syns6__-1DA1F2?style=flat-square&logo=twitter)](https://x.com/_syns6_)
-[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-syns6-DA552F?style=flat-square&logo=producthunt)](https://www.producthunt.com/products/syns6)
-
----
-
-## 🌐 Website
-
-**[syns6.com](https://syns6.com)**
 
 ---
 
