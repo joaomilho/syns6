@@ -8,8 +8,8 @@ import styles from "./app.module.css";
 
 // Version history - newest first
 const macOSVersions = [
-  { version: "0.2.0", arch: "x64", filename: "syns6_0.2.0_x64.dmg", date: "2024-12-21", current: true },
-  { version: "0.1.0", arch: "x64", filename: "syns6_0.1.0_x64.dmg", date: "2024-12-04", current: false },
+  { version: "0.2.0", arch: "x64", url: "https://github.com/joaomilho/syns6/releases/download/v0.2.0/syns6_0.2.0_x64.dmg", date: "2024-12-21", current: true },
+  { version: "0.1.0", arch: "x64", url: "https://github.com/joaomilho/syns6/releases/download/v0.1.0/syns6_0.1.0_x64.dmg", date: "2024-12-04", current: false },
 ];
 
 export default function AppDownloadPage() {
@@ -32,9 +32,8 @@ export default function AppDownloadPage() {
         <div className={styles.platforms}>
           {/* macOS - Available */}
           <a 
-            href={`/downloads/${currentVersion.filename}`}
+            href={currentVersion.url}
             className={styles.platformCard}
-            download
           >
             <div className={styles.platformIcon}>
               <Apple size={48} />
@@ -66,10 +65,9 @@ export default function AppDownloadPage() {
                 <div className={styles.olderVersionsList}>
                   {olderVersions.map((v) => (
                     <a
-                      key={v.filename}
-                      href={`/downloads/${v.filename}`}
+                      key={v.url}
+                      href={v.url}
                       className={styles.olderVersionItem}
-                      download
                     >
                       <span className={styles.versionNumber}>v{v.version}</span>
                       <span className={styles.versionArch}>{v.arch}</span>
