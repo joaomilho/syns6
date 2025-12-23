@@ -46,6 +46,24 @@ export default function AppDownloadPage() {
               Download
             </div>
           </a>
+
+          {/* Install help - always visible */}
+          <div className={styles.installHelp}>
+            <div className={styles.installHelpTitle}>
+              Having trouble opening the app?
+            </div>
+            <div className={styles.installHelpContent}>
+              <p>macOS may block apps from unidentified developers. To open syns6:</p>
+              <ol>
+                <li>Right-click the app in Applications</li>
+                <li>Click &quot;Open&quot; from the menu</li>
+                <li>Click &quot;Open&quot; in the dialog</li>
+              </ol>
+              <p className={styles.terminalHint}>
+                Or run in Terminal: <code>xattr -cr /Applications/syns6.app</code>
+              </p>
+            </div>
+          </div>
           
           {/* Older versions toggle */}
           {olderVersions.length > 0 && (
@@ -125,23 +143,6 @@ export default function AppDownloadPage() {
         <p className={styles.note}>
           The desktop app includes exclusive features like Philips Hue integration.
         </p>
-
-        <details className={styles.installHelp}>
-          <summary className={styles.installHelpSummary}>
-            Having trouble opening the app?
-          </summary>
-          <div className={styles.installHelpContent}>
-            <p>macOS may block apps from unidentified developers. To open syns6:</p>
-            <ol>
-              <li>Right-click the app in Applications</li>
-              <li>Click &quot;Open&quot; from the menu</li>
-              <li>Click &quot;Open&quot; in the dialog</li>
-            </ol>
-            <p className={styles.terminalHint}>
-              Or run in Terminal: <code>xattr -cr /Applications/syns6.app</code>
-            </p>
-          </div>
-        </details>
       </div>
     </div>
   );
