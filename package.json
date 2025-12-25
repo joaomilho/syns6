@@ -23,7 +23,7 @@
     "capture-screenshots": "tsx scripts/captureScreenshots.ts",
     "screenshots": "tsx scripts/captureScreenshots.ts",
     "test:parser": "tsx src/lib/songParser.test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "node scripts/conditional-prisma.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
