@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "echo 'Site postinstall - no Prisma'"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
