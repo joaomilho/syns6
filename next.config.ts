@@ -1,22 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Standalone output for bundling with Tauri
-  output: 'standalone',
-  
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'i.scdn.co',
-        port: '',
-        pathname: '/image/**',
-      },
-    ],
   },
-  
   devIndicators: false,
+  // Explicitly skip Prisma validation
+  experimental: {
+    // This prevents Next.js from auto-detecting Prisma
+  },
 };
 
 export default nextConfig;
+

@@ -1,85 +1,52 @@
-<div align="center">
+# syns6
 
-<img src="https://syns6.com/icon-240.svg" width="32" alt="syns6 logo" />
+**Karaoke, redefined.**
 
-<h1><a href="https://syns6.com">syns6</a></h1>
+By day, your home. By night, the sickest club in the world. And **you** own it.
 
-<p><strong>Karaoke, redefined.</strong></p>
+## Project Structure
 
-<p>By day, your home. By night, the sickest club in the world. And <strong>you</strong> own it.</p>
+This repository contains two separate projects:
 
-<p>
-  <a href="https://github.com/joaomilho/syns6/releases/latest">
-    <img src="https://img.shields.io/badge/Download-macOS-00ff00?style=for-the-badge&logo=apple" alt="Download for macOS" />
-  </a>
-</p>
+### 1. Site (Root Directory)
+- **Purpose**: Marketing/landing site
+- **Deployment**: Vercel (deploys from root automatically)
+- **Database**: None (no Prisma)
+- **Routes**: `/`, `/app`, `/download`, `/faq`, `/terms`, `/privacy`
 
-<p>
-  <a href="https://www.instagram.com/_syns6_/">
-    <img src="https://img.shields.io/badge/Instagram-@__syns6__-E4405F?style=flat-square&logo=instagram" alt="Instagram" />
-  </a>
-  <a href="https://www.tiktok.com/@_syns6_">
-    <img src="https://img.shields.io/badge/TikTok-@__syns6__-000000?style=flat-square&logo=tiktok" alt="TikTok" />
-  </a>
-  <a href="https://x.com/_syns6_">
-    <img src="https://img.shields.io/badge/Twitter-@__syns6__-1DA1F2?style=flat-square&logo=twitter" alt="Twitter" />
-  </a>
-  <a href="https://www.producthunt.com/products/syns6">
-    <img src="https://img.shields.io/badge/Product%20Hunt-syns6-DA552F?style=flat-square&logo=producthunt" alt="Product Hunt" />
-  </a>
-</p>
+### 2. Player App (`/player-app`)
+- **Purpose**: Main player application bundled with Tauri
+- **Deployment**: Bundled with Tauri desktop app (not deployed to Vercel)
+- **Database**: SQLite (via Prisma)
+- **Routes**: `/player`, `/share`, `/profile`, `/screenshots`, `/video-test`, `/lyrics-test`, `/api/*`
 
-</div>
+## Development
 
+### Site (Root)
+```bash
+npm install
+npm run dev
+```
 
-<p align="center">
-  <img src="https://syns6.com/viz-thumbnails/psychedelic.webp" width="400" alt="Psychedelic visualization" />
-  <img src="https://syns6.com/viz-thumbnails/fftspectrum.webp" width="400" alt="FFT Spectrum visualization" />
-</p>
+### Player App
+```bash
+cd player-app
+npm install
+npm run dev  # Runs on port 3001
+npm run dev:tauri  # Runs with Tauri
+```
 
-<p align="center">
-  <img src="https://syns6.com/viz-thumbnails/particles.webp" width="400" alt="Particles visualization" />
-  <img src="https://syns6.com/viz-thumbnails/waves.webp" width="400" alt="Waves visualization" />
-</p>
+## Building
 
-<p align="center">
-  <img src="https://syns6.com/lyrics/behemoth.webp" width="400" alt="Lyrics - Behemoth" />
-  <img src="https://syns6.com/lyrics/kraftwerk.webp" width="400" alt="Lyrics - Kraftwerk" />
-</p>
+### Site
+The site builds automatically on Vercel when you push to the repository.
 
----
+### Player App (Tauri)
+```bash
+cd player-app
+npm run build:app  # Builds Next.js and Tauri app
+```
 
-## ✨ Features
-
-### 🎨 Funmaxxing Visualizations
-Your voice & the beat: live 3D visuals that go so stupid they need a passport.
-
-### 🎤 Lyrics for All
-True Norwegian Black Metal? Memphis Hip Hop circa '95? Onkyokei Japanoise? Yes, we can. No more *Mamma Mia*. Real lyrics, real karaoke.
-
-### 👥 Viewer Mode
-Choose your VIPs. Share your karaoke session - friends can join and sing along.
-
-### 💡 Hue Integration
-Sync your smart lights to the beat - turn your room into a concert venue with Philips Hue integration.
-
-
-### 🎵 Compatibility
-
-Currently works with **Spotify**. Support for Apple Music, YouTube, and other sources may be added in future updates.
-
----
-
-## ⚖️ Legal
-
-syns6 is a **free, non-commercial** project. 
-
-The user is solely responsible for ensuring their use of the app complies with applicable laws and regulations. syns6 does not host, distribute, or store any copyrighted content.
-
-See [Terms of Service](https://syns6.com/terms) and [Privacy Policy](https://syns6.com/privacy) for more details.
-
----
-
-## 📄 License
+## License
 
 MIT

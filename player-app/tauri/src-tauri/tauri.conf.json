@@ -5,9 +5,9 @@
   "identifier": "com.syns6",
   "build": {
     "beforeDevCommand": "",
-    "devUrl": "http://127.0.0.1:3000/player",
-    "beforeBuildCommand": "cd .. && npm run build:prod",
-    "frontendDist": "http://127.0.0.1:3000/player"
+    "devUrl": "http://127.0.0.1:3001/player",
+    "beforeBuildCommand": "cd ../.. && cd player-app && npm run build:prod",
+    "frontendDist": "../.next"
   },
   "app": {
     "withGlobalTauri": true,
