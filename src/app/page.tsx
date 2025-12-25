@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { InstagramEmbed } from "react-social-media-embed";
 import styles from "./page.module.css";
+import FFTSpectrumVisualization from "@/components/FFTSpectrumVisualization";
+import { useMicrophoneAnalysis } from "@/hooks/useMicrophoneAnalysis";
 import { Logo } from "@/components/ds";
 import ScrollVideo from "@/components/ScrollVideo";
 
 export default function Home() {
+  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null); // null = checking
+  const { micData, enable: enableMic } = useMicrophoneAnalysis();
 
   // Structured data for SEO
   const structuredData = {
@@ -203,6 +207,65 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [lyricsTranslations.length]);
 
+  // Check WebGL availability
+  useEffect(() => {
+    // Add a small delay to ensure DOM is ready
+    const checkWebGL = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl');
+        
+        if (!gl || !(gl instanceof WebGLRenderingContext || gl instanceof WebGL2RenderingContext)) {
+          console.log('❌ WebGL not available');
+          setWebglAvailable(false);
+          return;
+        }
+        
+        // Additional check for shader precision (the failing call)
+        try {
+          const result = gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT);
+          if (!result) {
+            console.log('❌ WebGL shader precision not available');
+            setWebglAvailable(false);
+            return;
+          }
+          console.log('✅ WebGL fully available');
+          setWebglAvailable(true);
+        } catch (e) {
+          console.log('❌ WebGL available but shader precision failed');
+          setWebglAvailable(false);
+        }
+      } catch (e) {
+        console.log('❌ WebGL check failed:', e);
+        setWebglAvailable(false);
+      }
+    };
+    
+    // Run check on next tick
+    setTimeout(checkWebGL, 0);
+  }, []);
+
+  // Auto-enable microphone on mount for background visualization
+  useEffect(() => {
+    if (webglAvailable) {
+      enableMic();
+    }
+  }, [enableMic, webglAvailable]);
+
+  // Catch any unhandled WebGL errors and show fallback
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message && (event.message.includes('gl.getShader') || event.message.includes('WebGL'))) {
+        console.error('WebGL error caught, switching to fallback:', event.message);
+        setWebglAvailable(false);
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
   // Force body to be black and allow scrolling
   useEffect(() => {
     document.body.style.backgroundColor = '#000000';
@@ -223,13 +286,22 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       
-      {/* Background Image */}
+      {/* Background Visualization or Fallback Image */}
       <div className={styles.backgroundViz}>
-        <img 
-          src="/viz-thumbnails/fftspectrum.webp" 
-          alt="FFT Visualization" 
-          className={styles.fallbackImage}
-        />
+        {webglAvailable === null ? (
+          // Still checking WebGL availability
+          <div style={{ background: '#000' }} />
+        ) : webglAvailable ? (
+          // WebGL available - show 3D viz
+          <FFTSpectrumVisualization frequencyData={micData?.frequencyData} />
+        ) : (
+          // WebGL not available - show fallback image
+          <img 
+            src="/viz-thumbnails/fftspectrum.webp" 
+            alt="FFT Visualization" 
+            className={styles.fallbackImage}
+          />
+        )}
       </div>
 
       <main className={styles.landingMain}>
