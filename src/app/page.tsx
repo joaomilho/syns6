@@ -329,23 +329,25 @@ export default function Home() {
           </div>
           <p>Free macOS app. No account needed.</p>
 
-          <a href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" target="_blank" rel="noopener noreferrer">
-              <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1042868&theme=light&t=1764195048977" alt="syns6 - Karaoke&#0046;&#0032;Redefined&#0046; | Product Hunt" style={{width: '250px', height: '54px'}} width="250" height="54" />
-            </a>
+          
         </section>
+
+        
 
         {/* Social Links */}
         <nav className={styles.socialLinks} aria-label="Social media links">
-          <a href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Follow us on Instagram">
+          <a target="_blank" href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Follow us on Instagram">
             Instagram
           </a>
-          <a href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="Follow us on TikTok">
+          <a target="_blank" href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="Follow us on TikTok">
             TikTok
           </a>
-          <a href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Follow us on Twitter">
+          <a target="_blank" href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Follow us on Twitter">
             Twitter
           </a>
-          
+          <a target="_blank" href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" className={styles.socialLink} aria-label="Follow us on Product Hunt">
+            Product Hunt
+          </a>
         </nav>
 
         {/* Features Section */}
