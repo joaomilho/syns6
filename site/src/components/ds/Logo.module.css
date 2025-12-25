@@ -1,0 +1,36 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #00ff00;
+  background: transparent;
+  box-shadow: 0 0 4px 1px rgba(0, 255, 0, 0.6);
+  transition: all 0.3s ease;
+}
+
+/* When loading, spin the circle */
+.loading .circle {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

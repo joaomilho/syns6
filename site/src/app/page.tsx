@@ -1,0 +1,492 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { InstagramEmbed } from "react-social-media-embed";
+import styles from "./page.module.css";
+import { Logo } from "@/components/ds";
+import ScrollVideo from "@/components/ScrollVideo";
+
+export default function Home() {
+
+  // Structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "syns6",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Transform your home into a neon-soaked karaoke club. Live 3D visualizations, lyrics for all genres, Hue integration, and viewer mode.",
+    "url": "http://localhost:3000",
+    "image": "http://localhost:3000/opengraph-image",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    },
+    "featureList": [
+      "Live 3D music visualizations",
+      "Lyrics for all music genres and languages",
+      "Smart lights (Hue) integration",
+      "Viewer mode for sharing karaoke sessions",
+      "Real-time audio analysis"
+    ],
+    "sameAs": [
+      "https://www.instagram.com/_syns6_/",
+      "https://www.tiktok.com/@_syns6_",
+      "https://x.com/_syns6_",
+      "https://www.producthunt.com/products/syns6",
+      "https://trylaunch.ai/launch/syns6"
+    ]
+  };
+  
+  // Cycle through visualization images
+  const vizImages = [
+    'psychedelic.webp',
+    'fftspectrum.webp',
+    'animated.webp',
+    'particles.webp',
+    'waves.webp',
+    'spectrum3d.webp',
+  ];
+  const [currentVizIndex, setCurrentVizIndex] = useState(0);
+  const [vizFading, setVizFading] = useState(false);
+
+  // Cycle through lyrics screenshots
+  const lyricsImages = [
+    'behemoth.webp',
+    'kraftwerk.webp',
+    'mooki.webp',
+    'sai-abhyankkar.webp',
+  ];
+  const [currentLyricsIndex, setCurrentLyricsIndex] = useState(0);
+
+  // Translations of "Lyrics for all!" in 50+ languages
+  const lyricsTranslations = [
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fr', text: 'Paroles pour tous !' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'zh', text: '歌词为所有人！' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ta', text: 'அனைவருக்கும் பாடல் வரிகள்!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'he', text: '!מילים לכולם' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ar', text: '!كلمات لكل' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ru', text: 'Тексты для всех!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hi', text: 'सभी के लिए गीत!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ja', text: 'みんなのための歌詞！' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ko', text: '모두를 위한 가사!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'tr', text: 'Herkes için şarkı sözleri!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'yi', text: '!ליריקס פאר אלעמען' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'th', text: 'เนื้อเพลงสำหรับทุกคน!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'bn', text: 'সবার জন্য গানের কথা!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fa', text: '!ترانه برای همه' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ur', text: '!سب کے لیے گانے' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'el', text: 'Στίχοι για όλους!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'am', text: 'ለሁሉም ግጥሞች!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ms', text: 'Lirik untuk semua!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'de', text: 'Texte für alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'es', text: '¡Letras para todos!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'pt', text: 'Letras para todos!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'it', text: 'Testi per tutti!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'pl', text: 'Teksty dla wszystkich!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'uk', text: 'Тексти для всіх!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'vi', text: 'Lời bài hát cho tất cả!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'id', text: 'Lirik untuk semua!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sw', text: 'Maneno ya nyimbo kwa wote!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ro', text: 'Versuri pentru toți!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'nl', text: 'Teksten voor iedereen!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hu', text: 'Dalszövegek mindenkinek!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'cs', text: 'Texty pro všechny!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sv', text: 'Texter för alla!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'fi', text: 'Sanat kaikille!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'no', text: 'Tekster for alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'da', text: 'Tekster til alle!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'sr', text: 'Текстови за све!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'bg', text: 'Текстове за всички!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ka', text: 'ტექსტები ყველასთვის!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'hy', text: 'Տեքստեր բոլորի համար!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'kk', text: 'Барлығына мәтіндер!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'az', text: 'Hamı üçün mahnı sözləri!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'kn', text: 'ಎಲ್ಲರಿಗೂ ಸಾಹಿತ್ಯ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'te', text: 'అందరికీ సాహిత్యం!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'ml', text: 'എല്ലാവർക്കും വരികൾ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'si', text: 'සියලු දෙනාට ගී පද!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'my', text: 'အားလုံးအတွက် စာသားများ!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'km', text: 'អត្ថបទសម្រាប់ទាំងអស់!' },
+    { lang: 'en', text: 'Lyrics for all!' },
+    { lang: 'lo', text: 'ເນື້ອເພງສໍາລັບທຸກຄົນ!' },
+  ];
+  const [currentTranslationIndex, setCurrentTranslationIndex] = useState(0);
+  const [translationFading, setTranslationFading] = useState(false);
+
+
+  // Cycle through viz images every 6 seconds (slower) with fade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVizFading(true);
+      setTimeout(() => {
+        setCurrentVizIndex((prev) => (prev + 1) % vizImages.length);
+        setVizFading(false);
+      }, 1000); // Half of the 2s transition
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [vizImages.length]);
+
+  // Cycle through lyrics images every 6 seconds with crossfade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLyricsIndex((prev) => (prev + 1) % lyricsImages.length);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [lyricsImages.length]);
+
+  // Cycle through translations every 3 seconds with fade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTranslationFading(true);
+      setTimeout(() => {
+        setCurrentTranslationIndex((prev) => (prev + 1) % lyricsTranslations.length);
+        setTranslationFading(false);
+      }, 500); // Half of the 1s transition
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [lyricsTranslations.length]);
+
+  // Force body to be black and allow scrolling
+  useEffect(() => {
+    document.body.style.backgroundColor = '#000000';
+    document.documentElement.style.backgroundColor = '#000000';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    return () => {
+      document.body.style.backgroundColor = '';
+      document.documentElement.style.backgroundColor = '';
+    };
+  }, []);
+
+  return (
+    <div className={styles.landingPage}>
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
+      {/* Background Image */}
+      <div className={styles.backgroundViz}>
+        <img 
+          src="/viz-thumbnails/fftspectrum.webp" 
+          alt="FFT Visualization" 
+          className={styles.fallbackImage}
+        />
+      </div>
+
+      <main className={styles.landingMain}>
+        {/* Header with Logo and Icon */}
+        <header className={styles.header}>
+          <div className={styles.logoWrapper}>
+            <Logo />
+          </div>
+        </header>
+
+        {/* Hero Section - Title/Subtitle over visualization */}
+        <section className={styles.hero}>
+          <h1 className={styles.heroTitle}>Karaoke, redefined.</h1>
+          <p className={styles.heroSubtitle}>
+          By day, your home. By night,<br className={styles.desktopBreak}/>the sickest club in the world.<br className={styles.mobileBreak}/> And <b>you</b> own it.
+            {/* <br />
+            A neon-soaked, bass-pounding private club. */}
+          </p>
+          <div className={styles.ctaContainer}>
+            <a href="/app" className={styles.ctaButton}>
+              Download
+            </a>
+            
+          </div>
+          <p>Free macOS app. No account needed.</p>
+
+          
+        </section>
+
+        
+
+        {/* Social Links */}
+        <nav className={styles.socialLinks} aria-label="Social media links">
+          <a target="_blank" href="https://www.instagram.com/_syns6_/" className={styles.socialLink} aria-label="Follow us on Instagram">
+            Instagram
+          </a>
+          <a target="_blank" href="https://www.tiktok.com/@_syns6_" className={styles.socialLink} aria-label="Follow us on TikTok">
+            TikTok
+          </a>
+          <a target="_blank" href="https://x.com/_syns6_" className={styles.socialLink} aria-label="Follow us on Twitter">
+            Twitter
+          </a>
+          <a target="_blank" href="https://www.producthunt.com/products/syns6?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-syns6" className={styles.socialLink} aria-label="Follow us on Product Hunt">
+            Product Hunt
+          </a>
+        </nav>
+
+        {/* Features Section */}
+        <section className={styles.features}>
+          <h2 className={styles.sectionTitle}>Features that slap</h2>
+          
+          <div className={styles.featureGrid}>
+            <article className={styles.vizMasonrySection}>
+              <div className={styles.masonryGrid}>
+                {vizImages.slice(0, 4).map((img, index) => {
+                  const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
+                  return (
+                    <figure key={index} className={styles.masonryItem}>
+                      <ScrollVideo 
+                        src={videoSrc}
+                        alt={`Live 3D music visualization responding to voice and beat - example ${index + 1}`}
+                        className={styles.masonryImage}
+                      />
+                    </figure>
+                  );
+                })}
+                <div className={styles.masonryTextItem}>
+                  <h3 className={styles.featureTitle}>Funmaxxing visualizations</h3>
+                  <p className={styles.featureDescription}>
+                    Your voice <i style={{fontFamily: 'Baskerville, Georgia, serif', fontStyle: 'italic'}}>&</i> the beat: live 3D visuals that go so stupid they need a passport.
+                  </p>
+                </div>
+                {vizImages.slice(4).map((img, index) => {
+                  const videoSrc = `/viz-thumbnails/${img.replace('.webp', '.webm')}`;
+                  return (
+                    <figure key={index + 4} className={styles.masonryItem}>
+                      <ScrollVideo 
+                        src={videoSrc}
+                        alt={`Live 3D music visualization responding to voice and beat - example ${index + 5}`}
+                        className={styles.masonryImage}
+                      />
+                    </figure>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className={styles.featureCard}>
+              <figure className={styles.featureImageContainer}>
+                <div className={styles.imageStack}>
+                  {lyricsImages.map((img, index) => (
+                    <img 
+                      key={index}
+                      src={`/lyrics/${img}`}
+                      alt={`Karaoke lyrics display in multiple languages - supporting genres from Norwegian Black Metal to Memphis Hip Hop to Japanese Onkyokei`}
+                      className={`${styles.featureImage} ${styles.lyrics} ${styles.stackedImage}`}
+                      style={{ opacity: currentLyricsIndex === index ? 1 : 0 }}
+                    />
+                  ))}
+                </div>
+                <div className={styles.imageDots}>
+                  {lyricsImages.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`${styles.imageDot} ${currentLyricsIndex === index ? styles.active : ''}`}
+                      onClick={() => setCurrentLyricsIndex(index)}
+                      aria-label={`View lyrics example ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </figure>
+              <div className={styles.featureText}>
+                <div className={styles.titleContainer}>
+                  <h3 
+                    className={styles.featureTitle}
+                    style={{ 
+                      opacity: translationFading ? 0 : 1,
+                      transition: 'opacity 1s ease-in-out'
+                    }}
+                    lang={lyricsTranslations[currentTranslationIndex].lang}
+                  >
+                    {lyricsTranslations[currentTranslationIndex].text}
+                  </h3>
+                </div>
+                <p className={styles.featureDescription}>
+                  True Norwegian Black Metal?<br />
+                  Memphis Hip Hop circa '95? Onkyokei Japanoise?
+                  <br />
+                  Yes, we can.
+                  <br /><br />
+                  No more <i>Mamma Mia</i>. Real lyrics, real karaoke. 
+                </p>
+              </div>
+            </article>
+
+            <div className={styles.featureCardsGrid}>
+              <article className={styles.featureCardVertical}>
+                
+                <div className={styles.featureTextVertical}>
+                  <h3 className={styles.featureTitleVertical}>Viewer mode</h3>
+                  <p className={styles.featureDescriptionVertical}>
+                    Choose your VIPs. Share your karaoke session - friends can join and sing along.
+                  </p>
+                </div>
+              </article>
+
+              <article className={styles.featureCardVertical}>
+                
+                <div className={styles.featureTextVertical}>
+                  <h3 className={styles.featureTitleVertical}>Hue integration</h3>
+                  <p className={styles.featureDescriptionVertical}>
+                    Sync your smart lights to the beat - turn your room into a concert venue with Hue integration and many other peripherals.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {/* Instagram Videos Section */}
+        <section className={styles.instagramSection}>
+          <h2 className={styles.sectionTitle}>See it in action</h2>
+          <p className={styles.sectionSubtitle}>
+            Follow us on Instagram for the latest updates
+          </p>
+          <a 
+            href="https://www.instagram.com/_syns6_/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={styles.instagramLink}
+          >
+            @_syns6_
+          </a>
+          <div className={styles.instagramGrid}>
+            {/* Instagram Embed - Replace the URLs with your actual Instagram post/reel URLs */}
+            <article className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                
+                url="https://www.instagram.com/reel/DRft3ZmCPE9/" 
+                width={328}
+              />
+            </article>
+            <article className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                url="https://www.instagram.com/reel/DRdhNlxiKuS/" 
+                width={328}
+              />
+            </article>
+            <article className={styles.instagramEmbed}>
+              <InstagramEmbed 
+                url="https://www.instagram.com/reel/DRcfnrkCJFy/" 
+                width={328}
+              />
+            </article>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        {/* <section className={styles.testimonials}>
+          <h2 className={styles.sectionTitle}>What people are saying</h2>
+          
+          <div className={styles.testimonialGrid}>
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎤 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "Best karaoke experience ever! The visualizations are insane."
+              </p>
+              <p className={styles.testimonialAuthor}>- Alex</p>
+            </div>
+
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎵 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "Finally, I can sing metal without butchering the lyrics!"
+              </p>
+              <p className={styles.testimonialAuthor}>- Sam</p>
+            </div>
+            
+            <div className={styles.testimonialCard}>
+              <div className={styles.testimonialVideo}>
+                <div className={styles.videoPlaceholder}>🎸 Video</div>
+              </div>
+              <p className={styles.testimonialQuote}>
+                "The AI visualization creator is a game changer."
+              </p>
+              <p className={styles.testimonialAuthor}>- Jordan</p>
+            </div>
+          </div>
+        </section> */}
+
+        {/* Download Section */}
+        <section className={styles.pricing}>
+          <h2 className={styles.sectionTitle}>Ready to get started?</h2>
+          <a href="/app" className={styles.ctaButton}>
+          Download
+          </a>
+          <p>Free macOS app. No account needed.</p>
+        </section>
+
+        {/* Footer */}
+        <footer className={styles.footer}>
+          <div className={styles.footerContent}>
+            <div className={styles.footerBrand}>
+              <p className={styles.copyright}>© 2025 syns6. All rights reserved.</p>
+            </div>
+            <div className={styles.footerLinks}>
+              <a href="/faq" className={styles.footerLink}>FAQ</a>
+              <a href="/privacy" className={styles.footerLink}>Privacy & Data Protection</a>
+              <a href="/terms" className={styles.footerLink}>Terms of Service</a>
+            </div>
+          </div>
+        </footer>
+      </main>
+    </div>
+  );
+}
