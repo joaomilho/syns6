@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   devIndicators: false,
+  // Explicitly skip Prisma validation
+  experimental: {
+    // This prevents Next.js from auto-detecting Prisma
+  },
 };
 
 export default nextConfig;

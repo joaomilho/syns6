@@ -1,19 +1,25 @@
 # Vercel Deployment Instructions
 
-## Important: Root Directory Setting
+## Setup
 
-When deploying this site to Vercel, you **must** set the **Root Directory** to `site` in your Vercel project settings.
+This site deploys to Vercel and has no database dependencies.
+
+### Important Notes
+
+- The root directory's `vercel.json` has been removed (it was for the player app which uses Prisma)
+- This site has its own `vercel.json` in the `site/` directory
+- **You MUST set the Root Directory to `site` in your Vercel project settings**
 
 ### Steps:
 1. Go to your Vercel project settings
 2. Navigate to **Settings** → **General**
 3. Under **Root Directory**, set it to `site`
 4. Save the settings
+5. Redeploy
 
-This ensures that:
-- Vercel only sees files in the `site` directory
-- Prisma commands from the parent directory won't run
-- The build will use the correct `package.json` and `vercel.json`
+### Verification
 
-Without this setting, Vercel will scan the entire repository and may try to run Prisma commands from the parent directory, causing the `DATABASE_URL` error.
-
+After setting the root directory, verify in the build logs that:
+- The build uses `site/package.json`
+- The build command is `npm run vercel-build` (which runs `next build`)
+- No Prisma-related errors appear
